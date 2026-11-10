@@ -2,8 +2,10 @@
 -- Ressources collectables du MVP (Green Valley, 3 ressources de test).
 --
 -- sellValue, rarity, spawnWeight : Bible économique v1.0, section 3.2.
--- respawnSeconds, collectAmount  : HYPOTHÈSES issues de l'exemple de
---   l'architecture technique (section 8.1). La Bible ne les définit pas.
+-- respawnSeconds (2 / 3 / 4 s), collectAmount : HYPOTHÈSES PROVISOIRES
+--   issues de l'exemple de l'architecture technique (section 8.1),
+--   consignées dans la Bible 3.6. Aucune simulation ne les justifie :
+--   à mesurer et ajuster pendant l'équilibrage (T7).
 --
 -- Wild Fruit et Green Crystal (Bible 3.2) sont volontairement absents :
 -- le MVP est limité à trois ressources.
@@ -34,8 +36,8 @@ local ResourceConfig: { [string]: ResourceDefinition } = {
 		respawnSeconds = 2,
 	},
 
-	wood_chunk = {
-		displayNameKey = "resource.wood_chunk",
+	wood = {
+		displayNameKey = "resource.wood",
 		worldId = "GreenValley",
 		rarity = "Common",
 		sellValue = 2,

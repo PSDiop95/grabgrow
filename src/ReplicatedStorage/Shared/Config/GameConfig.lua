@@ -20,8 +20,8 @@ local GameConfig = {
 	},
 
 	Collection = {
-		-- Portée de collecte de base (studs). Correspond au Magnet niveau 1
-		-- de la Bible ; l'amélioration Magnet est hors MVP.
+		-- Portée de collecte sans Magnet (studs), soit magnetLevel = 0.
+		-- Valeur de la Bible, section 2. L'amélioration Magnet est hors MVP.
 		baseRangeStuds = 12,
 	},
 

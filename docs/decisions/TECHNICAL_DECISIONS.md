@@ -8,7 +8,7 @@ propriétaire), ACCEPTÉE, REMPLACÉE.
 ## D-001 — Code source sur disque, synchronisé vers Studio par Rojo
 
 - **Date :** 2026-11-10
-- **Statut :** PROPOSÉE
+- **Statut :** ACCEPTÉE (Prompt 1.1)
 - **Contexte :** le dépôt ne contient aucun fichier Roblox. Claude Code
   travaille sur des fichiers ; Roblox Studio travaille sur un fichier place.
   Sans passerelle, chaque script doit être recopié à la main dans Studio.
@@ -19,7 +19,11 @@ propriétaire), ACCEPTÉE, REMPLACÉE.
 - **Justification :** historique Git lisible, revue et tests possibles hors
   Studio, pas de recopie manuelle. Rojo est un outil de développement : il
   n'ajoute rien au jeu publié.
-- **Conséquences :** installer Rojo (binaire + plugin Studio). Le mappage ne
+- **Mise en œuvre :** Rokit 1.2.0 gère les outils ; versions épinglées dans
+  `rokit.toml` (Rojo 7.7.1, luau-lsp 1.70.1). Plugin Studio `Rojo.rbxm`
+  7.7.1 dans `%LOCALAPPDATA%\Roblox\Plugins`. Fichier place initial
+  `GrabAndGrow.rbxl` produit par `rojo build`.
+- **Conséquences :** le mappage ne
   cible que `Shared` et `Tests` : les instances créées dans Studio ne sont
   pas écrasées. Chaque nouveau dossier de scripts devra être ajouté au
   fichier projet.
@@ -45,21 +49,26 @@ propriétaire), ACCEPTÉE, REMPLACÉE.
 ## D-003 — Contenu des configurations du MVP
 
 - **Date :** 2026-11-10
-- **Statut :** PROPOSÉE
+- **Statut :** ACCEPTÉE (Prompt 1.1)
 - **Contexte :** le MVP impose trois ressources et deux améliorations ; la
   Bible en définit cinq et cinq.
 - **Décision :**
-  - Ressources : `green_leaf`, `wood_chunk`, `stone` (les trois communes de
-    la Bible 3.2, valeurs et poids inchangés).
+  - Ressources : `green_leaf`, `wood`, `stone` (les trois communes de la
+    Bible 3.2, valeurs et poids inchangés). `wood` désigne « Wood Chunk ».
   - Améliorations : `Backpack` et `Grabber`, tables complètes de la Bible
     (16 et 10 niveaux).
-  - Monde : `GreenValley` seul.
+  - Mondes : `GreenValley` (jouable) et `GoldenDesert` (verrouillé, 1 500
+    Coins et Backpack niveau 5, Bible 6). `GoldenDesert` n'existe que pour
+    tester le verrouillage et le déblocage : aucun contenu.
+  - Achats d'amélioration : x1 uniquement dans le MVP. x10, x100 et MAX
+    (Bible 5.7) sont reportés.
   - `GameConfig` ne contient que les paramètres globaux qui ne figurent
     dans aucune autre table (monde de départ, monnaie Coins, portée de base
     12 studs, vitesse de base 16). La capacité initiale et l'intervalle de
     base se lisent dans `UpgradeConfig` (niveau 1).
   - `respawnSeconds` (2 / 3 / 4 s) et `collectAmount` (1) viennent de
-    l'exemple de l'architecture : hypothèses, absentes de la Bible.
+    l'exemple de l'architecture : hypothèses provisoires, consignées dans
+    la Bible 3.6, à ajuster en T7.
   - Les configurations sont gelées (`TableUtil.deepFreeze`).
 - **Justification :** une seule source par valeur ; aucune valeur inventée ;
   les trois ressources retenues sont celles de l'exemple de l'architecture.
@@ -87,7 +96,7 @@ propriétaire), ACCEPTÉE, REMPLACÉE.
 ## D-005 — Tests sans framework externe pour l'instant
 
 - **Date :** 2026-11-10
-- **Statut :** PROPOSÉE
+- **Statut :** ACCEPTÉE (stratégie utilisée pour clôturer T0)
 - **Contexte :** aucun outil de test Luau n'est installé. CLAUDE.md interdit
   les dépendances non justifiées.
 - **Décision :** modules de test en Luau pur, retournant une liste d'échecs,
@@ -98,3 +107,42 @@ propriétaire), ACCEPTÉE, REMPLACÉE.
 - **Conséquences :** pas de rapport formaté ni d'intégration continue. À
   réévaluer si le nombre de tests le justifie.
 - **Affecte :** `src/ServerScriptService/Tests/`, `docs/tests/TEST_STRATEGY.md`.
+
+## D-006 — Schéma des données joueur : monnaies groupées, Magnet à 0
+
+- **Date :** 2026-11-10
+- **Statut :** ACCEPTÉE (Prompt 1.1) — à implémenter en T1
+- **Contexte :** le GDD (15.5) stocke `coins`, `gems`, `stars` à plat et
+  démarre `magnetLevel` à 1 ; l'architecture (7.1) utilise
+  `currencies = { coins, gems, stars }` et `magnetLevel = 0`.
+- **Décision :** structure de l'architecture.
+  `currencies = { coins = 0, gems = 0, stars = 0 }`. `magnetLevel = 0`
+  tant que l'amélioration n'est pas acquise.
+- **Justification :** une seule table à valider et à migrer pour les
+  soldes ; le niveau 0 distingue « non acquis » de « niveau 1 ».
+- **Conséquences :**
+  - Gems et Stars existent dans le profil mais restent à 0 et invisibles
+    dans le MVP.
+  - `GameConfig.Collection.baseRangeStuds` (12) est la portée à
+    `magnetLevel = 0`.
+  - La table Magnet de la Bible (5.4) démarre au niveau 1 gratuit à
+    12 studs : à réaligner sur le niveau 0 quand le Magnet sera
+    implémenté (hors MVP).
+  - La section 15.5 du GDD est remplacée par ce schéma.
+- **Affecte :** `PlayerDataService` (T1), GDD 15.5, Bible 5.4.
+
+## D-007 — Correction des moyennes de la Bible économique
+
+- **Date :** 2026-11-10
+- **Statut :** ACCEPTÉE (Prompt 1.1)
+- **Contexte :** les valeurs moyennes par monde annoncées ne correspondaient
+  pas aux poids et valeurs unitaires du même document.
+- **Décision :** moyennes recalculées (moyenne pondérée par les poids) :
+  Green Valley 2,24 ; Golden Desert 20,42 ; Frozen Peaks 105,1 ;
+  Mystic World 562. Ajout de la moyenne MVP à trois ressources (1,78).
+  Bible passée en 1.0.1.
+- **Justification :** les simulations doivent partir de chiffres cohérents.
+- **Conséquences :** aucune valeur unitaire, aucun poids, aucun coût
+  modifié. Les fourchettes de revenu cible par minute (4.2) sont
+  inchangées et restent à confronter aux mesures en T7.
+- **Affecte :** Bible économique 3.2, 3.6, 4.2, 20.

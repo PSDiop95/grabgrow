@@ -14,7 +14,7 @@ réellement exécuté. État détaillé : `PROJECT_STATUS.md`.
 
 | Phase | Livrable | Critère de validation | État |
 |---|---|---|---|
-| T0 | Structure du projet et configurations | Projet organisé, lancement sans erreur dans Studio | Partiel — fichiers prêts, lancement Studio non vérifié |
+| T0 | Structure du projet et configurations | Projet organisé, lancement sans erreur dans Studio | Terminé le 2026-11-10 — analyse Luau propre, `ConfigTests : OK` dans Studio |
 | T1 | Profil joueur et sauvegarde | Chargement, sauvegarde, reconnexion, pas d'écrasement | À faire |
 | T2 | Collecte et inventaire | Collecte validée serveur, sac limité | À faire |
 | T3 | Vente et Coins | Transaction fiable, inventaire vidé correctement | À faire |
@@ -24,17 +24,16 @@ réellement exécuté. État détaillé : `PROJECT_STATUS.md`.
 | T7 | Équilibrage MVP | Première session compréhensible et satisfaisante | À faire |
 | T8 | Préparation publication | Tests privés concluants | À faire |
 
-## Pour clôturer T0
+## Prochaine phase : T1
 
-1. Valider le flux de travail fichiers → Studio (D-001).
-2. Créer le fichier place et y synchroniser `src/`.
-3. Lancer Play dans Studio : `[Tests] ConfigTests : OK` dans Output, aucune erreur.
+Profil joueur et sauvegarde. Schéma : `decisions/TECHNICAL_DECISIONS.md`,
+D-006. Démarrage soumis à validation du propriétaire.
 
 ## Après le MVP (ne pas commencer avant validation de T0 à T8)
 
 - Magnet, Boots, Multiplier ; achats x10 / x100 / MAX.
 - Wild Fruit, Green Crystal ; Grab Combo.
-- Golden Desert, Frozen Peaks, Mystic World.
+- Golden Desert (contenu réel ; seule l'entrée verrouillée existe), Frozen Peaks, Mystic World.
 - Gems, Stars et Prestige.
 - Pets et œufs ; quêtes et succès ; événements coopératifs.
 - Monétisation (Game Pass, Developer Products).

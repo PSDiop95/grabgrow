@@ -1,9 +1,11 @@
 --!strict
--- Mondes du MVP : Green Valley uniquement.
+-- Mondes connus du MVP.
 -- Source : Bible économique v1.0, section 6.
 --
--- Golden Desert, Frozen Peaks et Mystic World sont reportés après
--- validation du MVP et ne sont pas configurés ici.
+-- GreenValley est le seul monde jouable du MVP.
+-- GoldenDesert est déclaré UNIQUEMENT pour tester le verrouillage et le
+-- déblocage côté serveur : il n'a ni carte, ni ressources, ni contenu.
+-- Frozen Peaks et Mystic World restent reportés et ne sont pas configurés.
 --
 -- Les ressources d'un monde se déduisent de ResourceConfig (champ worldId) :
 -- ne pas les lister ici pour éviter une double source.
@@ -25,6 +27,14 @@ local WorldConfig: { [string]: WorldDefinition } = {
 		unlockedByDefault = true,
 		unlockCost = 0,
 		requiredBackpackLevel = 1,
+	},
+
+	GoldenDesert = {
+		displayNameKey = "world.golden_desert",
+		order = 2,
+		unlockedByDefault = false,
+		unlockCost = 1_500,
+		requiredBackpackLevel = 5,
 	},
 }
 

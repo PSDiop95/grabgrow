@@ -1,115 +1,99 @@
 # GRAB & GROW — État du projet
 
-Dernière mise à jour : 2026-11-10 (Prompt 1 — audit initial)
+Dernière mise à jour : 2026-11-10 (Prompt 1.1 — clôture T0)
 
 ## Résumé
 
-Projet au stade pré-production. Les trois documents de référence existent.
-Les configurations du MVP et un test de cohérence sont écrits mais n'ont
-jamais été exécutés dans Roblox Studio. Aucun système de gameplay n'existe.
+T0 est clos : structure, configurations MVP, outillage et premier test
+exécuté dans Roblox Studio. Aucun système de gameplay n'existe. Prochaine
+phase : T1 (profil joueur et sauvegarde), en attente de validation.
 
-## État du dépôt
+## Environnement
 
-- Avant le lot : 4 fichiers Markdown (`CLAUDE.md` + 3 documents dans `docs/`).
-  Aucun script, aucun asset, aucun fichier place (`.rbxl`/`.rbxlx`), aucune
-  configuration de projet, aucune dépendance.
-- Pas de dépôt Git initialisé : aucun historique, aucune modification locale
-  à préserver.
-- Rien à supprimer, aucun script redondant.
+| Outil | Version | Emplacement |
+|---|---|---|
+| Roblox Studio | 0.747.0.7471481 | `%LOCALAPPDATA%\Roblox\Versions` |
+| Rokit | 1.2.0 | `~/.rokit` (PATH utilisateur) |
+| Rojo | 7.7.1 | via Rokit, épinglé dans `rokit.toml` |
+| luau-lsp | 1.70.1 | via Rokit, épinglé dans `rokit.toml` |
+| Plugin Studio Rojo | 7.7.1 | `%LOCALAPPDATA%\Roblox\Plugins\Rojo.rbxm` |
+| Types API Roblox | tag luau-lsp 1.70.1 | `.tools/globalTypes.d.luau` (non versionné) |
+| Git / GitHub CLI | 2.56.0 / 2.103.2 | dépôt `PSDiop95/grabgrow` |
 
-## Environnement (vérifié le 2026-11-10)
-
-| Outil | État |
-|---|---|
-| Roblox Studio | Installé (`%LOCALAPPDATA%\Roblox\Versions\version-63eb6055af4e4688`). Non lancé pendant ce lot. |
-| Git | 2.56.0 disponible, dépôt non initialisé |
-| GitHub CLI | 2.103.2 disponible |
-| Rojo | Absent |
-| Luau CLI / luau-lsp / Selene / StyLua / Lune | Absents |
-| Rokit / Aftman | Absents |
-| Node.js, Python | Présents (outillage uniquement, jamais pour le jeu) |
-
-Conséquence : aucun code Luau ne peut être exécuté ni analysé depuis le
-terminal aujourd'hui, et rien ne relie encore `src/` à Studio.
+Selene, StyLua et Lune ne sont pas installés : pas nécessaires à ce stade.
 
 ## Fichiers en place
 
 ```text
-default.project.json                 Mappage Rojo (proposition, D-001)
+default.project.json                 Mappage Rojo (Shared, Tests)
+rokit.toml                           Versions des outils
+GrabAndGrow.rbxl                     Fichier place (produit par rojo build)
 src/
   ReplicatedStorage/Shared/
     Config/GameConfig.lua            Paramètres globaux MVP
-    Config/ResourceConfig.lua        3 ressources Green Valley
+    Config/ResourceConfig.lua        green_leaf, wood, stone
     Config/UpgradeConfig.lua         Backpack (16 niveaux), Grabber (10 niveaux)
-    Config/WorldConfig.lua           Green Valley
-    Util/TableUtil.lua               deepFreeze (gel des configs)
+    Config/WorldConfig.lua           GreenValley, GoldenDesert (verrouillé, test)
+    Util/TableUtil.lua               deepFreeze
   ServerScriptService/Tests/
     ConfigTests.lua                  Cohérence structurelle des configs
     RunTests.server.lua              Lanceur, Studio uniquement
-docs/
-  ROADMAP.md, PROJECT_STATUS.md
-  decisions/TECHNICAL_DECISIONS.md
-  tests/TEST_STRATEGY.md
+docs/                                Références, roadmap, décisions, tests
 ```
 
-Les autres dossiers de la structure cible (Services, Systems, Remotes,
-Controllers, GUI, Workspace) seront créés avec leur premier fichier utile.
+Flux de travail : voir `tests/TEST_STRATEGY.md`. Les scripts se modifient
+dans `src/` ; la carte, les modèles et les interfaces dans Studio.
 
-## Vérifications
+## Vérifications T0 (2026-11-10)
 
 | Vérification | Type | Résultat |
 |---|---|---|
-| Valeurs Backpack, Grabber, ressources, portée, vitesse identiques à la Bible | Script de comparaison ponctuel (hors dépôt) | Exécuté — identique |
-| `default.project.json` | Analyse JSON | Exécuté — valide |
-| Équilibre des délimiteurs et blocs Luau | Contrôle textuel grossier | Exécuté — rien d'anormal (ne remplace pas un analyseur) |
-| Syntaxe et types Luau (`--!strict`) | Analyseur Luau | **Non exécuté** — outil absent |
-| `ConfigTests` | Test automatisé dans Studio | **Non exécuté** |
-| Lancement sans erreur dans Studio | Manuel | **Non exécuté** |
+| `luau-lsp analyze` sur `src/` (7 fichiers, `--!strict`) | Automatisé, terminal | Exécuté — 0 erreur, code de sortie 0 |
+| Contrôle négatif de l'analyseur (fichier volontairement faux) | Automatisé, terminal | Exécuté — erreurs détectées |
+| `rojo build` vers `GrabAndGrow.rbxl` | Automatisé, terminal | Exécuté — réussi |
+| Ouverture du place et chargement du plugin Rojo | Journal Studio | Constaté |
+| `ConfigTests` dans Studio (Run) | Automatisé, lancé à la main | Exécuté — `[Tests] ConfigTests : OK` (journal Studio, 23:07:58 UTC) |
+| Valeurs Backpack, Grabber, ressources, portée, vitesse identiques à la Bible | Script de comparaison ponctuel | Exécuté — identique |
+| Connexion `rojo serve` ↔ plugin Studio (synchronisation en direct) | Manuel | **Non exécuté** |
+| Play avec personnage (F5) | Manuel | **Non exécuté** — le place n'a ni sol ni point d'apparition |
 
-## Anomalies relevées dans les documents
+## Anomalies
 
-| # | Constat | Traitement |
+### Résolues
+
+| # | Constat | Résolution |
 |---|---|---|
-| A-01 | Bible 3.2 et 4.2 : valeurs moyennes annoncées 2,4 / 19,4 / 112 / 540. Recalcul avec les poids donnés : 2,24 / 20,42 / 105,1 / 562. | À corriger dans la Bible (décision propriétaire) |
-| A-02 | Le MVP impose 3 ressources, la Bible en définit 5 pour Green Valley. Avec Green Leaf, Wood Chunk, Stone : moyenne 1,78 Coin/unité au lieu de 2,24. | Voir impact ci-dessous, D-003 |
-| A-03 | Rareté de Stone : « Commune » (Bible) contre « Uncommon » (exemple architecture 8.1). | Bible appliquée |
-| A-04 | Identifiant du bois : `wood` (architecture) ; nom « Wood Chunk » (Bible). | `wood_chunk` retenu, D-003 |
-| A-05 | `magnetLevel = 0` dans le schéma de l'architecture 7.1 ; la Bible et le GDD démarrent le Magnet au niveau 1. | À trancher en T1 |
-| A-06 | Schéma de données : GDD 15.5 (monnaies à plat, `unlockedWorlds` en liste) contre architecture 7.1 (`currencies{}`, `worlds{}` en dictionnaire). | À trancher en T1 |
-| A-07 | Noms des modules : `EconomyConfig`, `ResourcesConfig`… (GDD, Bible) contre `GameConfig`, `ResourceConfig`… (architecture, CLAUDE.md). | Noms de l'architecture, D-002 |
-| A-08 | `Main.server.lua` et `SellingService` (GDD) contre `Bootstrap.server.lua` et vente dans `EconomyService` (architecture). | Architecture appliquée, D-002 |
-| A-09 | Ordre des phases : le GDD place Pets et événements avant la sauvegarde ; CLAUDE.md et l'architecture les reportent après le MVP. | CLAUDE.md appliqué, D-004 |
-| A-10 | Bible section 2 : « Capacité d'équipement initial : 1 Pet » et « Pets équipables gratuits au départ : 2 ». | Hors MVP, à corriger avant le lot Pets |
-| A-11 | Achat multiple x1/x10/x100/MAX (Bible 5.7) ; `RequestUpgrade` ne transporte que `upgradeId` (architecture 6.1). | x1 seul pour le MVP, à confirmer |
-| A-12 | Golden Desert exige niveau de sac ET Coins (Bible 6) ; le GDD 7.3 déconseille les conditions simultanées. | Hors MVP, à trancher plus tard |
-| A-13 | La Bible ne définit ni temps de réapparition, ni intervalle minimal de sécurité, ni tolérance de distance serveur. | Réapparition : exemple de l'architecture (hypothèse). Le reste en T2 |
-| A-14 | Les documents se citent sous `docs/GDD.md`, `docs/ECONOMY.md`, `docs/TECHNICAL_ARCHITECTURE.md` ; les fichiers réels sont `docs/GRAB_AND_GROW_*_v1.0.md`. | Sans effet technique |
-| A-15 | Le test MVP « Monde verrouillé » et le remote `RequestUnlockWorld` supposent un second monde, absent du MVP. | Décision en attente |
+| A-01 | Moyennes de la Bible incohérentes avec ses poids | Bible 1.0.1, D-007 |
+| A-02 | 3 ressources MVP contre 5 dans la Bible | 3 confirmées ; moyenne 1,78 documentée dans la Bible |
+| A-03 | Rareté de Stone | « Common » (Bible) |
+| A-04 | Identifiant du bois | `wood`, D-003 |
+| A-05 | `magnetLevel` de départ | 0, D-006 |
+| A-06 | Structure des monnaies | `currencies = { coins, gems, stars }`, D-006 |
+| A-07, A-08 | Noms de modules et de scripts | Architecture technique, D-002 |
+| A-09 | Ordre des phases | T0 à T8, D-004 |
+| A-11 | Achat multiple | x1 seul dans le MVP, D-003 |
+| A-13 | Temps de réapparition non définis | 2 / 3 / 4 s, hypothèse provisoire consignée dans la Bible 3.6 |
+| A-15 | Test « Monde verrouillé » sans second monde | `GoldenDesert` verrouillé dans `WorldConfig`, D-003 |
 
-### Impact économique de A-02 (calcul théorique, sans déplacement)
+### Restantes
 
-| Indicateur | 3 ressources (MVP) | 5 ressources (Bible) |
+| # | Constat | Échéance |
 |---|---|---|
-| Valeur moyenne par unité | 1,78 | 2,24 |
-| Valeur d'un sac de 50 | ~89 Coins | ~112 Coins |
-| Revenu maximal théorique à 0,75 s | ~142 Coins/min | ~179 Coins/min |
-| Première amélioration (Backpack 2, 100 Coins) | 2e vente | 1re vente |
-
-La cible du GDD « première vente ou première amélioration en 30–60 s »
-reste atteignable pour la vente (37,5 s de remplissage théorique), mais la
-première amélioration glisse à la deuxième vente. La cible de revenu de
-Green Valley (120–250 Coins/min) n'est atteinte qu'en haut de fourchette
-théorique. À mesurer en T7 ; aucune valeur n'a été modifiée.
+| A-10 | Bible section 2 : « Capacité d'équipement initial : 1 Pet » contre « Pets équipables gratuits au départ : 2 » | Avant le lot Pets |
+| A-12 | Golden Desert exige niveau de sac ET Coins ; le GDD 7.3 déconseille les conditions simultanées | Avant l'ouverture réelle de Golden Desert |
+| A-14 | Les documents se citent sous `docs/GDD.md`, etc. ; noms réels `docs/GRAB_AND_GROW_*_v1.0.md` | Sans effet technique |
+| A-16 | Intervalle minimal de sécurité et tolérance de distance serveur non définis dans la Bible | T2 |
+| A-17 | Table Magnet de la Bible (niveau 1 gratuit à 12 studs) à réaligner sur `magnetLevel = 0` | Avec l'amélioration Magnet (hors MVP) |
+| A-18 | GDD 15.5 et 20 non alignés sur D-004 et D-006 ; l'exemple de l'architecture 8.1 indique encore Stone « Uncommon » | Prochaine révision des documents |
+| A-19 | Première amélioration (100 Coins) atteinte à la 2e vente avec 3 ressources (sac ≈ 89 Coins) ; revenu théorique maximal ≈ 142 Coins/min pour une cible de 120–250 | À mesurer en T7 |
 
 ## Décisions en attente
 
-1. Flux de travail fichiers → Studio : installer Rojo (recommandé) ou copie manuelle (D-001).
-2. Initialiser Git (`git init`, `.gitignore`).
-3. Installer un analyseur Luau (luau-lsp ou Luau CLI) pour valider hors Studio.
-4. Confirmer les 3 ressources du MVP et l'identifiant `wood_chunk` (D-003).
-5. Test « Monde verrouillé » : ajouter Golden Desert comme entrée verrouillée dans `WorldConfig`, ou reporter ce test après le MVP (A-15).
-6. Corriger les moyennes de la Bible (A-01).
+1. Versionner ou non `GrabAndGrow.rbxl` dans Git (fichier binaire, mais seule
+   copie de la carte dès qu'elle sera éditée dans Studio).
+2. Commit et push de ce lot.
 
 ## Prochaine étape
 
-Clôturer T0 (voir `ROADMAP.md`), puis T1 — profil joueur et sauvegarde.
+T1 — profil joueur et sauvegarde (`PlayerDataService`, schéma D-006,
+migrations, tests avec DataStore simulé). Ne pas commencer sans validation.

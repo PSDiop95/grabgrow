@@ -162,8 +162,12 @@ soldes fractionnaires.
   Wild Fruit      Peu commune                  5                          8
   Green Crystal   Rare                        12                          2
 
-**Valeur moyenne théorique par ressource apparue :** environ 2,4 Coins
-avec les poids ci-dessus.
+**Valeur moyenne théorique par ressource apparue :** 2,24 Coins avec les
+poids ci-dessus (moyenne pondérée des cinq ressources).
+
+**MVP :** seules Green Leaf, Wood Chunk et Stone sont actives. Avec leurs
+poids (40 / 30 / 20), la moyenne est de 1,78 Coin par ressource. Les
+valeurs unitaires ne changent pas.
 
 ### 3.3 Golden Desert
 
@@ -212,6 +216,10 @@ les zones autorisées.
 -   Le nombre d'objets visibles est plafonné pour préserver les
     performances.
 
+**Hypothèse provisoire (MVP) :** temps de réapparition de 2 s (Green
+Leaf), 3 s (Wood Chunk) et 4 s (Stone). Ces durées ne résultent d'aucune
+simulation ; elles sont à mesurer et ajuster pendant l'équilibrage.
+
 ------------------------------------------------------------------------
 
 ## 4. Rythme de collecte et revenus cibles
@@ -234,13 +242,13 @@ doivent pas supposer une collecte parfaite en continu.
   Monde               Valeur moyenne indicative   Revenu brut cible / min
                                                    en progression normale
   ------------------- ------------------------- -------------------------
-  Green Valley                        2,4 Coins            120--250 Coins
+  Green Valley                       2,24 Coins            120--250 Coins
 
-  Golden Desert                      19,4 Coins          900--1 800 Coins
+  Golden Desert                     20,42 Coins          900--1 800 Coins
 
-  Frozen Peaks                        112 Coins        5 000--9 000 Coins
+  Frozen Peaks                      105,1 Coins        5 000--9 000 Coins
 
-  Mystic World                        540 Coins      25 000--45 000 Coins
+  Mystic World                        562 Coins      25 000--45 000 Coins
   -----------------------------------------------------------------------
 
 Ces plages sont des objectifs de simulation. Si les joueurs obtiennent
@@ -1069,6 +1077,16 @@ final.
                                                   Pets, événements,
                                                   monétisation,
                                                   garde-fous et analytics
+
+  1.0.1                   2026-11-10              Correction des valeurs
+                                                  moyennes par monde (3.2
+                                                  et 4.2) recalculées
+                                                  depuis les poids ;
+                                                  moyenne MVP à trois
+                                                  ressources ; hypothèse
+                                                  de réapparition (3.6).
+                                                  Aucune valeur unitaire
+                                                  modifiée
 
   -----------------------------------------------------------------------
 
