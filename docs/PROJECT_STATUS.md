@@ -1,6 +1,6 @@
 # GRAB & GROW — État du projet
 
-Dernière mise à jour : 2026-11-11 (T1 — profil joueur et sauvegarde)
+Dernière mise à jour : 2026-11-11 (clôture de T2 — collecte et inventaire)
 
 ## Résumé
 
@@ -8,8 +8,19 @@ T0 est clos. **T1 est validé avec réserves** (propriétaire, 2026-11-11) :
 socle commité en e90f709, protection D-008 dans le commit suivant
 (`fix(data): protect normalized profiles with recovery backups`). Sur
 DataStore réel (expérience de test) : V-01, V-02, V-03, V-05 validés ;
-V-04 partiel. Réserves ci-dessous. Aucun système de gameplay n'existe.
-T2 ne commence qu'avec l'accord explicite du propriétaire.
+V-04 partiel. Réserves ci-dessous.
+
+**T2 est VALIDÉ et CLÔTURÉ** (propriétaire, 2026-11-11), commit local
+`feat(collection): implement server-authoritative collection and inventory`
+(aucun push). Restent ouverts pour T6 : A-26 et A-27. Reportée en phase UX :
+A-29, A-30. Parcours : synchronisation Rojo
+vérifiée, carte de test reconstruite, place de test sauvegardé (version 15),
+reconnexion validée sur le DataStore de test, Local Server à 2 joueurs
+validé (points 1 à 5 OK), copie locale `GrabAndGrow.rbxl` vérifiée,
+émulateur mobile validé (protocole B OK), A-28 tranchée : toucher et
+maintien conservés tous les deux (maintien : 39 collectes en 60 s). Toutes
+les vérifications manuelles demandées sont faites. T3 ne commence qu'avec
+l'accord explicite du propriétaire.
 
 ### Réserves de T1
 
@@ -38,9 +49,9 @@ Selene et StyLua ne sont pas installés : pas nécessaires à ce stade.
 ## Fichiers en place
 
 ```text
-default.project.json                 Mappage Rojo (Shared, Bootstrap, Services, Systems, Tests)
+default.project.json                 Mappage Rojo (Shared, Bootstrap, Services, Systems, Tests, ServerOnlyConfig, client)
 rokit.toml                           Versions des outils
-GrabAndGrow.rbxl                     Fichier place (produit par rojo build)
+GrabAndGrow.rbxl                     Copie locale du place de test, avec la carte (non versionnée, D-013)
 src/
   ReplicatedStorage/Shared/
     Config/GameConfig.lua            Paramètres globaux MVP
@@ -49,17 +60,34 @@ src/
     Config/WorldConfig.lua           GreenValley, GoldenDesert (verrouillé, test)
     Config/DataConfig.lua            Persistance : schéma v1, DataStore, reprises, verrou
     Util/TableUtil.lua               deepFreeze, deepCopy
+    Util/Localization.lua            Textes en / fr par clé (provisoire, T2)
+    Remotes/Remotes.lua              RemoteEvents et codes de résultat (T2)
+  ServerStorage/ServerOnlyConfig/
+    CollectionSecurityConfig.lua     Marges de sécurité de la collecte, non répliquées (T2)
+  StarterPlayer/StarterPlayerScripts/
+    ClientBootstrap.client.lua       Point d'entrée client (T2)
+    Controllers/InventoryController.lua   Affichage du sac
+    Controllers/CollectionController.lua  Ciblage, entrées, retour visuel
   ServerScriptService/
-    Bootstrap.server.lua             Point d'entrée serveur, choix du magasin
+    Bootstrap.server.lua             Point d'entrée serveur, magasin, branchement de la collecte
     Services/PlayerDataService.lua   Chargement, Update, sauvegarde, verrou de session
+    Services/InventoryService.lua    Sac : état, capacité, ajout (T2)
+    Services/CollectionService.lua   Validation serveur d'une collecte (T2)
+    Services/RateLimitService.lua    Limite de fréquence par joueur et action (T2)
+    Systems/ResourceSpawner.lua      Nœuds, états, réapparition (T2)
+    Systems/ResourceNodes.lua        Points de spawn -> Parts du Workspace (T2)
     Systems/DataSchema.lua           Profil par défaut, intégrité, migrations
     Systems/MemoryDataStore.lua      Magasin en mémoire (tests, Studio)
     Systems/PlayerSession.lua        PlayerAdded, PlayerRemoving, sauvegarde auto, BindToClose
     Tests/ConfigTests.lua            Cohérence structurelle des configs
     Tests/DataSchemaTests.lua        Schéma, intégrité, migrations (17 cas)
     Tests/PlayerDataServiceTests.lua Chargement, sauvegarde, sessions (27 cas)
+    Tests/InventoryServiceTests.lua  Sac (14 cas)
+    Tests/ResourceSpawnerTests.lua   Nœuds et limite de fréquence (9 cas)
+    Tests/CollectionServiceTests.lua Collecte, anti-exploit, multijoueur simulé (22 cas)
     Tests/RunTests.server.lua        Lanceur, Studio uniquement
 tools/run_tests.luau                 Lanceur des tests en terminal (Lune)
+tools/studio/build_test_map.luau     Carte de test Green Valley (sol, spawn, 36 points)
 docs/                                Références, roadmap, décisions, tests
 ```
 
@@ -97,6 +125,152 @@ dans `src/` ; la carte, les modèles et les interfaces dans Studio.
 | Chargement et sauvegarde sur DataStore réel (place de test) | Manuel | **Non exécuté** — étapes dans `DATA_PERSISTENCE.md` |
 | Deux serveurs réels sur le même profil | Manuel | **Non exécuté** — couvert seulement par simulation |
 
+## Vérifications T2 (2026-11-11)
+
+Détail du système : `COLLECTION.md`. Décisions : D-010, D-011.
+
+### Automatisées
+
+| Vérification | Type | Résultat |
+|---|---|---|
+| Lune : ConfigTests, DataSchemaTests (17), PlayerDataServiceTests (35), InventoryServiceTests (14), ResourceSpawnerTests (9), CollectionServiceTests (22) | Terminal | Exécuté — `TOUS LES TESTS : OK`, code de sortie 0 |
+| Mêmes suites dans Studio (Play, magasin en mémoire) | Piloté par MCP | Exécuté — `TOUS LES TESTS : OK` |
+| `luau-lsp analyze` sur `src/` (`--!strict`, client compris) | Terminal | Exécuté — 0 erreur, code de sortie 0 |
+| `rojo build` (fichier temporaire) | Terminal | Exécuté — réussi |
+| Contrôle négatif : 13 défauts introduits tour à tour (distance, cadence, échéance, champs falsifiés, nœud inactif, limite de fréquence, trajet, plafond du sac, sac plein, quantité négative, double collecte, minuterie périmée, seau à jetons) | Lune | Exécuté — 13 détectés sur 13 (un test renforcé après un premier passage à 12) |
+| Non-régression T0 et T1 | Lune et Studio | Exécuté — suites T0/T1 inchangées et OK ; `ConfigTests` étendu (sécurité, textes) |
+
+### Dans Studio, un joueur (Play piloté par MCP, magasin en mémoire)
+
+| Vérification | Résultat |
+|---|---|
+| Démarrage | `[Bootstrap] PlayerDataService démarré ; collecte : 36 ressource(s)` |
+| État initial reçu par le client | `Sac 0 / 50`, détail par ressource, langue `fr-fr` |
+| Collecte touche E | `Sac 1 / 50`, message `+1 Feuille`, nœud réapparu après 2 s |
+| Maintien de E 5 s | 3 collectes (une seule ressource à portée, réapparition 2 s) |
+| Clic sur une ressource | +1 Pierre |
+| Bouton tactile (rendu visible, maintenu à la souris 5,5 s) | 4 collectes |
+| Les trois ressources collectées | Feuille, Bois, Pierre présents dans le sac |
+| Sac plein | 50 / 50 (37 feuilles, 13 bois) ; `INVENTORY_FULL` ensuite ; ressource refusée toujours disponible ; 3 tentatives de plus : toujours 50 / 50 |
+| Nœud à 80 studs | `TOO_FAR` |
+| Identifiant inexistant, payload texte, payload `nil` | `INVALID_TARGET` |
+| Payload avec `amount = 9999, coins = 1e6` | `INVALID_TARGET`, rien crédité |
+| Arguments supplémentaires après le payload | Ignorés (demande jugée sur le seul payload) |
+| 300 demandes d'un coup | 1 `SUCCESS`, 9 `RESOURCE_UNAVAILABLE`, 1 seule réponse `RATE_LIMITED` ; sac +1 |
+| Téléportation de 82 studs juste après une collecte | `TOO_FAR`, journal `déplacement implausible` ; acceptée 5 s plus tard |
+| Capture d'écran | Panneau du sac, bouton « Prendre », contour de la cible : conformes |
+
+### Synchronisation Rojo et place de test (2026-11-11, après retour du propriétaire)
+
+| Vérification | Résultat |
+|---|---|
+| `rojo serve` relancé avec le `default.project.json` de T2 | Arbre servi : `ServerStorage/ServerOnlyConfig`, `ClientBootstrap`, `Controllers` présents |
+| Plugin reconnecté (propriétaire), place rouvert dans Studio | Verrou de session Rojo présent |
+| Scripts du place comparés au dépôt (empreinte, fins de ligne normalisées) | 29 / 29 identiques, aucun doublon, aucun script absent de part ou d'autre |
+| Synchronisation en direct | Ligne de commentaire ajoutée puis retirée dans `Localization.lua` : reçue puis retirée dans Studio (1981 octets, identique au dépôt) |
+| Créations manuelles de T2 | Remplacées par la synchronisation (contenu identique) : plus de dépendance |
+| Carte reconstruite par `tools/studio/build_test_map.luau` | `green_leaf x16, stone x8, wood x12` ; mêmes positions qu'à la première construction (contrôle : `Spawn_green_leaf_06` en 11,62 / 4,90) |
+| Place de test sauvegardé (`save_place`) | **Version 15** sur Roblox (Team Create), non publiée. Avant sauvegarde : `DataConfig` du place identique au dépôt (`useMemoryStore = true`, empreinte comparée) |
+| Copie locale `GrabAndGrow.rbxl` avec la carte | **Faite** le 2026-11-11 à 18:59 UTC (propriétaire, Fichier > Télécharger une copie, depuis la fenêtre d'édition ; 129 121 octets). Contrôle Lune : pas de `Workspace.ResourceNodes`, 36 points de spawn (16 feuilles, 12 bois, 8 pierres ; `Spawn_green_leaf_06` en 11,62 / 4,90), 29 scripts identiques au dépôt (empreinte), `useMemoryStore = true`. Deux essais précédents rejetés : instantanés de session de jeu (`server.rbxl`, 36 nœuds d'exécution déjà présents). `server.rbxl` reste dans le dossier, non suivi, à exclure du commit |
+
+### Reconnexion sur DataStore de test (2026-11-11, autorisée par le propriétaire)
+
+Environnement : place de test 93404872714886, DataStore
+`GrabAndGrow_PlayerData_v1_Studio`, clé `Player_11975439775`.
+`useMemoryStore = false` le temps du test puis remis à `true` (dépôt et
+place, vérifié par empreinte). Aucune règle de sauvegarde modifiée.
+DataStore de production non touché.
+
+| Étape | Résultat | Preuves |
+|---|---|---|
+| Play 1 : chargement | Profil T1 existant, sac vide | `profil chargé, lastSaveAt=1794396150` ; HUD `Sac 0 / 50` |
+| Collecte de 4 ressources | 4 `SUCCESS` | HUD `Sac 4 / 50 \| Feuille 2 Bois 1 Pierre 1` |
+| Stop | Sauvegarde de fermeture | Journal Studio : `sauvegarde (fermeture serveur) OK, lastSaveAt=1794417526, verrou libéré` |
+| Play 2 : reconnexion | **Inventaire restauré** | `profil chargé, lastSaveAt=1794417526, verrou précédent : aucun` ; HUD `Sac 4 / 50 \| Feuille 2 Bois 1 Pierre 1` |
+| Lecture de la clé (`GetAsync`, lecture seule) | Valeur stockée conforme | `green_leaf=2, stone=1, wood=1`, `totalResourcesCollected=4`, `coins=0` |
+| Stop | Sauvegarde de fermeture | `sauvegarde (fermeture serveur) OK, lastSaveAt=1794417559, verrou libéré` |
+
+Aucune écriture DataStore pendant les collectes (une seule écriture de
+profil par session, à la fermeture). Le profil de test garde ces
+4 ressources.
+
+### Multijoueur — Local Server, 2 joueurs (propriétaire, 2026-11-11, 17:33–17:36 UTC)
+
+Magasin en mémoire. Preuves : constats du propriétaire et journaux Studio
+(serveur `…173305Z_Studio_F415D`, clients `…0D308` et `…F5B70`).
+
+| # | Vérification (protocole A) | Résultat | Source |
+|---|---|---|---|
+| — | Démarrage serveur, deux joueurs chargés | OK : `TOUS LES TESTS : OK`, `collecte : 36 ressource(s)`, `Player_-1` et `Player_-2 : nouveau profil créé` (verrous `…:1` et `…:2`) ; environ 80 s à deux joueurs | Journal serveur |
+| — | Sauvegardes pendant et après le test | OK : sauvegardes auto à 60 s pour les deux profils, puis `sauvegarde (sortie) OK, verrou libéré` pour chacun | Journal serveur |
+| 1 | Inventaires indépendants | **OK** | Propriétaire |
+| 2 | Même ressource : un seul sac crédité | **OK** (second essai, testeur seul alternant deux fenêtres, pierre) | Propriétaire |
+| 3 | Disparition et réapparition visibles dans les deux fenêtres | **OK** (second essai) | Propriétaire |
+| 4 | Sac plein d'un joueur sans effet sur l'autre | **OK** | Propriétaire |
+| 5 | Aucune erreur du jeu dans Output | OK : aucune ligne `[Collection]` ni erreur de script du jeu. Seules erreurs : texture d'accessoire d'avatar introuvable (`Hat1`) et `ChatScript` de Roblox (`CoreGuiChatConnections`), étrangères au projet | Journaux serveur et clients |
+
+Les collectes réussies ne sont pas journalisées : les points 1 à 4 ne
+reposent que sur les constats visuels. Second essai (points 2 et 3),
+journaux retrouvés : serveur `…174628Z_Studio_05E0B`, clients `…FB08B` et
+`…FE4DA`. `TOUS LES TESTS : OK`, `collecte : 36 ressource(s)`, `Player_-1`
+(17:47:12) et `Player_-2` (17:48:25) créés, sauvegardes auto OK, aucune
+erreur du jeu. Le point 2 reste couvert par la
+simulation Lune (même ressource, deux joueurs) et par l'atomicité serveur
+(aucune suspension entre contrôle et consommation du nœud).
+
+### Mobile — émulateur d'appareils (propriétaire, 2026-11-11)
+
+Preuves : constat du propriétaire et capture d'écran (téléphone, paysage).
+Les journaux Studio ne montrent que le chargement du plugin
+DeviceSimulator : ils ne prouvent pas le test.
+
+| # | Vérification (protocole B) | Résultat | Source |
+|---|---|---|---|
+| 6 | Bouton « Prendre » visible, atteignable, sans recouvrir saut ni stick | **OK** : bouton à gauche du saut, stick à gauche, aucun recouvrement | Propriétaire, capture |
+| 7 | Panneau du sac lisible, sans masquer l'action | **OK** : `Sac 34 / 50`, `Feuille 14 Bois 8 Pierre 12`, en haut au centre | Propriétaire, capture |
+| 8 | Contour blanc et nom au-dessus de la cible | **OK** : contour et étiquette `Bois` visibles | Propriétaire, capture |
+| 9 | Retours `+1`, barre, `Sac plein !`, barre rouge | **OK** | Propriétaire |
+| 10 | Stick, saut, caméra pendant et après la collecte | **OK** | Propriétaire |
+
+Défaut cosmétique relevé (capture PC, `Sac 2 / 50`) : à faible
+remplissage, la barre du sac s'affiche comme une pastille ronde (largeur du
+remplissage inférieure à l'arrondi des coins). Non corrigé : décision du
+propriétaire (2026-11-11), reporté à la phase dédiée à
+l'expérience utilisateur (A-30).
+
+### Comparaison toucher / maintien (protocole C, A-28)
+
+| Mode | Collectes en 60 s | Remarques |
+|---|---|---|
+| Maintien | 39 | Mesure du propriétaire |
+| Toucher | Non mesuré | — |
+
+Référence : cadence maximale théorique 80 en 60 s (intervalle 0,75 s),
+réellement bornée par les déplacements et la réapparition. Décision du
+propriétaire (2026-11-11) : conserver les deux modes, sans mesure du
+toucher (D-012).
+
+### Relance finale (2026-11-11, vers 20:00 UTC)
+
+| Test | Type | Résultat |
+|---|---|---|
+| `lune run tools/run_tests.luau` | Automatisé, terminal | OK : 6 suites (Config, 17, 35, 14, 9, 22 cas), code de sortie 0 |
+| `luau-lsp analyze` sur `src/` | Automatisé, terminal | 0 erreur, code de sortie 0 |
+| `rojo build` (vers un fichier temporaire, la copie locale n'est pas écrasée) | Automatisé, terminal | Réussi |
+| Synchronisation Studio | Empreintes | 29 scripts identiques au dépôt |
+| Play dans Studio | Automatisé, lancé par MCP | `TOUS LES TESTS : OK`, `collecte : 36 ressource(s)`, profil créé en mémoire ; seule erreur : asset Roblox 203785492 (avatar), étrangère au projet |
+| Périmètre | Diff | Aucun changement de `Config`, `PlayerDataService`, `DataSchema` ; aucune référence à la vente ou aux Coins dans le code T2 |
+
+### Non exécutées
+
+| Vérification | Raison | Couverture actuelle |
+|---|---|---|
+| Appareil mobile réel | Pas d'appareil branché | Émulateur validé (protocole B) |
+| Mesure du mode toucher (A-28) | Non demandée : les deux modes sont conservés (D-012) | Maintien : 39 collectes en 60 s |
+| Étiquette de nom au-dessus de la cible | L'outil de capture n'affiche aucun BillboardGui (vérifié avec un panneau neutre) | Propriétés lues : activée, ancrée sur la cible, texte `Pierre  [E]` |
+| Manette (bouton X) | Pas de manette | Même chemin de code que la touche E |
+| Performances avec plusieurs joueurs | Hors périmètre T2 | T6 |
+
 ## Anomalies
 
 ### Résolues
@@ -114,6 +288,7 @@ dans `src/` ; la carte, les modèles et les interfaces dans Studio.
 | A-11 | Achat multiple | x1 seul dans le MVP, D-003 |
 | A-13 | Temps de réapparition non définis | 2 / 3 / 4 s, hypothèse provisoire consignée dans la Bible 3.6 |
 | A-15 | Test « Monde verrouillé » sans second monde | `GoldenDesert` verrouillé dans `WorldConfig`, D-003 |
+| A-16 | Intervalle minimal de sécurité et tolérance de distance serveur non définis | Valeurs de départ dans `CollectionSecurityConfig`, D-010 ; hypothèses à mesurer en T6/T7 |
 
 ### Restantes
 
@@ -122,13 +297,20 @@ dans `src/` ; la carte, les modèles et les interfaces dans Studio.
 | A-10 | Bible section 2 : « Capacité d'équipement initial : 1 Pet » contre « Pets équipables gratuits au départ : 2 » | Avant le lot Pets |
 | A-12 | Golden Desert exige niveau de sac ET Coins ; le GDD 7.3 déconseille les conditions simultanées | Avant l'ouverture réelle de Golden Desert |
 | A-14 | Les documents se citent sous `docs/GDD.md`, etc. ; noms réels `docs/GRAB_AND_GROW_*_v1.0.md` | Sans effet technique |
-| A-16 | Intervalle minimal de sécurité et tolérance de distance serveur non définis dans la Bible | T2 |
 | A-17 | Table Magnet de la Bible (niveau 1 gratuit à 12 studs) à réaligner sur `magnetLevel = 0` | Avec l'amélioration Magnet (hors MVP) |
 | A-18 | GDD 15.5 et 20 non alignés sur D-004 et D-006 ; l'exemple de l'architecture 8.1 indique encore Stone « Uncommon » | Prochaine révision des documents |
 | A-20 | Le prompt T1 cite `docs/GRAB_AND_GROW_ECONOMY_v1.0.1.md` ; le fichier réel est `..._v1.0.md` (contenu 1.0.1, en-tête encore « Version : 1.0 ») | Sans effet technique |
 | A-21 | `stats.playTimeSeconds` existe dans le schéma mais aucun système ne l'alimente | À décider avant T5 |
 | A-22 | Messages d'expulsion (`PlayerSession`) en anglais brut, non localisés | T5 |
 | A-19 | Première amélioration (100 Coins) atteinte à la 2e vente avec 3 ressources (sac ≈ 89 Coins) ; revenu théorique maximal ≈ 142 Coins/min pour une cible de 120–250 | À mesurer en T7 |
+| A-23 | `rojo serve` lancé avant T2 ne prenait pas en compte les nouvelles entrées de `default.project.json` (`ServerStorage`, `StarterPlayer`) | **Levée** le 2026-11-11 : `rojo serve` relancé, plugin reconnecté par le propriétaire ; dans Studio, 29 scripts identiques au dépôt (empreinte comparée), aucun doublon |
+| A-24 | La carte de test n'existait que dans le place ouvert, non enregistré | **Levée** le 2026-11-11 : carte reconstruite par script, place de test sauvegardé en version 15 (non publié), copie locale `GrabAndGrow.rbxl` contenant la carte vérifiée (18:59 UTC). Non versionnée dans Git (D-013) : sauvegarde de travail locale |
+| A-25 | Ressources inconnues de `ResourceConfig` conservées par D-008 | **Décidée** (propriétaire, 2026-11-11, D-012) : conservées, et comptées dans l'occupation du sac pour empêcher tout dépassement de capacité. Comportement actuel, documenté dans `COLLECTION.md`. Leur sort à la vente reste à traiter en T3 |
+| A-26 | Position du personnage simulée par le client : le contrôle de trajet ne bloque que la téléportation entre deux collectes | **Ouverte, à traiter en T6** (D-012) : contrôle actuel conservé comme protection provisoire ; validation renforcée des déplacements côté serveur en T6 |
+| A-27 | Marges de sécurité de la collecte (4 studs, 0,1 s, 5 demandes/s) jamais mesurées avec une latence mobile réelle | **Ouverte, à traiter en T6** (D-012) : marges conservées comme hypothèses jusqu'aux tests sur mobile avec latence réelle |
+| A-28 | Collecte par toucher et collecte en maintien implémentées toutes les deux (GDD 5.1) | **Levée** le 2026-11-11 (propriétaire, D-012) : les deux modes sont conservés. Maintien mesuré sur émulateur (39 collectes en 60 s) ; toucher non mesuré |
+| A-29 | Aucun son ni animation de personnage à la collecte ; modèles de ressources provisoires | **Décidée** (D-012) : reportée à une phase dédiée à l'expérience utilisateur |
+| A-30 | Barre du sac affichée en pastille ronde à faible remplissage (largeur du remplissage inférieure à l'arrondi des coins) | **Reportée** (propriétaire, 2026-11-11) : phase dédiée à l'expérience utilisateur, avec A-29 |
 
 ## Vérifications avant le commit D-008 (2026-11-11)
 
@@ -172,11 +354,9 @@ Non vérifié sur DataStore réel :
 
 ## Décisions en attente
 
-1. Versionner ou non `GrabAndGrow.rbxl` dans Git (fichier binaire, mais seule
-   copie de la carte dès qu'elle sera éditée dans Studio). Exclu du commit T1.
-2. Push GitHub des commits T1 (non autorisé à ce jour).
+1. Push GitHub des commits T1 et T2 (non autorisé à ce jour).
 
 ## Prochaine étape
 
-1. Facultatif : lever R-01 et R-02.
-2. Sur accord explicite du propriétaire : T2 — collecte et inventaire.
+1. Propriétaire : validation du commit T2 et instructions pour la phase
+   suivante. T3 non commencé.

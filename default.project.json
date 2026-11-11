@@ -22,6 +22,24 @@
       "Tests": {
         "$path": "src/ServerScriptService/Tests"
       }
+    },
+    "ServerStorage": {
+      "$className": "ServerStorage",
+      "ServerOnlyConfig": {
+        "$path": "src/ServerStorage/ServerOnlyConfig"
+      }
+    },
+    "StarterPlayer": {
+      "$className": "StarterPlayer",
+      "StarterPlayerScripts": {
+        "$className": "StarterPlayerScripts",
+        "ClientBootstrap": {
+          "$path": "src/StarterPlayer/StarterPlayerScripts/ClientBootstrap.client.lua"
+        },
+        "Controllers": {
+          "$path": "src/StarterPlayer/StarterPlayerScripts/Controllers"
+        }
+      }
     }
   }
 }

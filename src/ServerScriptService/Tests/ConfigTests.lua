@@ -14,6 +14,9 @@ export type Configs = {
 	ResourceConfig: any,
 	UpgradeConfig: any,
 	WorldConfig: any,
+	-- T2 : paramètres de sécurité de la collecte et textes d'interface.
+	CollectionSecurityConfig: any,
+	Localization: any,
 }
 
 local MVP_RESOURCE_COUNT = 3
@@ -169,6 +172,48 @@ function ConfigTests.run(configs: Configs): { string }
 			check(
 				grabber.levels[level].value < grabber.levels[level - 1].value,
 				`Grabber niveau {level} : l'intervalle doit diminuer`
+			)
+		end
+	end
+
+	-- CollectionSecurityConfig (T2, hypothèses de départ : cohérence seulement)
+	local security = configs.CollectionSecurityConfig
+	local grabberLevels = upgrades.Grabber.levels
+	local fastestInterval = grabberLevels[#grabberLevels].value
+	check(
+		type(security.Distance.toleranceStuds) == "number" and security.Distance.toleranceStuds >= 0,
+		"Distance.toleranceStuds doit être >= 0"
+	)
+	check(
+		security.Distance.toleranceStuds < gameConfig.Collection.baseRangeStuds,
+		"la tolérance de distance doit rester inférieure à la portée nominale"
+	)
+	check(
+		security.Cooldown.jitterToleranceSeconds >= 0 and security.Cooldown.jitterToleranceSeconds < fastestInterval,
+		"Cooldown.jitterToleranceSeconds doit être >= 0 et inférieur au plus petit intervalle du Grabber"
+	)
+	check(security.Travel.speedFactor >= 1, "Travel.speedFactor doit être >= 1")
+	check(security.Travel.slackStuds >= 0, "Travel.slackStuds doit être >= 0")
+	local collectLimit = security.RateLimits.Collect
+	check(collectLimit ~= nil, "RateLimits.Collect doit être défini")
+	if collectLimit ~= nil then
+		check(isPositiveInteger(collectLimit.burst), "RateLimits.Collect.burst doit être un entier > 0")
+		-- Un joueur honnête au Grabber maximal ne doit jamais être limité.
+		check(
+			collectLimit.refillPerSecond > 1 / fastestInterval,
+			"RateLimits.Collect.refillPerSecond doit dépasser la cadence légitime maximale"
+		)
+	end
+	check(isPositiveInteger(security.RateLimitFeedback.logEveryRejections), "logEveryRejections doit être un entier > 0")
+	check(isPositiveInteger(security.Payload.maxResourceIdLength), "maxResourceIdLength doit être un entier > 0")
+
+	-- Localization : chaque nom de ressource existe dans chaque langue.
+	local localization = configs.Localization
+	for _, language in ipairs(localization.languages()) do
+		for resourceId, resource in pairs(resources) do
+			check(
+				localization.has(resource.displayNameKey, language),
+				`texte manquant ({language}) pour la ressource {resourceId}`
 			)
 		end
 	end

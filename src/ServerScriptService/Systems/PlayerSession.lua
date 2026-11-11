@@ -19,6 +19,14 @@ local KICK_SESSION_LOST = "Your session was opened on another server."
 
 type Service = typeof(PlayerDataService.new({} :: any))
 
+-- Points d'accroche des systèmes de jeu. Ne doivent pas suspendre le fil.
+export type Hooks = {
+	-- Profil chargé et utilisable.
+	onProfileLoaded: ((player: Player) -> ())?,
+	-- Juste avant la sauvegarde de sortie.
+	onPlayerRemoving: ((player: Player) -> ())?,
+}
+
 local started = false
 
 -- Message d'expulsion à utiliser quand un autre serveur reprend le verrou.
@@ -29,13 +37,19 @@ function PlayerSession.kickSessionLost(userId: number)
 	end
 end
 
-function PlayerSession.start(service: Service)
+function PlayerSession.start(service: Service, hooks: Hooks?)
 	assert(not started, "PlayerSession.start appelé deux fois")
 	started = true
 
 	local function onPlayerAdded(player: Player)
 		local result = service.LoadPlayer(player.UserId)
-		if result.ok or result.code == PlayerDataService.Code.Cancelled then
+		if result.ok then
+			if hooks and hooks.onProfileLoaded then
+				hooks.onProfileLoaded(player)
+			end
+			return
+		end
+		if result.code == PlayerDataService.Code.Cancelled then
 			return
 		end
 		-- Pas de profil : le joueur ne doit pas entrer en jeu. Aucun profil
@@ -49,6 +63,9 @@ function PlayerSession.start(service: Service)
 
 	Players.PlayerAdded:Connect(onPlayerAdded)
 	Players.PlayerRemoving:Connect(function(player: Player)
+		if hooks and hooks.onPlayerRemoving then
+			hooks.onPlayerRemoving(player)
+		end
 		service.ReleasePlayer(player.UserId)
 	end)
 	-- Joueurs déjà présents si le script démarre après eux (Studio).

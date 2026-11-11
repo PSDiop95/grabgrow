@@ -1,12 +1,13 @@
 --!strict
 -- Lance les tests automatisés au démarrage du serveur, dans Studio uniquement.
 -- Résultats dans la fenêtre Output. N'exécute rien en production.
--- Aucun test ne touche le DataStore réel : PlayerDataServiceTests injecte
--- un magasin en mémoire.
+-- Aucun test ne touche le DataStore réel : les suites injectent un magasin
+-- en mémoire.
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 local ServerScriptService = game:GetService("ServerScriptService")
+local ServerStorage = game:GetService("ServerStorage")
 
 if not RunService:IsStudio() then
 	return
@@ -16,6 +17,9 @@ local Config = ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config")
 local ConfigTests = require(script.Parent.ConfigTests)
 local DataSchemaTests = require(script.Parent.DataSchemaTests)
 local PlayerDataServiceTests = require(script.Parent.PlayerDataServiceTests)
+local InventoryServiceTests = require(script.Parent.InventoryServiceTests)
+local ResourceSpawnerTests = require(script.Parent.ResourceSpawnerTests)
+local CollectionServiceTests = require(script.Parent.CollectionServiceTests)
 
 local GameConfig = require(Config.GameConfig)
 local ResourceConfig = require(Config.ResourceConfig)
@@ -25,6 +29,13 @@ local DataConfig = require(Config.DataConfig)
 local DataSchema = require(ServerScriptService.Systems.DataSchema)
 local MemoryDataStore = require(ServerScriptService.Systems.MemoryDataStore)
 local PlayerDataService = require(ServerScriptService.Services.PlayerDataService)
+local InventoryService = require(ServerScriptService.Services.InventoryService)
+local RateLimitService = require(ServerScriptService.Services.RateLimitService)
+local CollectionService = require(ServerScriptService.Services.CollectionService)
+local ResourceSpawner = require(ServerScriptService.Systems.ResourceSpawner)
+local Remotes = require(ReplicatedStorage.Shared.Remotes.Remotes)
+local Localization = require(ReplicatedStorage.Shared.Util.Localization)
+local CollectionSecurityConfig = require(ServerStorage:WaitForChild("ServerOnlyConfig").CollectionSecurityConfig)
 
 local totalFailures = 0
 
@@ -48,6 +59,8 @@ report(
 		ResourceConfig = ResourceConfig,
 		UpgradeConfig = UpgradeConfig,
 		WorldConfig = WorldConfig,
+		CollectionSecurityConfig = CollectionSecurityConfig,
+		Localization = Localization,
 	})
 )
 
@@ -69,6 +82,45 @@ report(
 		MemoryDataStore = MemoryDataStore,
 		DataSchema = DataSchema,
 		DataConfig = DataConfig,
+	})
+)
+
+report(
+	"InventoryServiceTests",
+	InventoryServiceTests.run({
+		InventoryService = InventoryService,
+		PlayerDataService = PlayerDataService,
+		MemoryDataStore = MemoryDataStore,
+		DataSchema = DataSchema,
+		ResourceConfig = ResourceConfig,
+		UpgradeConfig = UpgradeConfig,
+	})
+)
+
+report(
+	"ResourceSpawnerTests",
+	ResourceSpawnerTests.run({
+		ResourceSpawner = ResourceSpawner,
+		RateLimitService = RateLimitService,
+		ResourceConfig = ResourceConfig,
+	})
+)
+
+report(
+	"CollectionServiceTests",
+	CollectionServiceTests.run({
+		CollectionService = CollectionService,
+		InventoryService = InventoryService,
+		PlayerDataService = PlayerDataService,
+		RateLimitService = RateLimitService,
+		ResourceSpawner = ResourceSpawner,
+		MemoryDataStore = MemoryDataStore,
+		DataSchema = DataSchema,
+		GameConfig = GameConfig,
+		ResourceConfig = ResourceConfig,
+		UpgradeConfig = UpgradeConfig,
+		CollectionSecurityConfig = CollectionSecurityConfig,
+		Remotes = Remotes,
 	})
 )
 

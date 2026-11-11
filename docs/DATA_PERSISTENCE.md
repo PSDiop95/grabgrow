@@ -63,6 +63,7 @@ end)
   fil (`task.wait`, appel réseau) annulent la modification.
 - `Update` ne déclenche aucune écriture DataStore.
 - Coût : une copie et un contrôle du profil par appel. À mesurer en T6.
+- Premier utilisateur : `InventoryService.AddResource` (T2, `COLLECTION.md`).
 
 ## Chargement
 

@@ -254,3 +254,127 @@ propriétaire), ACCEPTÉE, REMPLACÉE.
   est levée pour la logique pure.
 - **Affecte :** `PlayerDataService`, `Bootstrap`, `rokit.toml`,
   `tools/run_tests.luau`, `docs/tests/TEST_STRATEGY.md`.
+
+## D-010 — Sécurité de la collecte : distance, cadence, limite de fréquence
+
+- **Date :** 2026-11-11
+- **Statut :** ACCEPTÉE comme hypothèses de départ (propriétaire,
+  2026-11-11, voir D-012, A-27) ; valeurs définitives après mesure sur
+  mobile avec latence réelle
+- **Contexte :** A-16. La Bible fixe la portée (12 studs) et l'intervalle
+  de collecte (Grabber, 0,75 s au niveau 1), mais ni la marge de distance
+  serveur, ni la tolérance de cadence, ni la limite des RemoteEvents.
+- **Décision :**
+  - Marges dans `ServerStorage/ServerOnlyConfig/CollectionSecurityConfig`,
+    jamais répliquées. Les valeurs nominales restent dans `GameConfig` et
+    `UpgradeConfig` (une seule source).
+  - Distance acceptée : portée nominale + 4 studs, en 3D, depuis la
+    position du personnage vue par le serveur. Le Magnet n'intervient pas.
+  - Cadence : intervalle du Grabber du profil serveur ; avance tolérée de
+    0,1 s ; échéance suivante = `max(maintenant, échéance) + intervalle`.
+  - Trajet entre deux collectes réussies : au plus vitesse de référence
+    × 2 × temps + 20 studs. Remis à zéro à la réapparition du personnage.
+  - Limite de fréquence : seau à jetons par joueur, rafale 10, 5/s.
+    `RateLimitService` est créé maintenant car la collecte en a besoin.
+  - Payload : table avec le seul champ `resourceId` ; tout autre champ
+    fait refuser la demande.
+  - Aucun bannissement : refus, journal limité.
+  - Code de résultat ajouté à la liste de l'architecture 6.3 :
+    `NO_CHARACTER`, `RESOURCE_UNAVAILABLE`, `PROFILE_NOT_LOADED`.
+- **Justification :** 4 studs couvrent 150 ms de latence à 16 studs/s
+  (2,4 studs) et la taille de la ressource. Une échéance calée sur
+  l'intervalle nominal tolère la gigue sans accélérer la cadence moyenne.
+  5 demandes/s dépassent la cadence légitime maximale (2,8/s, Grabber 10).
+- **Conséquences :** impact économique nul sur la cadence nominale
+  (revenu par minute, temps jusqu'à la première vente inchangés). Un
+  tricheur gagne au plus 4 studs de portée. Valeurs à mesurer sur mobile
+  (A-27). Toute téléportation légitime future doit appeler
+  `ResetTravelReference`.
+- **Affecte :** `CollectionService`, `RateLimitService`,
+  `CollectionSecurityConfig`, `docs/COLLECTION.md`.
+
+## D-011 — Ressources partagées, points de spawn et interface construite par code
+
+- **Date :** 2026-11-11
+- **Statut :** PROPOSÉE
+- **Contexte :** T2 doit fournir des ressources collectables en
+  multijoueur, testables sans Roblox, sans carte ni assets définitifs.
+- **Décision :**
+  - Les ressources sont partagées entre les joueurs : un nœud collecté
+    disparaît pour tous jusqu'à sa réapparition.
+  - `ResourceSpawner` (logique pure, minuterie injectée) tient le registre
+    et les états `ACTIVE → COLLECTED → RESPAWNING → ACTIVE` ;
+    `ResourceNodes` crée les Parts et reflète l'état.
+  - Points de spawn édités dans Studio (`Workspace.ResourceSpawnPoints`,
+    attribut `ResourceType`). Identifiants de nœud attribués par le
+    serveur. État répliqué par attributs (`NodeId`, `ResourceType`,
+    `Available`), sans RemoteEvent supplémentaire.
+  - Carte de test produite par `tools/studio/build_test_map.luau`
+    (versionné, rejouable), en attendant la vraie carte.
+  - Modèles provisoires en formes simples : aucun asset importé.
+  - Interface T2 construite par code dans les contrôleurs (versionnée,
+    sans édition manuelle dans Studio) ; textes par clé dans
+    `Shared/Util/Localization` (en, fr). À revoir en T5.
+  - `PlayerSession.start` accepte deux points d'accroche facultatifs
+    (`onProfileLoaded`, `onPlayerRemoving`) ; `PlayerDataService` est
+    inchangé.
+  - Aucun retrait d'inventaire ni service vide : `InventoryService` se
+    limite à la lecture et à l'ajout.
+- **Justification :** ressources partagées = comportement demandé pour le
+  MVP et le plus simple à rendre sûr (une seule vérité serveur). Les
+  attributs répliquent l'état sans code réseau. Une interface par code
+  reste dans Git tant que le place n'est pas versionné.
+- **Conséquences :** avec peu de points de spawn, plusieurs joueurs se
+  disputent les ressources (densité à régler en T7). Les nœuds sont
+  répliqués à tous les clients (36 Parts dans la carte de test). Le place
+  doit contenir `Workspace.ResourceSpawnPoints`, sinon aucune ressource
+  n'apparaît (avertissement au démarrage).
+- **Affecte :** `ResourceSpawner`, `ResourceNodes`, `PlayerSession`,
+  contrôleurs client, `default.project.json`, `docs/COLLECTION.md`.
+
+## D-012 — Arbitrage des réserves de T2 (A-25 à A-29)
+
+- **Date :** 2026-11-11
+- **Statut :** ACCEPTÉE (décision du propriétaire, retour sur T2)
+- **Contexte :** le rapport T2 laissait cinq réserves ouvertes.
+- **Décision :**
+  - A-25 : les ressources inconnues de `ResourceConfig` restent conservées
+    (D-008) et comptent dans l'occupation du sac, pour empêcher tout
+    dépassement de capacité. Comportement déjà en place, documenté.
+  - A-26 : le contrôle de trajet actuel reste une protection provisoire ;
+    validation renforcée des déplacements côté serveur en T6.
+  - A-27 : les marges de `CollectionSecurityConfig` restent des hypothèses
+    jusqu'aux tests sur mobile avec latence réelle.
+  - A-28 : toucher et maintien sont comparés sur mobile avant le choix du
+    comportement définitif. Les deux restent actifs d'ici là.
+    **Mise à jour 2026-11-11 (propriétaire) :** les deux modes sont
+    conservés définitivement pour le MVP, après mesure du maintien sur
+    émulateur (39 collectes en 60 s) ; le toucher n'est pas mesuré.
+  - A-29 : sons et animations dans une phase dédiée à l'expérience
+    utilisateur.
+- **Justification :** aucune de ces réserves ne met en cause la sécurité
+  serveur ou l'intégrité des données du MVP.
+- **Conséquences :** aucun changement de code. T2 reste PARTIEL jusqu'aux
+  vérifications manuelles et à la validation finale.
+  **Mise à jour 2026-11-11 :** vérifications faites, T2 validé et clôturé
+  par le propriétaire. A-26 et A-27 restent des risques ouverts pour T6 ;
+  A-29 et A-30 (barre du sac) reportés à la phase UX.
+- **Affecte :** `docs/COLLECTION.md`, `docs/PROJECT_STATUS.md`, T6, phase UX.
+
+## D-013 — Fichiers place `.rbxl` hors de Git
+
+- **Date :** 2026-11-11
+- **Statut :** ACCEPTÉE (décision du propriétaire, clôture de T2)
+- **Contexte :** la carte de test n'existe que dans le place ; une copie
+  locale `GrabAndGrow.rbxl` a été vérifiée. Studio crée aussi `server.rbxl`
+  lors d'un Test > Local Server.
+- **Décision :** `GrabAndGrow.rbxl` et `server.rbxl` ne sont pas versionnés
+  (`.gitignore`, chemins exacts à la racine). `GrabAndGrow.rbxl` reste une
+  sauvegarde de travail locale ; `server.rbxl` est temporaire.
+- **Justification :** fichiers binaires, illisibles en diff. La carte de test
+  se reconstruit avec `tools/studio/build_test_map.luau` (déterministe) et
+  le place de test est sauvegardé sur Roblox.
+- **Conséquences :** une carte éditée à la main dans Studio n'est protégée
+  que par le place Roblox et la copie locale. À réexaminer quand une carte
+  non scriptée existera.
+- **Affecte :** `.gitignore`, `docs/PROJECT_STATUS.md`.

@@ -11,9 +11,9 @@ lot distingue tests automatisés, tests manuels et vérifications non faites.
 |---|---|---|---|
 | 1. Analyse statique | Syntaxe, types `--!strict` | `luau-lsp analyze` en terminal ; Script Analysis de Studio | Oui |
 | 2. Configurations | Cohérence structurelle et références croisées | `Tests/ConfigTests.lua` | Oui |
-| 3. Logique serveur | Règles des services (collecte, vente, achat, migration) | Modules de test en Luau pur, dépendances simulées | Oui pour T1 (`DataSchemaTests`, `PlayerDataServiceTests`) |
-| 4. Intégration | Remotes, validation, rate limit | Play dans Studio, Output | À partir de T2 |
-| 5. Multijoueur | Isolation des données, double collecte | Studio : Test > Local Server, 2 joueurs ou plus | À partir de T2 |
+| 3. Logique serveur | Règles des services (collecte, vente, achat, migration) | Modules de test en Luau pur, dépendances simulées | Oui pour T1 (`DataSchemaTests`, `PlayerDataServiceTests`) et T2 (`InventoryServiceTests`, `ResourceSpawnerTests`, `CollectionServiceTests`) |
+| 4. Intégration | Remotes, validation, rate limit | Play dans Studio piloté par MCP : demandes envoyées depuis le client, réponses lues sur `ActionResult` | Oui (T2, un joueur) |
+| 5. Multijoueur | Isolation des données, double collecte | Simulation : deux `UserId` sur le même service (Lune). Réel : Studio, Test > Local Server, 2 joueurs ou plus | Simulé : oui. Réel : oui pour T2 (2 joueurs, propriétaire) |
 | 6. Sauvegarde | Nouveau profil, reconnexion, échecs, migration | `MemoryDataStore` injecté dans `PlayerDataService` ; puis expérience de test avec accès API, pilotée par le serveur MCP Roblox Studio | Simulé : oui. DataStore réel : V-01, V-02, V-03, V-05 faits ; V-04 partiel (`PROJECT_STATUS.md`) |
 | 7. Appareils | Lisibilité, tactile, performances | Émulateur d'appareils de Studio, puis téléphone réel | À partir de T5 |
 
@@ -47,11 +47,89 @@ aucun échec. Résultat attendu :
 [Tests] ConfigTests : OK
 [Tests] DataSchemaTests : OK (17 cas)
 [Tests] PlayerDataServiceTests : OK (35 cas)
+[Tests] InventoryServiceTests : OK (14 cas)
+[Tests] ResourceSpawnerTests : OK (9 cas)
+[Tests] CollectionServiceTests : OK (22 cas)
 [Tests] TOUS LES TESTS : OK
 ```
 
-Non couvert par ce lanceur : `Bootstrap.server.lua` et
-`Systems/PlayerSession.lua` (événements Roblox), à vérifier dans Studio.
+Non couvert par ce lanceur : `Bootstrap.server.lua`,
+`Systems/PlayerSession.lua`, `Systems/ResourceNodes.lua` (événements et
+instances Roblox) et les contrôleurs client, à vérifier dans Studio.
+
+## Carte de test (Studio)
+
+`tools/studio/build_test_map.luau` crée le sol, le point d'apparition et
+36 points de spawn (`Workspace.ResourceSpawnPoints`). À exécuter en mode
+Edit (barre de commande ou serveur MCP). Rejouable, résultat identique à
+chaque exécution. Sans points de spawn, le serveur démarre sans ressource
+et l'écrit dans Output.
+
+## Tests manuels T2 (à faire par le propriétaire)
+
+Préparation : place de test ouvert, `rojo serve` actif et plugin connecté,
+`useMemoryStore = true` (aucun test de cette liste ne touche un DataStore).
+Noter pour chaque point : OK / KO, et une capture ou la ligne d'Output en
+cas d'écart.
+
+### A. Multijoueur — Test > Clients and Servers > Local Server, 2 joueurs
+
+État au 2026-11-11 : points 1 à 5 OK (propriétaire).
+
+Fenêtres : Server, Player1, Player2. Les deux joueurs apparaissent au même
+point ; les feuilles les plus proches sont à environ 12 studs.
+
+1. Player1 collecte une feuille, Player2 un bois : chaque panneau « Sac »
+   n'augmente que de sa propre collecte.
+2. Placer les deux joueurs devant la même ressource (une pierre : 4 s de
+   réapparition laissent le temps de changer de fenêtre ; un testeur seul
+   suffit). Player1 appuie sur E, puis, dans la fenêtre de Player2, E tout
+   de suite : un seul sac augmente
+   de 1 ; Player2 ne reçoit rien. La simultanéité exacte n'est pas
+   nécessaire : la course réelle est couverte par les tests Lune.
+3. Pendant le point 2, regarder la fenêtre de Player2 : la pierre y
+   disparaît au moment de la collecte de Player1, puis réapparaît dans les
+   deux fenêtres environ 4 s plus tard.
+4. Player1 remplit son sac (50, message « Sac plein ! ») : Player2 continue
+   de collecter normalement.
+5. Fenêtre Server, Output : aucune erreur `[Collection]` ou `[PlayerData]`
+   autre que les avertissements attendus.
+
+### B. Mobile — Test > Device (émulateur), un téléphone, paysage puis portrait
+
+État au 2026-11-11 : points 6 à 10 OK (propriétaire, capture en paysage).
+
+6. Le bouton rond « Grab / Prendre » est visible, atteignable au pouce
+   droit, sans recouvrir le bouton de saut ni le stick.
+7. Le panneau du sac reste lisible et ne masque pas l'action.
+8. La ressource ciblée a un contour blanc et son nom au-dessus.
+9. Retours visuels : « +1 … », barre de progression, « Sac plein ! » en
+   orange et barre rouge à 50.
+10. Non-régression : déplacement au stick, saut et caméra fonctionnent
+    pendant et après la collecte.
+
+### C. Comparaison toucher / maintien (A-28), sur émulateur mobile
+
+État au 2026-11-11 : maintien, 39 collectes en 60 s ; toucher non mesuré. Les deux modes sont conservés (D-012).
+
+Pour chaque mode, 60 secondes autour du point d'apparition, sac vidé au
+départ (nouveau Play) :
+
+| Mode | Geste | À noter |
+|---|---|---|
+| Toucher | Toucher chaque ressource à l'écran | Nombre de collectes en 60 s ; touches manquées ; gêne avec la caméra |
+| Maintien | Maintenir le bouton « Prendre » en marchant | Nombre de collectes en 60 s ; confort du pouce ; collectes non voulues |
+
+Donner ensuite une préférence et ses raisons. Le choix définitif est une
+décision du propriétaire (D-012).
+
+### D. Reconnexion sur DataStore de test
+
+Exécutée le 2026-11-11 avec l'accord du propriétaire (`PROJECT_STATUS.md`,
+« Reconnexion sur DataStore de test »). Pour la rejouer : passer
+`DataConfig.Studio.useMemoryStore` à `false`, collecter, Stop, Play,
+comparer le sac, puis remettre `true` et vérifier le place avant toute
+sauvegarde.
 
 ## Lancer les tests automatisés (Studio)
 
@@ -89,7 +167,7 @@ de relire le résultat depuis le terminal après exécution.
 | Phase | Cas obligatoires |
 |---|---|
 | T1 | Nouveau profil ; profil existant ; échec de chargement sans écrasement ; échec de sauvegarde ; reconnexion ; migration ; sauvegardes concurrentes ; verrou actif, expiré, renouvelé, libéré ; données corrompues ; version future ; fermeture serveur |
-| T2 | Collecte valide ; ressource inexistante ; trop loin ; trop rapide ; sac plein ; deux joueurs sur la même ressource |
+| T2 | Collecte valide ; ressource inexistante ; ressource inactive ; trop loin ; trop rapide ; sac plein ; sac presque plein ; profil non chargé ; personnage absent ; payload invalide ou falsifié ; rejeu ; trajet implausible ; deux joueurs sur la même ressource ; inventaires indépendants ; réapparition ; quantité invalide ou négative ; persistance après reconnexion |
 | T3 | Vente normale ; inventaire vide ; hors zone ; inventaire intact si le crédit échoue |
 | T4 | Solde suffisant ; solde insuffisant ; niveau maximum ; identifiant inconnu |
 | T6 | Remote à cadence excessive ; arguments de type invalide ; valeurs falsifiées ; isolation entre joueurs |
@@ -102,6 +180,11 @@ de relire le résultat depuis le terminal après exécution.
   données passent par Assistant > MCP Permissions : lecture seule accordée.
 - Studio n'accepte qu'une session par place (`RCC-276`) : pas de test à
   deux serveurs actifs depuis Studio.
+- Le serveur MCP lance un Play à un seul joueur : pas de test à plusieurs
+  clients, ni d'émulateur d'appareils. Sa capture d'écran n'affiche pas
+  les BillboardGui.
+- `rojo serve` ne relit pas les nouvelles entrées de
+  `default.project.json` : le relancer après une modification du mappage.
 - `luau-lsp analyze` vérifie syntaxe et types, mais n'exécute pas le code.
 - Lune n'est pas Roblox : il exécute le même Luau, mais sans API Roblox.
   Un résultat sous Lune ne remplace pas une exécution dans Studio.

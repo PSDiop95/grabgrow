@@ -2,3 +2,8 @@ sourcemap.json
 .tools/
 *.rbxl.lock
 *.rbxlx.lock
+
+# Places Roblox locaux (binaires, non versionnés) : copie de travail et
+# fichier temporaire de Test > Local Server.
+/GrabAndGrow.rbxl
+/server.rbxl
