@@ -62,6 +62,7 @@ function MemoryDataStore.new()
 	local failuresAfterWrite = 0
 	local alwaysFail = false
 	local beforeCall: ((key: string) -> ())? = nil
+	local failingKeys: ((key: string) -> boolean)? = nil
 	local writeCount = 0
 	local activeCalls = 0
 	local maxActiveCalls = 0
@@ -69,7 +70,7 @@ function MemoryDataStore.new()
 	local store = {}
 
 	local function update(key: string, transform: (any, any) -> ...any): any
-		if alwaysFail then
+		if alwaysFail or (failingKeys ~= nil and failingKeys(key)) then
 			error(SIMULATED_FAILURE)
 		end
 		if failuresBeforeWrite > 0 then
@@ -136,6 +137,22 @@ function MemoryDataStore.new()
 
 	function store.setAlwaysFail(enabled: boolean)
 		alwaysFail = enabled
+	end
+
+	-- Fait échouer tous les appels sur les clés pour lesquelles `predicate`
+	-- retourne true (nil : désactivé).
+	function store.setFailingKeys(predicate: ((key: string) -> boolean)?)
+		failingKeys = predicate
+	end
+
+	-- Liste triée des clés présentes.
+	function store.keys(): { string }
+		local list = {}
+		for key in pairs(values) do
+			table.insert(list, key)
+		end
+		table.sort(list)
+		return list
 	end
 
 	-- Fonction appelée au début de chaque appel ; peut suspendre le fil.

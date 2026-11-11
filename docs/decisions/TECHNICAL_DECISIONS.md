@@ -150,25 +150,51 @@ propriétaire), ACCEPTÉE, REMPLACÉE.
 ## D-008 — Règles d'intégrité des profils chargés
 
 - **Date :** 2026-11-11
-- **Statut :** ACCEPTÉE (validation du propriétaire, 2026-11-11)
+- **Statut :** ACCEPTÉE (validation du propriétaire, 2026-11-11) ;
+  décision définitive validée sur la base de l'implémentation et des tests
+  automatisés. Vérification de la copie `Recovery_` sur DataStore réel :
+  à faire (`PROJECT_STATUS.md`, R-01).
 - **Termes validés :** profil corrompu = joueur bloqué ; données originales
   jamais écrasées ni réparées automatiquement ; données conservées pour une
   récupération manuelle ; erreurs journalisées.
-- **Portée de « jamais réparées » (lecture de Claude, à confirmer) :** elle
-  vise les profils refusés (type incorrect, structure illisible, version
-  future), qui restent intacts dans le DataStore. Les ajustements exigés
-  par le prompt T1 (« ajouter les champs manquants », « borner les
-  niveaux ») restent appliqués à un profil lisible et sont réécrits dans le
-  DataStore dès le chargement, journalisés ligne par ligne. Si le
-  propriétaire veut aussi conserver l'original dans ce cas, il faut une
-  décision complémentaire (par exemple refuser au lieu de borner).
+- **Décision définitive (propriétaire, 2026-11-11, après le commit
+  e90f709) :**
+  - Profil corrompu ou incohérent : blocage, aucune réparation
+    automatique, original intact.
+  - Profil lisible nécessitant une normalisation : corrections en mémoire
+    autorisées, aucune réécriture immédiate de l'original.
+  - Avant toute sauvegarde d'un profil normalisé, une copie récupérable de
+    l'original est préservée. Si elle ne peut pas l'être, la sauvegarde de
+    ce profil est bloquée et le problème journalisé.
+  - Les migrations de schéma explicitement définies et testées suivront
+    une procédure dédiée (à définir avec la première migration réelle).
+- **Mise en œuvre :**
+  - Au chargement, seul le verrou est écrit ; `profile` reste l'original.
+  - Profil normalisé = au moins une correction, ou `schemaVersion`
+    différent de celui du serveur. En attendant la procédure dédiée, une
+    migration déclenche aussi la copie.
+  - Copie dans le même DataStore, clé `Recovery_<UserId>_<heure Unix du
+    chargement>` : `{ kind, userId, sourceKey, capturedAt,
+    serverSchemaVersion, repairs, originalProfile }`. Écrite par
+    `UpdateAsync` seulement si la clé est vide ; une copie existante
+    différente n'est jamais écrasée (et bloque la sauvegarde).
+  - Copie impossible : sauvegarde refusée (`BackupFailed`), données gardées
+    en mémoire, nouvel essai à la sauvegarde suivante. À la sortie : le
+    verrou est libéré sans toucher au profil ; les modifications de la
+    session sont perdues, l'original reste.
+  - La copie n'est écrite qu'une fois par session.
+- **Décision connexe (validée le 2026-11-11) :** les `UserId` négatifs sont
+  acceptés. Ils n'existent que dans les serveurs de test de Studio
+  (Test > Local Server : -1, -2...), qui sinon expulseraient chaque joueur.
+  `0`, les décimaux et les valeurs infinies restent refusés.
 - **Contexte :** l'architecture (7.4) demande à la fois de remplacer les
   valeurs invalides par des valeurs sûres et de ne jamais écraser
   silencieusement une sauvegarde illisible. Le schéma contient en outre
   Magnet, Boots et Multiplier, absents de `UpgradeConfig` (hors MVP).
-- **Décision :**
-  - Champ ou section manquant : valeur par défaut ajoutée.
-  - Nombre hors bornes (niveau, solde négatif, décimale) : borné.
+- **Décision initiale (règles de contrôle, inchangées) :**
+  - Champ ou section manquant : valeur par défaut ajoutée (en mémoire).
+  - Nombre hors bornes (niveau, solde négatif, décimale) : borné (en
+    mémoire).
   - Type incorrect, NaN, structure illisible : profil refusé
     (`CorruptData`), rien n'est écrit, le joueur est expulsé.
   - Version future : refus (`UnsupportedVersion`).
@@ -184,7 +210,10 @@ propriétaire), ACCEPTÉE, REMPLACÉE.
   mauvais type signale un défaut de code ou une édition manuelle, qu'une
   réparation automatique masquerait en détruisant l'original.
 - **Conséquences :** un joueur au profil corrompu est bloqué jusqu'à
-  correction manuelle. Le nombre de niveaux hors MVP est écrit à deux
+  correction manuelle. Une panne limitée aux écritures de copie empêche la
+  sauvegarde des profils normalisés concernés (perte possible de leur
+  session, jamais de l'original). Les copies `Recovery_` ne sont jamais
+  supprimées automatiquement : purge manuelle à prévoir. Le nombre de niveaux hors MVP est écrit à deux
   endroits (Bible et `DataConfig`) : à ramener dans `UpgradeConfig` quand
   ces améliorations seront implémentées.
 - **Affecte :** `DataSchema`, `DataConfig`, `docs/DATA_PERSISTENCE.md`.

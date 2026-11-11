@@ -28,4 +28,25 @@ function TableUtil.deepCopy<T>(value: T): T
 	return copy :: any
 end
 
+-- Égalité structurelle de données simples (tables comparées par contenu).
+function TableUtil.deepEqual(a: any, b: any): boolean
+	if type(a) ~= type(b) then
+		return false
+	end
+	if type(a) ~= "table" then
+		return a == b
+	end
+	for key, value in pairs(a) do
+		if not TableUtil.deepEqual(value, b[key]) then
+			return false
+		end
+	end
+	for key in pairs(b) do
+		if a[key] == nil then
+			return false
+		end
+	end
+	return true
+end
+
 return TableUtil

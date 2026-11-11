@@ -193,7 +193,8 @@ function PlayerDataServiceTests.run(modules: Modules): ({ string }, number)
 		check(server.service.SavePlayer(USER_A).code == Code.NotLoaded, "SavePlayer accepté")
 		check(server.service.ReleasePlayer(USER_A).code == Code.NotLoaded, "ReleasePlayer accepté")
 		check(world.store.getWriteCount() == 0, "écriture sans profil chargé")
-		check(server.service.LoadPlayer(-1).code == Code.InvalidArgument, "userId invalide accepté")
+		check(server.service.LoadPlayer(0).code == Code.InvalidArgument, "userId 0 accepté")
+		check(server.service.LoadPlayer(1.5).code == Code.InvalidArgument, "userId décimal accepté")
 		check(server.service.LoadPlayer("1001" :: any).code == Code.InvalidArgument, "userId texte accepté")
 	end)
 
@@ -254,6 +255,159 @@ function PlayerDataServiceTests.run(modules: Modules): ({ string }, number)
 			end
 		end
 		check(reported, "réparation non journalisée")
+		check(deepEqual(world.store.peek(KEY_A).profile, partial), "profil original réécrit au chargement (D-008)")
+	end)
+
+	case("chargement : UserId négatif de Studio accepté", function(check)
+		local world = newWorld()
+		local server = newServer(world, "A")
+		check(server.service.LoadPlayer(-1).ok, "joueur de test Studio (-1) refusé")
+		check(world.store.peek("Player_-1") ~= nil, "profil de test non créé")
+	end)
+
+	-- D-008 : PROFIL NORMALISÉ ---------------------------------------------
+
+	local function recoveryKeys(world: any): { string }
+		local list = {}
+		local prefix = config.Store.recoveryKeyPrefix
+		for _, key in ipairs(world.store.keys()) do
+			if string.sub(key, 1, #prefix) == prefix then
+				table.insert(list, key)
+			end
+		end
+		return list
+	end
+
+	local function partialProfile(): any
+		return { schemaVersion = 1, currencies = { coins = 321 }, upgrades = { backpackLevel = 999 } }
+	end
+
+	local function hasLog(server: any, fragment: string): boolean
+		for _, line in ipairs(server.logs) do
+			if string.find(line, fragment, 1, true) then
+				return true
+			end
+		end
+		return false
+	end
+
+	local function failRecoveryKeys(world: any)
+		world.store.setFailingKeys(function(key: string): boolean
+			return string.sub(key, 1, #config.Store.recoveryKeyPrefix) == config.Store.recoveryKeyPrefix
+		end)
+	end
+
+	case("D-008 : chargement normalisé sans réécriture ni copie immédiate", function(check)
+		local world = newWorld()
+		world.store.seed(KEY_A, { profile = partialProfile(), autreChamp = "conservé" })
+		local server = newServer(world, "A")
+		check(server.service.LoadPlayer(USER_A).ok, "chargement refusé")
+		local stored = world.store.peek(KEY_A)
+		check(deepEqual(stored.profile, partialProfile()), "profil original modifié au chargement")
+		check(stored.autreChamp == "conservé", "champ inconnu de premier niveau supprimé")
+		check(stored.session ~= nil and stored.session.id == "A:1", "verrou non posé")
+		check(#recoveryKeys(world) == 0, "copie écrite dès le chargement")
+		check(server.service.GetData(USER_A).upgrades.backpackLevel ~= 999, "profil non normalisé en mémoire")
+		check(hasLog(server, "normalisé en mémoire"), "normalisation non journalisée")
+	end)
+
+	case("D-008 : copie de récupération écrite avant la première sauvegarde", function(check)
+		local world = newWorld()
+		world.store.seed(KEY_A, { profile = partialProfile() })
+		local server = newServer(world, "A")
+		server.service.LoadPlayer(USER_A)
+		local loadTime = world.now
+		server.service.Update(USER_A, addCoins(9))
+		world.now += 30
+		check(server.service.SavePlayer(USER_A).ok, "sauvegarde refusée")
+
+		local keys = recoveryKeys(world)
+		local expectedKey = `Recovery_{USER_A}_{loadTime}`
+		check(#keys == 1 and keys[1] == expectedKey, `clé de copie inattendue : {table.concat(keys, ", ")}`)
+		local record = world.store.peek(expectedKey)
+		check(record ~= nil and deepEqual(record.originalProfile, partialProfile()), "copie différente de l'original")
+		check(record ~= nil and record.userId == USER_A and record.sourceKey == KEY_A, "copie sans provenance")
+		check(record ~= nil and #record.repairs > 0, "copie sans liste des corrections")
+		local stored = world.store.peek(KEY_A)
+		check(stored.profile.currencies.coins == 330, "profil normalisé non sauvegardé")
+		check(DataSchema.validate(stored.profile), "profil sauvegardé non conforme")
+
+		local writes = world.store.getWriteCount()
+		server.service.SavePlayer(USER_A)
+		check(#recoveryKeys(world) == 1, "seconde copie créée")
+		check(world.store.getWriteCount() == writes + 1, "la copie est réécrite à chaque sauvegarde")
+	end)
+
+	case("D-008 : copie impossible, sauvegarde bloquée puis reprise", function(check)
+		local world = newWorld()
+		world.store.seed(KEY_A, { profile = partialProfile() })
+		local server = newServer(world, "A")
+		server.service.LoadPlayer(USER_A)
+		server.service.Update(USER_A, addCoins(9))
+		failRecoveryKeys(world)
+		local blocked = server.service.SavePlayer(USER_A)
+		check(blocked.code == Code.BackupFailed, `code {tostring(blocked.code)}`)
+		check(deepEqual(world.store.peek(KEY_A).profile, partialProfile()), "original écrasé sans copie")
+		check(server.service.IsLoaded(USER_A), "session perdue après un blocage")
+		check(server.service.GetData(USER_A).currencies.coins == 330, "données en mémoire perdues")
+		check(hasLog(server, "sauvegarde bloquée"), "blocage non journalisé")
+
+		world.store.setFailingKeys(nil)
+		check(server.service.SavePlayer(USER_A).ok, "sauvegarde toujours bloquée après rétablissement")
+		check(#recoveryKeys(world) == 1, "copie absente après rétablissement")
+		check(world.store.peek(KEY_A).profile.currencies.coins == 330, "profil non sauvegardé après rétablissement")
+	end)
+
+	case("D-008 : sortie avec copie impossible, original intact et verrou libéré", function(check)
+		local world = newWorld()
+		world.store.seed(KEY_A, { profile = partialProfile() })
+		local server = newServer(world, "A")
+		server.service.LoadPlayer(USER_A)
+		server.service.Update(USER_A, addCoins(9))
+		failRecoveryKeys(world)
+		local result = server.service.ReleasePlayer(USER_A)
+		check(result.code == Code.BackupFailed, `code {tostring(result.code)}`)
+		local stored = world.store.peek(KEY_A)
+		check(deepEqual(stored.profile, partialProfile()), "original écrasé à la sortie")
+		check(stored.session == nil, "verrou non libéré")
+		check(not server.service.IsLoaded(USER_A), "session conservée")
+	end)
+
+	case("D-008 : copie déjà écrite (réponse perdue) acceptée", function(check)
+		local world = newWorld()
+		world.store.seed(KEY_A, { profile = partialProfile() })
+		local server = newServer(world, "A")
+		server.service.LoadPlayer(USER_A)
+		world.store.failAfterWriteNext(1)
+		check(server.service.SavePlayer(USER_A).ok, "sauvegarde refusée après une réponse perdue")
+		check(#recoveryKeys(world) == 1, "copie absente ou dupliquée")
+	end)
+
+	case("D-008 : copie existante différente jamais écrasée", function(check)
+		local world = newWorld()
+		local existingKey = `Recovery_{USER_A}_{world.now}`
+		world.store.seed(KEY_A, { profile = partialProfile() })
+		world.store.seed(existingKey, { autre = "copie" })
+		local server = newServer(world, "A")
+		server.service.LoadPlayer(USER_A)
+		check(server.service.SavePlayer(USER_A).code == Code.BackupFailed, "copie existante ignorée")
+		check(deepEqual(world.store.peek(existingKey), { autre = "copie" }), "copie existante écrasée")
+		check(deepEqual(world.store.peek(KEY_A).profile, partialProfile()), "original écrasé")
+	end)
+
+	case("D-008 : profil conforme ou nouveau, aucune copie", function(check)
+		local world = newWorld()
+		world.store.seed(KEY_A, { profile = existingProfile() })
+		local server = newServer(world, "A")
+		server.service.LoadPlayer(USER_A)
+		server.service.SavePlayer(USER_A)
+		server.service.ReleasePlayer(USER_A)
+		check(#recoveryKeys(world) == 0, "copie créée pour un profil conforme")
+		local fresh = newWorld()
+		local other = newServer(fresh, "B")
+		other.service.LoadPlayer(USER_A)
+		other.service.SavePlayer(USER_A)
+		check(#recoveryKeys(fresh) == 0, "copie créée pour un nouveau profil")
 	end)
 
 	-- ACCÈS ET MODIFICATION -----------------------------------------------

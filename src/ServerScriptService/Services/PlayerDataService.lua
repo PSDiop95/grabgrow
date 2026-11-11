@@ -14,6 +14,11 @@
 -- Valeur stockée sous la clé `Player_<UserId>` :
 --   { profile = <profil schéma v1>, session = { id, expiresAt } | nil }
 -- `session` est le verrou : seul le serveur qui le détient peut écrire.
+--
+-- D-008 : un profil normalisé au chargement (champs ajoutés, valeurs
+-- bornées, migration) n'est pas réécrit au chargement. Avant sa première
+-- sauvegarde, l'original est copié sous `Recovery_<UserId>_<heure>` ; si
+-- cette copie échoue, la sauvegarde est bloquée.
 -- Détails et limites : docs/DATA_PERSISTENCE.md.
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -34,6 +39,7 @@ PlayerDataService.Code = table.freeze({
 	CorruptData = DataSchema.ErrorCode.CorruptData,
 	UnsupportedVersion = DataSchema.ErrorCode.UnsupportedVersion,
 	MigrationFailed = DataSchema.ErrorCode.MigrationFailed,
+	BackupFailed = "BackupFailed", -- copie de récupération impossible : sauvegarde bloquée (D-008)
 	InvalidUpdate = "InvalidUpdate", -- modification refusée par le schéma
 	Aborted = "Aborted", -- modification abandonnée par l'appelant
 	Cancelled = "Cancelled", -- joueur parti pendant le chargement
@@ -78,6 +84,9 @@ type Session = {
 	resaveRequested: boolean,
 	releaseRequested: boolean,
 	lastSaveResult: Result,
+	-- Copie de récupération à écrire avant la première sauvegarde d'un
+	-- profil normalisé (D-008). nil une fois écrite, ou si inutile.
+	pendingBackup: { key: string, record: any }?,
 }
 
 local OK: Result = table.freeze({ ok = true })
@@ -94,8 +103,22 @@ local function defaultLog(level: string, message: string)
 	end
 end
 
+-- Entier non nul. Les serveurs de test de Studio (Test > Local Server)
+-- donnent aux joueurs des UserId négatifs (-1, -2...) ; ils n'existent pas
+-- sur un serveur publié.
 local function isValidUserId(userId: any): boolean
-	return type(userId) == "number" and userId % 1 == 0 and userId > 0
+	return type(userId) == "number" and userId % 1 == 0 and userId ~= 0 and math.abs(userId) ~= math.huge
+end
+
+local function describeLock(lock: any, now: number): string
+	if lock == nil then
+		return "aucun"
+	end
+	local remaining = lock.expiresAt - now
+	if remaining > 0 then
+		return `{lock.id} (expire dans {remaining} s)`
+	end
+	return `{lock.id} (expiré depuis {-remaining} s)`
 end
 
 function PlayerDataService.new(dependencies: Dependencies)
@@ -141,10 +164,67 @@ function PlayerDataService.new(dependencies: Dependencies)
 		return { id = session.lockId, expiresAt = clock() + config.SessionLock.timeoutSeconds }
 	end
 
+	-- Écrit la copie de récupération de l'original (D-008). N'écrase jamais
+	-- une copie existante différente.
+	local function writeBackup(session: Session): Result
+		local backup = session.pendingBackup :: { key: string, record: any }
+		local conflict = false
+		local ok, err = updateWithRetry(backup.key, function(stored: any): ...any
+			conflict = false
+			if stored == nil then
+				return backup.record, { session.userId }
+			end
+			if not TableUtil.deepEqual(stored, backup.record) then
+				conflict = true
+			end
+			-- Identique : écrite par une tentative dont la réponse s'est perdue.
+			return nil
+		end)
+		if not ok then
+			return failure(PlayerDataService.Code.BackupFailed, err)
+		end
+		if conflict then
+			return failure(PlayerDataService.Code.BackupFailed, `{backup.key} existe déjà avec un autre contenu`)
+		end
+		log("info", `{session.key} : copie de récupération écrite : {backup.key}`)
+		session.pendingBackup = nil
+		return OK
+	end
+
+	-- Retire le verrou sans toucher au profil stocké.
+	local function releaseLockOnly(session: Session)
+		local ok, err = updateWithRetry(session.key, function(stored: any): ...any
+			if type(stored) == "table" and type(stored.session) == "table" and stored.session.id == session.lockId then
+				stored.session = nil
+				return stored, { session.userId }
+			end
+			return nil
+		end)
+		if not ok then
+			log("error", `{session.key} : verrou non libéré : {tostring(err)}`)
+		end
+	end
+
 	-- Écrit le profil si ce serveur détient toujours le verrou. `release`
 	-- retire le verrou dans la même écriture. Ne réécrit jamais une valeur
 	-- détenue par une autre session.
 	local function writeProfile(session: Session, release: boolean): Result
+		if session.pendingBackup ~= nil then
+			local backupResult = writeBackup(session)
+			if not backupResult.ok then
+				log(
+					"error",
+					`{session.key} : sauvegarde bloquée, copie de récupération impossible (D-008) : {tostring(backupResult.message)}`
+				)
+				if release then
+					-- Le profil original reste en place ; les modifications de
+					-- la session sont perdues.
+					releaseLockOnly(session)
+				end
+				return backupResult
+			end
+		end
+
 		local snapshot = TableUtil.deepCopy(session.data)
 		snapshot.lastSaveAt = clock()
 
@@ -157,7 +237,10 @@ function PlayerDataService.new(dependencies: Dependencies)
 			local lock = stored.session
 			if type(lock) == "table" and lock.id == session.lockId then
 				outcome = "saved"
-				return { profile = snapshot, session = if release then nil else newLock(session) }, { session.userId }
+				-- Les autres champs de premier niveau sont conservés.
+				stored.profile = snapshot
+				stored.session = if release then nil else newLock(session)
+				return stored, { session.userId }
 			end
 			-- Libération rejouée après une réponse perdue : la tentative
 			-- précédente a déjà écrit le profil et retiré le verrou.
@@ -195,7 +278,7 @@ function PlayerDataService.new(dependencies: Dependencies)
 	-- Une seule écriture à la fois par profil. Une demande reçue pendant une
 	-- écriture provoque une seconde écriture à la suite, pour inclure les
 	-- modifications faites entre-temps.
-	local function saveSession(session: Session): Result
+	local function saveSession(session: Session, reason: string): Result
 		if session.saving then
 			session.resaveRequested = true
 			while session.saving do
@@ -216,7 +299,12 @@ function PlayerDataService.new(dependencies: Dependencies)
 		if result.code == PlayerDataService.Code.LockLost then
 			markLost(session)
 		elseif not result.ok then
-			log("error", `{session.key} : sauvegarde en échec : {tostring(result.message)}`)
+			log("error", `{session.key} : sauvegarde ({reason}) en échec : {tostring(result.message)}`)
+		else
+			log(
+				"info",
+				`{session.key} : sauvegarde ({reason}) OK, lastSaveAt={session.data.lastSaveAt}, verrou renouvelé pour {config.SessionLock.timeoutSeconds} s`
+			)
 		end
 		return result
 	end
@@ -235,11 +323,14 @@ function PlayerDataService.new(dependencies: Dependencies)
 		if sessions[session.userId] == session then
 			sessions[session.userId] = nil
 		end
+		local reason = if shuttingDown then "fermeture serveur" else "sortie"
 		if not result.ok then
 			log(
 				"error",
-				`{session.key} : sauvegarde de sortie en échec ({tostring(result.code)}) : {tostring(result.message)}`
+				`{session.key} : sauvegarde ({reason}) en échec ({tostring(result.code)}) : {tostring(result.message)}`
 			)
+		else
+			log("info", `{session.key} : sauvegarde ({reason}) OK, lastSaveAt={session.data.lastSaveAt}, verrou libéré`)
 		end
 		return result
 	end
@@ -274,7 +365,7 @@ function PlayerDataService.new(dependencies: Dependencies)
 						if lock.id ~= session.lockId and clock() < lock.expiresAt then
 							outcome = {
 								code = PlayerDataService.Code.SessionLocked,
-								message = `profil détenu par la session {lock.id}`,
+								message = `profil détenu par la session {describeLock(lock, clock())}`,
 							}
 							return nil
 						end
@@ -285,11 +376,22 @@ function PlayerDataService.new(dependencies: Dependencies)
 						outcome = { code = code, message = message }
 						return nil
 					end
-					profile = normalized
-					repairs = normalizeRepairs
+
+					local migrated = stored.profile.schemaVersion ~= config.SchemaVersion
+					outcome = {
+						profile = normalized,
+						repairs = normalizeRepairs,
+						isNew = false,
+						previousLock = describeLock(lock, clock()),
+						-- D-008 : original à préserver avant toute réécriture.
+						original = if #normalizeRepairs > 0 or migrated then stored.profile else nil,
+					}
+					-- Le profil stocké reste tel quel : seul le verrou change.
+					stored.session = newLock(session)
+					return stored, { session.userId }
 				end
 
-				outcome = { profile = profile, repairs = repairs, isNew = isNew }
+				outcome = { profile = profile, repairs = repairs, isNew = isNew, previousLock = "aucun" }
 				return { profile = profile, session = newLock(session) }, { session.userId }
 			end)
 
@@ -300,7 +402,30 @@ function PlayerDataService.new(dependencies: Dependencies)
 				for _, repair in ipairs(outcome.repairs) do
 					log("warn", `{session.key} : profil réparé au chargement : {repair}`)
 				end
-				log("info", `{session.key} : {if outcome.isNew then "nouveau profil créé" else "profil chargé"}`)
+				if outcome.original ~= nil then
+					local capturedAt = clock()
+					local backupKey = `{config.Store.recoveryKeyPrefix}{session.userId}_{capturedAt}`
+					session.pendingBackup = {
+						key = backupKey,
+						record = {
+							kind = "PreNormalizationBackup",
+							userId = session.userId,
+							sourceKey = session.key,
+							capturedAt = capturedAt,
+							serverSchemaVersion = config.SchemaVersion,
+							repairs = TableUtil.deepCopy(outcome.repairs),
+							originalProfile = TableUtil.deepCopy(outcome.original),
+						},
+					}
+					log(
+						"warn",
+						`{session.key} : profil normalisé en mémoire uniquement ; original conservé, copie {backupKey} avant la première sauvegarde (D-008)`
+					)
+				end
+				log(
+					"info",
+					`{session.key} : {if outcome.isNew then "nouveau profil créé" else "profil chargé"}, lastSaveAt={outcome.profile.lastSaveAt}, verrou précédent : {outcome.previousLock}, nouveau verrou : {session.lockId}`
+				)
 				-- Copie : la table transmise au magasin ne doit pas rester
 				-- partagée avec les données de session.
 				return OK, TableUtil.deepCopy(outcome.profile)
@@ -312,6 +437,10 @@ function PlayerDataService.new(dependencies: Dependencies)
 				break
 			end
 			if attempt < config.SessionLock.acquireAttempts then
+				log(
+					"warn",
+					`{session.key} : {outcome.message} ; nouvelle tentative dans {config.SessionLock.acquireDelaySeconds} s ({attempt}/{config.SessionLock.acquireAttempts})`
+				)
 				wait(config.SessionLock.acquireDelaySeconds)
 			end
 		end
@@ -360,6 +489,7 @@ function PlayerDataService.new(dependencies: Dependencies)
 			resaveRequested = false,
 			releaseRequested = false,
 			lastSaveResult = OK,
+			pendingBackup = nil,
 		}
 		sessions[userId] = session
 
@@ -437,12 +567,13 @@ function PlayerDataService.new(dependencies: Dependencies)
 	end
 
 	-- Sauvegarde le profil et renouvelle le verrou. Bloquant.
-	function service.SavePlayer(userId: number): Result
+	-- `reason` ne sert qu'au journal (ex. "auto").
+	function service.SavePlayer(userId: number, reason: string?): Result
 		local session = sessions[userId]
 		if session == nil or session.state ~= "active" then
 			return failure(PlayerDataService.Code.NotLoaded, "profil non chargé")
 		end
-		return saveSession(session)
+		return saveSession(session, reason or "manuelle")
 	end
 
 	-- Sauvegarde finale, libération du verrou et retrait de la mémoire.

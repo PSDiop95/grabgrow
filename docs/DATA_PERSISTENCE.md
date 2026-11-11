@@ -21,6 +21,10 @@ D-009. Réglages : `Shared/Config/DataConfig.lua`.
 - DataStore : `GrabAndGrow_PlayerData_v1` (production).
 - Clé : `Player_<UserId>`.
 - Valeur : `{ profile = <profil v1>, session = { id, expiresAt } | nil }`.
+  Les autres champs de premier niveau éventuels sont conservés.
+- Copies de récupération (D-008) : même DataStore, clé
+  `Recovery_<UserId>_<heure Unix du chargement>`, jamais écrasées ni
+  supprimées automatiquement.
 - Toute lecture et écriture passe par `UpdateAsync` (opération atomique).
 - `UserId` associé à la clé (paramètre `userIds`), pour les demandes
   d'effacement.
@@ -85,6 +89,47 @@ end)
 Un profil refusé reste intact dans le DataStore : correction manuelle
 nécessaire. Bornes des niveaux : `UpgradeConfig` pour Backpack et Grabber,
 `DataConfig.NonMvpUpgradeMaxLevels` pour Magnet, Boots et Multiplier.
+
+### Profil normalisé : copie avant réécriture (D-008, décision définitive)
+
+Un profil est « normalisé » s'il a demandé au moins une correction ci-dessus
+ou s'il a été migré.
+
+1. **Chargement** : les corrections sont faites en mémoire uniquement. Le
+   DataStore ne reçoit que le verrou ; `profile` reste l'original.
+   Journal : `profil normalisé en mémoire uniquement ; original conservé`.
+2. **Première sauvegarde** (auto, sortie ou fermeture) : écriture d'abord de
+   la copie `Recovery_<UserId>_<heure>` :
+
+   ```lua
+   {
+       kind = "PreNormalizationBackup",
+       userId = 123,
+       sourceKey = "Player_123",
+       capturedAt = 1793000000,      -- heure Unix du chargement
+       serverSchemaVersion = 1,
+       repairs = { "upgrades.backpackLevel : 999 -> 16", ... },
+       originalProfile = { ... },    -- profil stocké, tel quel
+   }
+   ```
+
+   Puis, seulement si la copie est confirmée, écriture du profil normalisé.
+   Journal : `copie de récupération écrite : Recovery_...`.
+3. **Copie impossible** (erreur DataStore après les reprises, ou clé déjà
+   occupée par un autre contenu) : sauvegarde refusée, code
+   `BackupFailed`, journal `sauvegarde bloquée, copie de récupération
+   impossible (D-008)`. Les données restent en mémoire ; la sauvegarde
+   suivante réessaie. À la sortie du joueur : verrou libéré sans toucher
+   au profil, modifications de la session perdues, original intact.
+4. La copie n'est écrite qu'une fois par session.
+
+**Récupération manuelle** : lire la clé `Recovery_...` (Creator Hub,
+Data Stores Manager, ou Open Cloud) et réécrire `originalProfile` dans
+`Player_<UserId>.profile`, joueur déconnecté et verrou absent ou expiré.
+
+Les migrations explicites suivront une procédure dédiée, à définir avec
+la première migration réelle. D'ici là, une migration déclenche la même
+copie.
 
 ## Sauvegarde
 
@@ -160,6 +205,11 @@ le DataStore de production.
   un écart de quelques secondes est sans effet face aux 180 s.
 - **Panne DataStore prolongée** : les joueurs sont refusés à l'entrée.
 - **Profil corrompu** : le joueur est bloqué jusqu'à correction manuelle.
+- **Copie de récupération impossible** : les profils normalisés concernés
+  ne sont plus sauvegardés ; leur session est perdue à la sortie (jamais
+  l'original).
+- **Copies `Recovery_`** : jamais purgées automatiquement ; volume à
+  surveiller.
 - **Quotas** : une écriture par joueur et par minute, plus chargement et
   sortie. Non mesuré sur un serveur réel.
 - **Messages d'expulsion** : texte anglais brut, non localisé.
@@ -172,21 +222,48 @@ le DataStore de production.
 
 | Élément | Magasin en mémoire (Lune, Studio) | DataStore réel |
 |---|---|---|
-| Chargement, nouveau profil | Validé | **Non vérifié** |
-| Sauvegarde automatique 60 s | Validé par simulation | **Non vérifié** |
-| Sauvegarde de sortie, `BindToClose` | Validé par simulation ; Studio sans erreur | **Non vérifié** |
-| Verrou, deux serveurs, expiration | Validé par simulation | **Non vérifié** |
+| Chargement, nouveau profil | Validé | Validé (V-03) |
+| Sauvegarde automatique 60 s | Validé par simulation | Validé (V-01) |
+| Sauvegarde à l'arrêt (`BindToClose`) | Validé par simulation | Validé (V-02) |
+| Sauvegarde de sortie seule (`PlayerRemoving`, serveur qui continue) | Validé par simulation | **Non isolée** |
+| Verrou actif refusé, expiration après crash | Validé par simulation | Validé (V-05) |
+| Deux serveurs actifs simultanément | Validé par simulation | **Non vérifié** (Studio : une session par place) |
+| Copie de récupération D-008 | Validé par simulation | **Non vérifié** |
 
 Suivi détaillé : `PROJECT_STATUS.md`, V-01 à V-05.
 
-## Vérification avec le DataStore réel (manuelle, non faite)
+## Protocole V-01 à V-05 (DataStore réel)
 
-À réaliser sur un place de test publié, jamais sur la production :
+Environnement : une **expérience de test dédiée**, jamais celle du jeu
+publié. Les DataStores sont propres à chaque expérience : celle de test ne
+partage aucune donnée avec la production. Depuis Studio, le service écrit
+dans `GrabAndGrow_PlayerData_v1_Studio`.
 
-1. Publier le place sur une expérience de test.
-2. Studio : Game Settings > Security > Enable Studio Access to API Services.
-3. `DataConfig.Studio.useMemoryStore = false`.
-4. Play : vérifier `[Bootstrap] DataStore : GrabAndGrow_PlayerData_v1_Studio`
-   puis `nouveau profil créé`.
-5. Stop, puis Play : vérifier `profil chargé`.
-6. Remettre `useMemoryStore = true`.
+Preuves : journal Studio (`%LOCALAPPDATA%\Roblox\logs`, lignes
+`[Bootstrap]` et `[PlayerData]`). Les valeurs `lastSaveAt` et l'identifiant
+du verrou affichés au chargement sont lus dans le DataStore réel : ce sont
+les données de test.
+
+### Préparation
+
+1. Studio, `GrabAndGrow.rbxl` ouvert : File > Publish to Roblox As >
+   **nouvelle expérience** (nom suggéré : « GrabAndGrow TEST »), privée.
+2. Game Settings > Security > **Enable Studio Access to API Services**.
+3. `DataConfig.Studio.useMemoryStore = false` (synchronisé par Rojo).
+4. Vérifier au Play : `[Bootstrap] DataStore : GrabAndGrow_PlayerData_v1_Studio`.
+
+### Étapes et critères
+
+| Étape | Action | Preuve attendue dans le journal | Valide |
+|---|---|---|---|
+| E1 | Play, rester **au moins 70 s**, puis Stop | `DataStore : ..._Studio` ; `nouveau profil créé` ou `profil chargé` ; `sauvegarde (auto) OK, lastSaveAt=A` ; `sauvegarde (sortie) OK, lastSaveAt=B` ou `(fermeture serveur)` | V-03, V-01 (écriture) |
+| E2 | Play | `profil chargé, lastSaveAt=B, verrou précédent : aucun` | V-02 |
+| E3 | Rester au moins 70 s, noter `sauvegarde (auto) OK, lastSaveAt=C`, puis **arrêt forcé de Studio** (processus tué, aucune sauvegarde de sortie) | Pas de ligne `sauvegarde (sortie)` après C | préparation V-05 |
+| E4 | Rouvrir Studio et Play **moins de 150 s** après C | `verrou actif ... expire dans N s ; nouvelle tentative` (5 fois), puis `chargement refusé (SessionLocked)` ; joueur expulsé | V-05 (verrou respecté), V-04 partiel |
+| E5 | Play **plus de 180 s** après C | `profil chargé, lastSaveAt=C, verrou précédent : studio-... (expiré depuis N s)` | V-05 (reprise), V-01 (persistance sans sortie) |
+| E6 (V-04) | Deux fenêtres Studio sur l'expérience de test, Play dans la première puis dans la seconde | Seconde fenêtre : `verrou actif` puis refus ; première fenêtre : sauvegardes auto toujours `OK`, aucune `verrou perdu` | V-04 |
+| Fin | Remettre `useMemoryStore = true` | — | — |
+
+E6 est impossible : Studio refuse deux sessions sur le même place
+(`RCC-276`) et ferme l'ancienne. Constaté le 2026-11-11 ; dans ce cas, V-04 n'est couvert que par E4 (verrou d'un serveur
+arrêté) et par la simulation, et reste noté « partiel ».

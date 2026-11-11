@@ -19,6 +19,9 @@ local DataConfig = {
 		-- mémoire est désactivé : Studio ne touche jamais la production.
 		studioName = "GrabAndGrow_PlayerData_v1_Studio",
 		keyPrefix = "Player_",
+		-- Copies de récupération d'un profil normalisé (D-008), dans le même
+		-- DataStore : `Recovery_<UserId>_<heure Unix>`. Jamais écrasées.
+		recoveryKeyPrefix = "Recovery_",
 	},
 
 	Studio = {

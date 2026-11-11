@@ -4,12 +4,21 @@ Dernière mise à jour : 2026-11-11 (T1 — profil joueur et sauvegarde)
 
 ## Résumé
 
-T0 est clos. T1 (profil joueur et sauvegarde) est écrit, testé avec un
-magasin simulé (Lune et Studio) et commité localement ; D-008 et D-009 sont
-acceptées. **La persistance réelle n'est pas validée** : sauvegarde
-automatique, sauvegarde de sortie et DataStore réel restent à vérifier
-(section « Validations T1 non réalisées »). Aucun système de gameplay
-n'existe. T2 attend la validation du propriétaire.
+T0 est clos. **T1 est validé avec réserves** (propriétaire, 2026-11-11) :
+socle commité en e90f709, protection D-008 dans le commit suivant
+(`fix(data): protect normalized profiles with recovery backups`). Sur
+DataStore réel (expérience de test) : V-01, V-02, V-03, V-05 validés ;
+V-04 partiel. Réserves ci-dessous. Aucun système de gameplay n'existe.
+T2 ne commence qu'avec l'accord explicite du propriétaire.
+
+### Réserves de T1
+
+| # | Réserve | Statut |
+|---|---|---|
+| R-01 | Copie `Recovery_` (D-008) non vérifiée sur DataStore réel : D-008 validée sur l'implémentation et les tests automatisés | À faire ; demande le droit MCP `universe-datastores.objects:update`, à n'activer qu'avec l'accord du propriétaire |
+| R-02 | V-04 : deux serveurs actifs simultanément non testés (Studio : une session par place, `RCC-276`) | Facultatif avant T2 |
+| R-03 | V-02 : sortie d'un joueur sur un serveur qui continue (`PlayerRemoving` seul) non isolée sur DataStore réel | Couvert par simulation |
+| R-04 | Place Roblox de test : version enregistrée avec `useMemoryStore = false` ; corrigé dans le place ouvert mais non sauvegardé | Sauvegarde du place soumise à validation |
 
 ## Environnement
 
@@ -121,28 +130,54 @@ dans `src/` ; la carte, les modèles et les interfaces dans Studio.
 | A-22 | Messages d'expulsion (`PlayerSession`) en anglais brut, non localisés | T5 |
 | A-19 | Première amélioration (100 Coins) atteinte à la 2e vente avec 3 ressources (sac ≈ 89 Coins) ; revenu théorique maximal ≈ 142 Coins/min pour une cible de 120–250 | À mesurer en T7 |
 
-## Validations T1 non réalisées
+## Vérifications avant le commit D-008 (2026-11-11)
 
-Aucune de ces vérifications n'a été faite. Tant qu'elles ne le sont pas,
-la persistance n'est validée que contre le magasin en mémoire.
+| Vérification | Type | Résultat |
+|---|---|---|
+| Lune : ConfigTests, DataSchemaTests (17), PlayerDataServiceTests (35) | Automatisé, terminal | Exécuté — OK, code de sortie 0 |
+| Mêmes suites dans Studio (Play, magasin en mémoire) | Automatisé, piloté par MCP | Exécuté — `TOUS LES TESTS : OK`, profil créé |
+| Scripts du place Studio identiques au dépôt | Empreinte comparée, 11 modules | Identiques (ConfigTests : fins de ligne CRLF seulement) |
+| `luau-lsp analyze` | Automatisé, terminal | 0 erreur |
+| Défauts D-008 introduits volontairement (4) | Contrôle négatif, Lune | Tous détectés |
+| Configs économiques inchangées | `git diff` | Constaté |
 
-| # | Vérification | Ce qui manque | Comment la faire |
+## Validations T1 sur DataStore réel (2026-11-11)
+
+Environnement : expérience de test dédiée (universe 10775875517, place
+93404872714886, confirmée par le propriétaire), DataStore
+`GrabAndGrow_PlayerData_v1_Studio`, clé `Player_11975439775`. Pilotage de
+Studio par le serveur MCP Roblox Studio (Play, Stop, Luau) ; preuves :
+journal Studio (`[PlayerData]`) et lectures `GetAsync` de la clé réelle.
+Après les tests : `useMemoryStore` remis à `true` (dépôt et place ouvert).
+
+| # | Vérification | Résultat | Preuves |
 |---|---|---|---|
-| V-01 | Sauvegarde automatique (60 s) | Aucune session Studio n'a duré 60 s ; le magasin en mémoire n'en garde de toute façon aucune trace visible | Place de test publié, DataStore réel : jouer plus de 60 s, modifier une valeur par la barre de commande serveur, couper Studio brutalement, relancer et vérifier la valeur |
-| V-02 | Sauvegarde réelle à la sortie | Le Stop dans Studio n'a produit aucune erreur, mais la libération réussie ne journalise rien et le magasin était en mémoire | DataStore réel : Play, Stop, Play ; vérifier `profil chargé` (et non `nouveau profil créé`) et l'absence d'attente de verrou |
-| V-03 | DataStore réel sur un place de test publié | Jamais exécuté ; quotas et latence réels inconnus | Étapes dans `DATA_PERSISTENCE.md`, section « Vérification avec le DataStore réel » |
-| V-04 | Deux serveurs réels sur le même profil | Couvert uniquement par simulation | Deux sessions de test sur le place publié avec le même compte |
-| V-05 | Crash serveur : expiration du verrou (180 s) | Couvert uniquement par simulation | DataStore réel : fermer Studio de force pendant le Play, relancer ; refus attendu avant 180 s, chargement après |
+| V-03 | DataStore réel | **Validé** | `[Bootstrap] DataStore : GrabAndGrow_PlayerData_v1_Studio` ; `nouveau profil créé` (11:06:34 UTC) ; `GetAsync` : profil v1 par défaut + verrou `studio-733f…:1`, `expiresAt=1794395373` |
+| V-01 | Sauvegarde auto 60 s | **Validé** | `sauvegarde (auto) OK, lastSaveAt=1794395251` (11:07:32, 58 s après le chargement) ; `GetAsync` : `lastSaveAt=1794395251`, `expiresAt` repoussé à 1794395432. Persistance sans sauvegarde de sortie : après le crash (E3), E5 relit `lastSaveAt=1794395680`, valeur de la dernière sauvegarde auto |
+| V-02 | Sauvegarde écrite à la sortie | **Validé** (propriétaire) ; voie `PlayerRemoving` seule non isolée (R-03) | Stop : `sauvegarde (fermeture serveur) OK, lastSaveAt=1794395300, verrou libéré` ; `GetAsync` : `lastSaveAt=1794395300`, `session=nil` ; Play suivant : `profil chargé, lastSaveAt=1794395300, verrou précédent : aucun`. Dans Studio, le Stop déclenche `BindToClose` : le cas « joueur qui quitte un serveur qui continue » n'a pas été observé seul |
+| V-05 | Crash : expiration du verrou | **Validé** | Dernière sauvegarde auto `lastSaveAt=1794395680`, verrou jusqu'à 1794395860 ; Studio tué (`taskkill /F`, 11:14:52) ; Play à 11:15:40 : 5 tentatives `profil détenu par la session studio-48a3…:1 (expire dans 122 s…98 s)`, puis `chargement refusé (SessionLocked)` et expulsion ; `GetAsync` : valeur inchangée. Play à 11:17:56 : `profil chargé, lastSaveAt=1794395680, verrou précédent : studio-48a3…:1 (expiré depuis 13 s)` |
+| V-04 | Deux serveurs sur le même profil | **Partiel** (validé partiellement par le propriétaire, R-02) | Un serveur ne peut pas prendre un verrou détenu par un autre (E4, verrou d'un serveur arrêté). Deux serveurs **actifs simultanément** : non testé, Studio refuse deux sessions sur le même place (`RCC-276 Sessions multiples détectées`) et ferme l'ancienne ; celle-ci s'est arrêtée proprement (`sauvegarde (fermeture serveur) OK, lastSaveAt=1794395974, verrou libéré`). Reste couvert par la simulation |
+
+Non vérifié sur DataStore réel :
+
+- V-04 avec deux serveurs actifs : demande deux serveurs publiés (le même
+  compte qui change de serveur sur l'expérience de test), journaux lus par
+  la console développeur.
+- Copie de récupération D-008 (`Recovery_`) : aucun profil à normaliser
+  dans le magasin de test ; en provoquer un exige le droit d'écriture MCP
+  (`universe-datastores.objects:update`), non demandé. Couvert par la
+  simulation uniquement.
+- `ListKeysAsync` depuis MCP retourne une liste vide alors que la clé
+  existe : non utilisé comme preuve.
 
 ## Décisions en attente
 
 1. Versionner ou non `GrabAndGrow.rbxl` dans Git (fichier binaire, mais seule
    copie de la carte dès qu'elle sera éditée dans Studio). Exclu du commit T1.
-2. Push GitHub du commit T1 (non autorisé à ce jour).
-3. Portée exacte de « ne jamais réparer automatiquement » dans D-008 :
-   profils lisibles avec champs manquants ou niveaux hors bornes.
+2. Push GitHub des commits T1 (non autorisé à ce jour).
+3. Sauvegarde du place de test dans Roblox (R-04).
 
 ## Prochaine étape
 
-1. Validations V-01 à V-05 sur un place de test publié.
-2. Après validation du propriétaire : T2 — collecte et inventaire.
+1. Facultatif : lever R-01 et R-02.
+2. Sur accord explicite du propriétaire : T2 — collecte et inventaire.

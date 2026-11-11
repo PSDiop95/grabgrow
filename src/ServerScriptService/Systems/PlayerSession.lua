@@ -62,7 +62,7 @@ function PlayerSession.start(service: Service)
 			task.wait(DataConfig.Save.autosaveIntervalSeconds)
 			for _, player in ipairs(Players:GetPlayers()) do
 				if service.IsLoaded(player.UserId) then
-					task.spawn(service.SavePlayer, player.UserId)
+					task.spawn(service.SavePlayer, player.UserId, "auto")
 				end
 			end
 		end

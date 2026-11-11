@@ -14,7 +14,7 @@ lot distingue tests automatisés, tests manuels et vérifications non faites.
 | 3. Logique serveur | Règles des services (collecte, vente, achat, migration) | Modules de test en Luau pur, dépendances simulées | Oui pour T1 (`DataSchemaTests`, `PlayerDataServiceTests`) |
 | 4. Intégration | Remotes, validation, rate limit | Play dans Studio, Output | À partir de T2 |
 | 5. Multijoueur | Isolation des données, double collecte | Studio : Test > Local Server, 2 joueurs ou plus | À partir de T2 |
-| 6. Sauvegarde | Nouveau profil, reconnexion, échecs, migration | `MemoryDataStore` injecté dans `PlayerDataService` ; puis place de test avec accès API | Simulé : oui. DataStore réel : non fait (`DATA_PERSISTENCE.md`) |
+| 6. Sauvegarde | Nouveau profil, reconnexion, échecs, migration | `MemoryDataStore` injecté dans `PlayerDataService` ; puis expérience de test avec accès API, pilotée par le serveur MCP Roblox Studio | Simulé : oui. DataStore réel : V-01, V-02, V-03, V-05 faits ; V-04 partiel (`PROJECT_STATUS.md`) |
 | 7. Appareils | Lisibilité, tactile, performances | Émulateur d'appareils de Studio, puis téléphone réel | À partir de T5 |
 
 ## Analyse statique (terminal)
@@ -46,7 +46,7 @@ aucun échec. Résultat attendu :
 ```text
 [Tests] ConfigTests : OK
 [Tests] DataSchemaTests : OK (17 cas)
-[Tests] PlayerDataServiceTests : OK (27 cas)
+[Tests] PlayerDataServiceTests : OK (35 cas)
 [Tests] TOUS LES TESTS : OK
 ```
 
@@ -96,9 +96,12 @@ de relire le résultat depuis le terminal après exécution.
 
 ## Limites de l'environnement
 
-- Roblox Studio ne peut pas être piloté depuis le terminal : les tests des
-  niveaux 4 à 7 sont exécutés par le propriétaire, qui en rapporte le
-  résultat.
+- Studio est piloté par le serveur MCP Roblox Studio (Play, Stop, Luau,
+  console), configuré localement dans la config Claude du projet et activé
+  dans Studio (Assistant > Gérer les serveurs MCP). Les droits sur les
+  données passent par Assistant > MCP Permissions : lecture seule accordée.
+- Studio n'accepte qu'une session par place (`RCC-276`) : pas de test à
+  deux serveurs actifs depuis Studio.
 - `luau-lsp analyze` vérifie syntaxe et types, mais n'exécute pas le code.
 - Lune n'est pas Roblox : il exécute le même Luau, mais sans API Roblox.
   Un résultat sous Lune ne remplace pas une exécution dans Studio.
