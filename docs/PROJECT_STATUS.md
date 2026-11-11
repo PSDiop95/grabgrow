@@ -18,7 +18,7 @@ T2 ne commence qu'avec l'accord explicite du propriétaire.
 | R-01 | Copie `Recovery_` (D-008) non vérifiée sur DataStore réel : D-008 validée sur l'implémentation et les tests automatisés | À faire ; demande le droit MCP `universe-datastores.objects:update`, à n'activer qu'avec l'accord du propriétaire |
 | R-02 | V-04 : deux serveurs actifs simultanément non testés (Studio : une session par place, `RCC-276`) | Facultatif avant T2 |
 | R-03 | V-02 : sortie d'un joueur sur un serveur qui continue (`PlayerRemoving` seul) non isolée sur DataStore réel | Couvert par simulation |
-| R-04 | Place Roblox de test : version enregistrée avec `useMemoryStore = false` ; corrigé dans le place ouvert mais non sauvegardé | Sauvegarde du place soumise à validation |
+| R-04 | Place Roblox de test : version enregistrée avec `useMemoryStore = false` | **Levée** le 2026-11-11 (accord du propriétaire) : place de test (93404872714886) sauvegardé en version 7 avec `useMemoryStore = true` ; `DataConfig` du place et de `GrabAndGrow.rbxl` local identiques au dépôt (empreinte comparée) ; aucune donnée persistante modifiée |
 
 ## Environnement
 
@@ -175,7 +175,6 @@ Non vérifié sur DataStore réel :
 1. Versionner ou non `GrabAndGrow.rbxl` dans Git (fichier binaire, mais seule
    copie de la carte dès qu'elle sera éditée dans Studio). Exclu du commit T1.
 2. Push GitHub des commits T1 (non autorisé à ce jour).
-3. Sauvegarde du place de test dans Roblox (R-04).
 
 ## Prochaine étape
 
