@@ -10,6 +10,15 @@
     },
     "ServerScriptService": {
       "$className": "ServerScriptService",
+      "Bootstrap": {
+        "$path": "src/ServerScriptService/Bootstrap.server.lua"
+      },
+      "Services": {
+        "$path": "src/ServerScriptService/Services"
+      },
+      "Systems": {
+        "$path": "src/ServerScriptService/Systems"
+      },
       "Tests": {
         "$path": "src/ServerScriptService/Tests"
       }

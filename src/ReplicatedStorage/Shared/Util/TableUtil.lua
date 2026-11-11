@@ -15,4 +15,17 @@ function TableUtil.deepFreeze<T>(value: T): T
 	return value
 end
 
+-- Copie récursive, non gelée, sans référence partagée avec l'original.
+-- Réservé aux données simples (pas de cycle, pas de métatable).
+function TableUtil.deepCopy<T>(value: T): T
+	if type(value) ~= "table" then
+		return value
+	end
+	local copy = {}
+	for key, child in pairs(value :: any) do
+		copy[key] = TableUtil.deepCopy(child)
+	end
+	return copy :: any
+end
+
 return TableUtil

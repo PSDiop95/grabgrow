@@ -1,6 +1,6 @@
 # GRAB & GROW — Stratégie de tests
 
-Dernière mise à jour : 2026-11-10
+Dernière mise à jour : 2026-11-11
 
 Règle : un test n'est « réussi » que s'il a été exécuté. Chaque rapport de
 lot distingue tests automatisés, tests manuels et vérifications non faites.
@@ -11,10 +11,10 @@ lot distingue tests automatisés, tests manuels et vérifications non faites.
 |---|---|---|---|
 | 1. Analyse statique | Syntaxe, types `--!strict` | `luau-lsp analyze` en terminal ; Script Analysis de Studio | Oui |
 | 2. Configurations | Cohérence structurelle et références croisées | `Tests/ConfigTests.lua` | Oui |
-| 3. Logique serveur | Règles des services (collecte, vente, achat, migration) | Modules de test en Luau pur, dépendances simulées | À écrire avec chaque service |
+| 3. Logique serveur | Règles des services (collecte, vente, achat, migration) | Modules de test en Luau pur, dépendances simulées | Oui pour T1 (`DataSchemaTests`, `PlayerDataServiceTests`) |
 | 4. Intégration | Remotes, validation, rate limit | Play dans Studio, Output | À partir de T2 |
 | 5. Multijoueur | Isolation des données, double collecte | Studio : Test > Local Server, 2 joueurs ou plus | À partir de T2 |
-| 6. Sauvegarde | Nouveau profil, reconnexion, échecs, migration | DataStore simulé injecté dans `PlayerDataService` ; puis place de test avec accès API | À partir de T1 |
+| 6. Sauvegarde | Nouveau profil, reconnexion, échecs, migration | `MemoryDataStore` injecté dans `PlayerDataService` ; puis place de test avec accès API | Simulé : oui. DataStore réel : non fait (`DATA_PERSISTENCE.md`) |
 | 7. Appareils | Lisibilité, tactile, performances | Émulateur d'appareils de Studio, puis téléphone réel | À partir de T5 |
 
 ## Analyse statique (terminal)
@@ -32,12 +32,34 @@ Code de sortie 0 et aucune ligne d'erreur : analyse propre.
 il provient du dépôt luau-lsp, au tag de la version épinglée dans
 `rokit.toml`.
 
+## Lancer les tests automatisés (terminal)
+
+```bash
+lune run tools/run_tests.luau
+```
+
+Exécute `Tests/RunTests.server.lua` hors de Studio (Lune, épinglé dans
+`rokit.toml`, D-009). `tools/run_tests.luau` simule `game:GetService`,
+`script` et `require` pour les modules de logique pure. Code de sortie 0 :
+aucun échec. Résultat attendu :
+
+```text
+[Tests] ConfigTests : OK
+[Tests] DataSchemaTests : OK (17 cas)
+[Tests] PlayerDataServiceTests : OK (27 cas)
+[Tests] TOUS LES TESTS : OK
+```
+
+Non couvert par ce lanceur : `Bootstrap.server.lua` et
+`Systems/PlayerSession.lua` (événements Roblox), à vérifier dans Studio.
+
 ## Lancer les tests automatisés (Studio)
 
 1. Ouvrir `GrabAndGrow.rbxl`.
 2. Terminal : `rojo serve`. Studio : onglet Plugins > Rojo > Connect.
 3. Lancer Run (F8) ou Play (F5).
-4. Lire Output : `[Tests] ConfigTests : OK` ou la liste des échecs.
+4. Lire Output : `[Tests] TOUS LES TESTS : OK` ou la liste des échecs, et
+   `[Bootstrap] PlayerDataService démarré`.
 
 Studio écrit aussi Output dans `%LOCALAPPDATA%\Roblox\logs`, ce qui permet
 de relire le résultat depuis le terminal après exécution.
@@ -54,12 +76,19 @@ de relire le résultat depuis le terminal après exécution.
 - La conformité des valeurs à la Bible se contrôle par comparaison avec le
   document à chaque modification d'une config.
 - Tout test de sauvegarde utilise un DataStore de test, jamais la production.
+- Le magasin simulé copie les valeurs, refuse les valeurs non
+  sérialisables et appelle deux fois la fonction de transformation, pour
+  ne pas masquer des défauts que le DataStore réel révélerait.
+- Les cas de concurrence pilotent des coroutines à la main ; l'horloge et
+  les attentes sont simulées (exécution instantanée).
+- Après l'écriture d'une suite, vérifier qu'elle échoue quand on introduit
+  un défaut dans le code testé.
 
 ## Couverture attendue par phase
 
 | Phase | Cas obligatoires |
 |---|---|
-| T1 | Nouveau profil ; profil existant ; échec de chargement sans écrasement ; échec de sauvegarde ; reconnexion ; migration ; sauvegardes concurrentes |
+| T1 | Nouveau profil ; profil existant ; échec de chargement sans écrasement ; échec de sauvegarde ; reconnexion ; migration ; sauvegardes concurrentes ; verrou actif, expiré, renouvelé, libéré ; données corrompues ; version future ; fermeture serveur |
 | T2 | Collecte valide ; ressource inexistante ; trop loin ; trop rapide ; sac plein ; deux joueurs sur la même ressource |
 | T3 | Vente normale ; inventaire vide ; hors zone ; inventaire intact si le crédit échoue |
 | T4 | Solde suffisant ; solde insuffisant ; niveau maximum ; identifiant inconnu |
@@ -70,8 +99,9 @@ de relire le résultat depuis le terminal après exécution.
 - Roblox Studio ne peut pas être piloté depuis le terminal : les tests des
   niveaux 4 à 7 sont exécutés par le propriétaire, qui en rapporte le
   résultat.
-- `luau-lsp analyze` vérifie syntaxe et types, mais n'exécute pas le code :
-  les tests ne tournent que dans Studio.
+- `luau-lsp analyze` vérifie syntaxe et types, mais n'exécute pas le code.
+- Lune n'est pas Roblox : il exécute le même Luau, mais sans API Roblox.
+  Un résultat sous Lune ne remplace pas une exécution dans Studio.
 - Les limites de requêtes et la latence réelles du DataStore ne sont pas
   reproduites par un DataStore simulé.
 - L'émulateur d'appareils ne mesure pas les performances d'un vrai

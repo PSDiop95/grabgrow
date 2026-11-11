@@ -146,3 +146,82 @@ propriétaire), ACCEPTÉE, REMPLACÉE.
   modifié. Les fourchettes de revenu cible par minute (4.2) sont
   inchangées et restent à confronter aux mesures en T7.
 - **Affecte :** Bible économique 3.2, 3.6, 4.2, 20.
+
+## D-008 — Règles d'intégrité des profils chargés
+
+- **Date :** 2026-11-11
+- **Statut :** ACCEPTÉE (validation du propriétaire, 2026-11-11)
+- **Termes validés :** profil corrompu = joueur bloqué ; données originales
+  jamais écrasées ni réparées automatiquement ; données conservées pour une
+  récupération manuelle ; erreurs journalisées.
+- **Portée de « jamais réparées » (lecture de Claude, à confirmer) :** elle
+  vise les profils refusés (type incorrect, structure illisible, version
+  future), qui restent intacts dans le DataStore. Les ajustements exigés
+  par le prompt T1 (« ajouter les champs manquants », « borner les
+  niveaux ») restent appliqués à un profil lisible et sont réécrits dans le
+  DataStore dès le chargement, journalisés ligne par ligne. Si le
+  propriétaire veut aussi conserver l'original dans ce cas, il faut une
+  décision complémentaire (par exemple refuser au lieu de borner).
+- **Contexte :** l'architecture (7.4) demande à la fois de remplacer les
+  valeurs invalides par des valeurs sûres et de ne jamais écraser
+  silencieusement une sauvegarde illisible. Le schéma contient en outre
+  Magnet, Boots et Multiplier, absents de `UpgradeConfig` (hors MVP).
+- **Décision :**
+  - Champ ou section manquant : valeur par défaut ajoutée.
+  - Nombre hors bornes (niveau, solde négatif, décimale) : borné.
+  - Type incorrect, NaN, structure illisible : profil refusé
+    (`CorruptData`), rien n'est écrit, le joueur est expulsé.
+  - Version future : refus (`UnsupportedVersion`).
+  - Clés inconnues, dont les ressources absentes de `ResourceConfig` :
+    conservées.
+  - Toute réparation est journalisée.
+  - Bornes des niveaux hors MVP : 10, d'après la Bible 5.4 à 5.6, dans
+    `DataConfig.NonMvpUpgradeMaxLevels`. Backpack et Grabber restent bornés
+    par `UpgradeConfig`.
+  - Niveaux initiaux comparés aux configurations et à la Bible : identiques
+    au schéma D-006, aucune valeur modifiée.
+- **Justification :** une valeur bornée reste plausible ; une valeur de
+  mauvais type signale un défaut de code ou une édition manuelle, qu'une
+  réparation automatique masquerait en détruisant l'original.
+- **Conséquences :** un joueur au profil corrompu est bloqué jusqu'à
+  correction manuelle. Le nombre de niveaux hors MVP est écrit à deux
+  endroits (Bible et `DataConfig`) : à ramener dans `UpgradeConfig` quand
+  ces améliorations seront implémentées.
+- **Affecte :** `DataSchema`, `DataConfig`, `docs/DATA_PERSISTENCE.md`.
+
+## D-009 — Persistance : verrou de session, magasin injectable, Lune
+
+- **Date :** 2026-11-11
+- **Statut :** ACCEPTÉE (validation du propriétaire, 2026-11-11 ; Lune
+  validé pendant T1)
+- **Termes validés :** expiration du verrou après 180 s en cas de crash ;
+  renouvellement pendant une session active ; vérification de propriété
+  avant chaque sauvegarde et libération ; aucune reprise tant que le verrou
+  est valide.
+- **Contexte :** T1 doit protéger un profil contre deux serveurs
+  simultanés et se tester sans DataStore réel. Aucun moteur Luau n'était
+  disponible en terminal : les tests ne tournaient que dans Studio, lancés
+  à la main.
+- **Décision :**
+  - Aucune bibliothèque externe (ProfileStore, etc.) : service maison,
+    limité au besoin du MVP.
+  - Valeur stockée `{ profile, session }` ; lecture et écriture uniquement
+    par `UpdateAsync` ; verrou de 180 s renouvelé à chaque sauvegarde
+    (60 s) ; un verrou valide n'est jamais remplacé.
+  - `PlayerDataService.new(dépendances)` : magasin, horloge, attente et
+    identifiant de serveur injectés. API par `UserId`, pas par `Player`.
+  - `GetData` retourne une copie ; `Update` est la seule voie de
+    modification et valide le résultat contre le schéma.
+  - Studio : magasin en mémoire par défaut, sinon DataStore
+    `GrabAndGrow_PlayerData_v1_Studio`. Jamais le DataStore de production.
+  - Lune 0.11.1 (via Rokit) exécute les tests en terminal avec
+    `tools/run_tests.luau`, qui simule `game`, `script` et `require`.
+- **Justification :** la sécurité des données prime ; un service court et
+  testé est plus simple à maîtriser pour un développeur seul qu'une
+  dépendance. Lune rend les tests exécutables sans action manuelle.
+- **Conséquences :** un joueur attend jusqu'à 180 s après un crash serveur.
+  Lune est un outil de développement, absent du jeu. D-005 reste valable
+  (pas de framework de test) ; sa limite « tests uniquement dans Studio »
+  est levée pour la logique pure.
+- **Affecte :** `PlayerDataService`, `Bootstrap`, `rokit.toml`,
+  `tools/run_tests.luau`, `docs/tests/TEST_STRATEGY.md`.

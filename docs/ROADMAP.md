@@ -1,6 +1,6 @@
 # GRAB & GROW — Roadmap
 
-Dernière mise à jour : 2026-11-10
+Dernière mise à jour : 2026-11-11
 
 Phasage du MVP repris de l'architecture technique (section 20, T0 à T8).
 Le calendrier 10 semaines du GDD (section 20) reste la cible commerciale,
@@ -15,7 +15,7 @@ réellement exécuté. État détaillé : `PROJECT_STATUS.md`.
 | Phase | Livrable | Critère de validation | État |
 |---|---|---|---|
 | T0 | Structure du projet et configurations | Projet organisé, lancement sans erreur dans Studio | Terminé le 2026-11-10 — analyse Luau propre, `ConfigTests : OK` dans Studio |
-| T1 | Profil joueur et sauvegarde | Chargement, sauvegarde, reconnexion, pas d'écrasement | À faire |
+| T1 | Profil joueur et sauvegarde | Chargement, sauvegarde, reconnexion, pas d'écrasement | Code et tests terminés le 2026-11-11 (44 cas OK sous Lune et dans Studio) — commité localement ; sauvegarde auto, sauvegarde de sortie et DataStore réel **non vérifiés** (V-01 à V-05) |
 | T2 | Collecte et inventaire | Collecte validée serveur, sac limité | À faire |
 | T3 | Vente et Coins | Transaction fiable, inventaire vidé correctement | À faire |
 | T4 | Améliorations (Backpack, Grabber) | Achats validés côté serveur | À faire |
@@ -24,10 +24,12 @@ réellement exécuté. État détaillé : `PROJECT_STATUS.md`.
 | T7 | Équilibrage MVP | Première session compréhensible et satisfaisante | À faire |
 | T8 | Préparation publication | Tests privés concluants | À faire |
 
-## Prochaine phase : T1
+## Prochaine phase : T2
 
-Profil joueur et sauvegarde. Schéma : `decisions/TECHNICAL_DECISIONS.md`,
-D-006. Démarrage soumis à validation du propriétaire.
+Collecte et inventaire, par-dessus `PlayerDataService.Update`
+(`DATA_PERSISTENCE.md`). Démarrage soumis à la validation de T1 par le
+propriétaire. D-008 et D-009 acceptées ; la persistance réelle
+reste à vérifier (`PROJECT_STATUS.md`, V-01 à V-05).
 
 ## Après le MVP (ne pas commencer avant validation de T0 à T8)
 
