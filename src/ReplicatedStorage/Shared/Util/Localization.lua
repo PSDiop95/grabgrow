@@ -73,6 +73,13 @@ local STRINGS: { [string]: { [string]: string } } = {
 		["world.unlocked_toast"] = "World unlocked!",
 		["world.coming_soon"] = "Content coming soon",
 		["world.failed"] = "Unlock failed. Nothing was spent.",
+		-- T5.2 : message de déblocage nommé, préférences audio et effets.
+		["world.unlocked_named"] = "{world} unlocked!",
+		["settings.title"] = "Settings",
+		["settings.sound"] = "Sound",
+		["settings.reduced_effects"] = "Reduced effects",
+		["settings.on"] = "On",
+		["settings.off"] = "Off",
 	},
 	fr = {
 		["resource.green_leaf"] = "Feuille",
@@ -133,6 +140,12 @@ local STRINGS: { [string]: { [string]: string } } = {
 		["world.unlocked_toast"] = "Monde débloqué !",
 		["world.coming_soon"] = "Contenu à venir",
 		["world.failed"] = "Déblocage impossible. Rien n'a été dépensé.",
+		["world.unlocked_named"] = "{world} débloqué !",
+		["settings.title"] = "Paramètres",
+		["settings.sound"] = "Son",
+		["settings.reduced_effects"] = "Effets réduits",
+		["settings.on"] = "Activé",
+		["settings.off"] = "Désactivé",
 	},
 }
 

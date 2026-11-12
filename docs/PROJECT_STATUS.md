@@ -1,6 +1,6 @@
 # GRAB & GROW — État du projet
 
-Dernière mise à jour : 2026-11-12 (T5.1 HUD clôturé)
+Dernière mise à jour : 2026-11-12 (T5.2 feedback clôturé)
 
 ## Résumé
 
@@ -88,6 +88,8 @@ src/
     Util/SaleValue.lua               Formule de vente partagée (T3), Multiplier (T4)
     Util/UpgradeMath.lua             Lecture des tables d'amélioration (T4)
     Util/BagDisplay.lua              États d'affichage du sac (T5.1)
+    Util/FeedbackRules.lua           Règles des retours audio/visuels (T5.2)
+    Config/FeedbackConfig.lua        Sons, volumes, budgets d'effets (T5.2)
     Remotes/Remotes.lua              RemoteEvents et codes de résultat (T2)
   ServerStorage/ServerOnlyConfig/
     CollectionSecurityConfig.lua     Marges de sécurité de la collecte, non répliquées (T2)
@@ -99,6 +101,7 @@ src/
     Controllers/CollectionController.lua  Ciblage, entrées, retour visuel
     Controllers/SellController.lua   Prompt de vente, étiquette, retours (T3)
     Controllers/UpgradeController.lua Boutique et mondes (T4)
+    Controllers/FeedbackController.lua Sons, effets, préférences (T5.2)
   ServerScriptService/
     Bootstrap.server.lua             Point d'entrée serveur, magasin, branchement de la collecte
     Services/PlayerDataService.lua   Chargement, Update, sauvegarde, verrou de session
@@ -126,6 +129,7 @@ src/
     Tests/EconomyServiceTests.lua    Crédit, débit, arrondi du Multiplier (10 cas, T4)
     Tests/UpgradeServiceTests.lua    Achats, effets, concurrence, mondes, persistance, préréglages (23 cas, T4)
     Tests/HudTests.lua               États du sac, textes EN/FR (10 cas, T5.1)
+    Tests/FeedbackTests.lua          Retours audio/visuels (14 cas, T5.2)
     Tests/RunTests.server.lua        Lanceur, Studio uniquement
 tools/run_tests.luau                 Lanceur des tests en terminal (Lune)
 tools/studio/build_test_map.luau     Carte de test Green Valley (sol, spawn, 36 points, station de vente)
@@ -604,6 +608,69 @@ aucun schéma modifié. Détail : `phases/T5_PREFLIGHT.md`, section 9.
 | Sauvegarde du place de test (accord du propriétaire) | Studio | **Version 41** (Team Create), non publiée ; avant sauvegarde : 47 / 47 scripts identiques au dépôt, `useMemoryStore = true`, station présente, pas de `ResourceNodes` |
 | Commit local (accord du propriétaire) | Git | `feat(hud)` T5.1 ; aucun push |
 
+## Vérifications T5.2 — Feedback audio et visuel (2026-11-12, TERMINÉ)
+
+Clôturé par le propriétaire le 2026-11-12 : test sur téléphone réel
+réalisé et validé. Décisions D-8 et D-9 :
+recommandations en place (préférences en session, section dans la
+boutique), sans décision explicite consignée.
+
+Détail : `phases/T5_PREFLIGHT.md` section 10 ; sons :
+`assets/SOUND_MANIFEST.md`. Aucun service serveur, schéma, prix ou effet
+d'amélioration modifié (`git status` : seuls Localization, RunTests,
+ClientBootstrap, InventoryController, UpgradeController modifiés ;
+4 fichiers de code nouveaux).
+
+### Automatisées
+
+| Vérification | Résultat |
+|---|---|
+| Lune, 11 suites (`FeedbackTests` : 14 cas nouveaux) | Exécuté — `TOUS LES TESTS : OK` |
+| Contrôle négatif : 7 défauts introduits dans `FeedbackRules` (refus traité comme succès, anti-doublon supprimé, son coupé ignoré, montant = quantité, budget négatif, volume réduit ignoré, son à la baisse) | Exécuté — 7 / 7 détectés (1 à 13 échecs), code restauré |
+| `luau-lsp analyze` (strict) | Exécuté — 0 erreur, code de sortie 0 |
+| `rojo build` (fichier temporaire) | Exécuté — OK |
+| Suites dans Studio (Play) | Exécuté — `TOUS LES TESTS : OK` |
+| Synchronisation Rojo | Exécuté — 51 / 51 scripts identiques au dépôt (taille sans fins de ligne) |
+
+Les tests automatisés prouvent quel retour est demandé, pas le rendu réel
+d'un son.
+
+### Dans Studio, un joueur (Play, magasin en mémoire, demandes par les RemoteEvents réels)
+
+Compteurs relus sur les attributs de `PlayerGui.FeedbackFX`.
+
+| # | Vérification | Résultat |
+|---|---|---|
+| 1 | Collecte green_leaf, wood, stone | 3 `SUCCESS` → 3 sons `collect`, 3 éclats ; 3 instances par éclat ; 0 instance après 1 s |
+| 2 | Collecte refusée | Sac plein : `INVENTORY_FULL` → son `bag_full` seul ; aucun éclat |
+| 3-4 | Vente (U5) | `SUCCESS`, `coinsEarned = 60` ; `LastSaleAmount = 60`, toast « +60 Coins », journal serveur `+60` ; 6 pièces de (482, 271) vers l'icône Coins (378, 55), détruites en 0,7 s ; ligne Coins impulsion + blanc → or ; `sell` puis `coins` |
+| 5 | Vente sac vide | `NOTHING_TO_SELL` → `refuse` seul, aucun visuel |
+| 6 | Achats Backpack, Grabber, Magnet, Boots, Multiplier | 5 `SUCCESS` → 5 sons `upgrade`, 5 anneaux (détruits), toasts « avant → après » ; Magnet : 1 seul anneau 3D (A-40) |
+| 7 | Achats refusés | `INSUFFICIENT_FUNDS` ×3, `MAX_LEVEL` (U9) → `refuse`, aucun anneau |
+| 8 | Monde | `REQUIREMENT_NOT_MET` (U7_locked) → `refuse` ; `SUCCESS` (U7_ready) → son `world`, 12 confettis, contour ; toast « Golden Desert débloqué ! » ; rien ne reste après 1,4 s |
+| — | Sac presque plein / plein (U5 + 20 collectes) | 40/50 : 1 `bag_warning` ; 41–49 : aucun ; 50/50 : 1 `bag_full` ; 3 refus en 2,4 s : 1 son de plus, 2 doublons écartés |
+| 9 | Son désactivé | Groupe Master à 0 ; vente et collecte : 0 son joué (`IsPlaying` max 0), compteurs inchangés ; visuels conservés |
+| 10 | Effets réduits | Vente : 3 pièces au plus ; éclat de collecte sans déplacement ; montant inchangé (80 = journal serveur) |
+| — | Boutons Paramètres (clic souris réel) | Son : Activé → Désactivé (Master 0) → Activé |
+| 11 | Nettoyage | `ClientFeedbackEffects` et `FeedbackFX` à 0 descendant après chaque scénario ; `SoundService.SFX` : 9 sons, constant |
+| 12 | Doublons | Une réponse = un son et un visuel (compteurs) ; doublons simulés en Lune |
+| — | Erreurs | Aucune erreur du jeu ; seule : asset d'avatar 203785492 (étrangère) |
+
+Capture : section Paramètres de la boutique (dossier de session, non
+versionnée). Effets en mouvement **non capturés** (durée < 1 s, capture
+non synchronisable par l'outil).
+
+### Non exécutées
+
+| Vérification | Raison |
+|---|---|
+| Écoute des sons (volume, confort, superposition) | Couvert par le test sur téléphone réel validé par le propriétaire (2026-11-12) |
+| Téléphone en paysage, tablette (émulateur) | Émulateur non pilotable par MCP ; à faire par le propriétaire |
+| Téléphone réel | **Fait** : validé par le propriétaire (2026-11-12) |
+| Manette | Aucune manette (comme E8, U10) |
+| FPS sur appareil modeste | Non mesuré ; budget : ≤ 6 éclats (3 instances chacun), 1 volée de pièces à la fois, aucune boucle par frame ajoutée |
+| Deux joueurs | Effets locaux (chaque client ne réagit qu'à ses propres `ActionResult`) ; non testé en Local Server |
+
 ## Anomalies
 
 ### Résolues
@@ -702,6 +769,7 @@ Non vérifié sur DataStore réel :
 
 ## Prochaine étape
 
-1. T5.2 — Feedback (sons D-1, éclat de collecte, pièces à la vente,
-   impulsion à l'achat, option D-6) : à démarrer sur autorisation du
-   propriétaire. Aucun push.
+1. T5.3 — Première session (guidage contextuel non bloquant) : à
+   démarrer sur autorisation du propriétaire. Aucun push.
+2. Décisions D-8 (persistance des préférences) et D-9 (emplacement) à
+   confirmer ; recommandations appliquées en attendant.

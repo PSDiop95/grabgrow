@@ -392,7 +392,15 @@ local function onActionResult(result: any)
 			pendingUntil[result.worldId] = nil
 		end
 		if result.ok == true then
-			InventoryController.showSuccess("world.unlocked_toast")
+			-- T5.2 : message nommé ; effet et son par FeedbackController.
+			local world = if type(result.worldId) == "string" then WorldConfig[result.worldId] else nil
+			if world then
+				InventoryController.showSuccessText(Localization.fill("world.unlocked_named", localPlayer.LocaleId, {
+					world = translate(world.displayNameKey),
+				}))
+			else
+				InventoryController.showSuccess("world.unlocked_toast")
+			end
 		elseif code == Remotes.ResultCode.InsufficientFunds then
 			InventoryController.showMessage("shop.insufficient")
 		elseif code == Remotes.ResultCode.RequirementNotMet then
@@ -421,6 +429,8 @@ local function buildCard(list: Instance, upgradeId: string, order: number)
 
 	local iconInfo = ICONS[upgradeId] or { glyph = "?", color = COLOR_DISABLED }
 	local icon = Instance.new("TextLabel")
+	-- Nom lu par FeedbackController (éclat à l'achat, T5.2).
+	icon.Name = "Icon"
 	icon.Size = UDim2.new(0, 52, 0, 52)
 	icon.Position = UDim2.new(0, 10, 0.5, -26)
 	icon.BackgroundColor3 = iconInfo.color
@@ -436,6 +446,7 @@ local function buildCard(list: Instance, upgradeId: string, order: number)
 	name.Size = UDim2.new(1, -212, 0, 20)
 
 	local level = newLabel(card, "", 13, COLOR_MUTED)
+	level.Name = "Level"
 	level.Position = UDim2.new(0, 72, 0, 29)
 	level.Size = UDim2.new(1, -212, 0, 16)
 

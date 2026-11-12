@@ -250,6 +250,27 @@ ne vaut pas validation sur appareil réel.
 Pour chaque scénario : OK / KO, environnement réel utilisé, et, en cas de
 KO, l'action, le résultat observé et l'extrait d'Output ou une capture.
 
+## Tests manuels T5.2 (à faire par le propriétaire)
+
+Play dans Studio, puis émulateur (téléphone paysage, tablette), puis
+téléphone réel. Préréglages, côté serveur :
+`game.ServerStorage.StudioTestHooks.ApplyPreset:Invoke("U5")`.
+
+| # | Action | Attendu |
+|---|---|---|
+| F1 | Collecter une feuille, un bois, une pierre | Petit son doux, éclat coloré qui file vers le personnage, toast `+1` |
+| F2 | U5 puis collecter jusqu'à 40 / 50, puis 50 / 50 | Signal discret à 40 ; son court de refus à 50 ; maintenir « Prendre » : pas de répétition fatigante |
+| F3 | Vendre au stand | Son de pièces, pièces qui montent vers le solde, ligne Coins qui pulse, toast `+N Coins` = montant crédité |
+| F4 | Vendre sac vide | Son discret de refus, aucun effet positif |
+| F5 | U1 à U5 : acheter chaque amélioration | Son positif, anneau doré autour de l'icône, niveau en vert ; Magnet : anneau au sol seul |
+| F6 | U6 : acheter | « Pas assez de Coins » + son discret de refus |
+| F7 | U7_ready : débloquer Golden Desert | Son de victoire distinct, confettis, « Golden Desert débloqué ! » |
+| F8 | Boutique > Paramètres > Son : Désactivé ; refaire F1, F3 | Aucun son ; effets visuels présents |
+| F9 | Effets réduits : Activé ; refaire F1, F3, F5 | Sons plus faibles, moins de particules et de pièces, animations plus courtes ; retours toujours visibles |
+| F10 | Téléphone paysage et tablette | Pièces et confettis sans masquer « Prendre », saut, stick ; section Paramètres lisible et touchable |
+
+Les préférences sont mémorisées pour la session seulement (D-8).
+
 ## Lancer les tests automatisés (Studio)
 
 1. Ouvrir `GrabAndGrow.rbxl`.

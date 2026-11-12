@@ -105,6 +105,10 @@ local trackTween: Tween? = nil
 local fillTween: Tween? = nil
 local lastCompact: boolean? = nil
 local lastTier: string? = nil
+-- T5.2 : cible des pièces de la vente et mise en évidence du solde.
+local coinIcon: Frame
+local coinsRowScale: UIScale
+local coinsHighlightToken = 0
 
 -- Ressources dans un ordre stable (valeur de vente croissante).
 local resourceOrder: { string } = {}
@@ -240,6 +244,11 @@ local function buildCoinsRow(panel: Frame)
 	edge.Color = COLOR_COIN_EDGE
 	edge.Thickness = 2
 	edge.Parent = coin
+
+	coinIcon = coin
+	-- T5.2 : impulsion de la ligne Coins après une vente confirmée.
+	coinsRowScale = Instance.new("UIScale")
+	coinsRowScale.Parent = row
 
 	coinsLabel = newLabel(row, UDim2.new(0.55, -24, 1, 0), UDim2.new(0, 24, 0, 0), 18)
 	coinsLabel.Name = "Coins"
@@ -542,6 +551,28 @@ end
 function InventoryController.showSale(coinsEarned: number)
 	showToast(Localization.format("sell.gain", localPlayer.LocaleId, coinsEarned), COLOR_COINS)
 	pulsePanel()
+end
+
+-- Icône de la pièce du HUD (cible de l'effet de vente, T5.2).
+function InventoryController.getCoinIcon(): GuiObject
+	return coinIcon
+end
+
+-- Mise en évidence temporaire du solde (T5.2) : impulsion de la ligne et
+-- texte blanc qui revient à l'or. Purement visuel ; `subtle` : impulsion
+-- réduite (préférence « Effets réduits »).
+function InventoryController.highlightCoins(subtle: boolean)
+	coinsHighlightToken += 1
+	local token = coinsHighlightToken
+	coinsRowScale.Scale = if subtle then 1.06 else 1.15
+	TweenService:Create(coinsRowScale, TweenInfo.new(0.25, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { Scale = 1 }):Play()
+	coinsLabel.TextColor3 = COLOR_TEXT
+	task.delay(0.15, function()
+		if token ~= coinsHighlightToken then
+			return
+		end
+		TweenService:Create(coinsLabel, TweenInfo.new(0.4), { TextColor3 = COLOR_COINS }):Play()
+	end)
 end
 
 -- Appelé à chaque nouvel état reçu du serveur.

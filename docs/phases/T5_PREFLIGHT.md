@@ -1,7 +1,7 @@
 # T5 — HUD et feedback mobile : préflight
 
 Date : 2026-11-12. Statut : **préflight validé** (décisions D-1 à D-7 :
-recommandations acceptées, D-016) ; T5.1 terminé (section 9) ; T5.2 non commencé.
+recommandations acceptées, D-016) ; T5.1 terminé (section 9) ; T5.2 terminé (section 10) ; T5.3 non commencé.
 
 Critère de la phase (architecture 20, ROADMAP) : **boucle complète
 utilisable sur téléphone.**
@@ -200,3 +200,65 @@ tablette (Boutique) ; PC 16:9 (30 / 50). Dossier :
 1. Fait : téléphone réel OK (propriétaire, 2026-11-12).
 2. Fait (accord du propriétaire) : place de test sauvegardé en version 41
    (non publié), commit local ; aucun push.
+
+## 10. Lot T5.2 — Feedback audio et visuel (2026-11-12, TERMINÉ)
+
+Clôturé par le propriétaire le 2026-11-12 : téléphone réel validé.
+
+### Audit de départ
+
+| Événement | Source existante | Champs utilisés |
+|---|---|---|
+| Collecte réussie / refusée | `ActionResult` (`Collect`) | `ok`, `code`, `resourceId` (nœud), `resourceType`, `amount` |
+| Inventaire mis à jour | `StateUpdated` via `InventoryController.onStateChanged` | `inventory.used`, `inventory.capacity` → tier `BagDisplay` |
+| Vente / Coins crédités | `ActionResult` (`Sell`) puis `StateUpdated` | `ok`, `code`, `coinsEarned` |
+| Achat d'amélioration | `ActionResult` (`Upgrade`) | `ok`, `code`, `upgradeId`, `level` |
+| Déblocage de monde | `ActionResult` (`UnlockWorld`) | `ok`, `code`, `worldId` |
+
+Aucun RemoteEvent ajouté, aucun service serveur modifié.
+
+### Réalisé
+
+- `Shared/Config/FeedbackConfig` : 8 sons (compte Roblox, voir
+  `docs/assets/SOUND_MANIFEST.md`), volumes, durées, budgets d'effets.
+- `Shared/Util/FeedbackRules` (logique pure) : retour par réponse serveur
+  (positif seulement si `ok == true` et champs cohérents ; montant de vente
+  = `coinsEarned`), retours d'état du sac (à la hausse seulement),
+  anti-doublon par clé (0,3 s ; sac plein 1,5 s), budget d'effets,
+  volumes selon les préférences.
+- `Controllers/FeedbackController` : `SoundService/GrabGrowMaster` >
+  `SFX` (groupes), sons pré-créés et réutilisés (9 instances, aucune
+  création par événement) ; effets :
+  | Action | Effet | Son |
+  |---|---|---|
+  | Collecte | Copie néon du nœud qui rétrécit vers le joueur (0,3 s) + 8 particules (texture moteur par défaut) | `collect` |
+  | Presque plein / plein | (visuel T5.1 existant) | `bag_warning` / `bag_full` (+0,25 s) |
+  | Vente | 6 pièces du personnage vers l'icône Coins (0,45 s), impulsion et éclair blanc de la ligne Coins ; toast `+N Coins` existant | `sell`, puis `coins` |
+  | Amélioration | Anneau doré qui s'agrandit autour de l'icône, impulsion de l'icône, niveau en vert ; toast « avant → après » existant ; Magnet : anneau 3D A-40 seul | `upgrade` |
+  | Monde | Contour doré de la ligne, 12 confettis, toast nommé « Golden Desert débloqué ! » | `world` |
+  | Refus | Aucun visuel positif ; messages existants | `refuse` / `bag_full` |
+- Préférences D-6 : section « Paramètres » en bas de la boutique (Son :
+  Activé / Désactivé ; Effets réduits). Effets réduits : volume × 0,6,
+  3 particules, 3 pièces, 5 confettis, animations plus courtes, éclat sans
+  déplacement, pas d'anneau d'icône ; retours essentiels conservés.
+  Activé par défaut si `GuiService.ReducedMotionEnabled` ou qualité
+  graphique manuelle 1 à 3 (appareil modeste).
+- **Persistance des préférences : session seulement.** Le profil v1
+  contient déjà `settings.sfxEnabled`, mais aucun RemoteEvent ne permet de
+  le lire ou de l'écrire, et « Effets réduits » n'a pas de champ. Persister
+  demanderait un RemoteEvent et un traitement serveur (hors périmètre
+  T5.2), plus une migration pour « Effets réduits ». Décision D-8 ci-dessous.
+- Retouches d'interface : `InventoryController.getCoinIcon` /
+  `highlightCoins` ; `UpgradeController` : noms `Icon` / `Level`, toast de
+  déblocage nommé. Textes : `world.unlocked_named`, `settings.*` (EN/FR).
+
+### Décision à valider
+
+| # | Question | Options | Recommandation |
+|---|---|---|---|
+| D-8 | Persistance des préférences audio | a) session seulement (actuel) ; b) `sfxEnabled` persistant via un RemoteEvent `RequestSetting` (sans migration), « Effets réduits » en session ; c) b + champ `reducedEffects` (migration v1→v2) | a) pour T5, b) en T6 avec la revue serveur |
+| D-9 | Emplacement des préférences | a) section en bas de la boutique (actuel, aucun nouveau bouton sur l'écran) ; b) bouton ⚙ dédié | a) |
+
+### Tests
+
+Voir `docs/PROJECT_STATUS.md`, « Vérifications T5.2 ».
