@@ -1,6 +1,6 @@
 # GRAB & GROW — État du projet
 
-Dernière mise à jour : 2026-11-12 (T5.1 HUD : PARTIEL, Studio OK, téléphone réel restant)
+Dernière mise à jour : 2026-11-12 (T5.1 HUD clôturé)
 
 ## Résumé
 
@@ -579,7 +579,11 @@ touches injectées. Simulation : ni téléphone, ni émulateur, ni manette.
 - Deux joueurs réels (Local Server) : simulé seulement.
 - Magnet : effet vérifié (U3), non perçu en jeu par le propriétaire (A-40).
 
-## Vérifications T5.1 — HUD (2026-11-12, PARTIEL : téléphone réel restant)
+## Vérifications T5.1 — HUD (2026-11-12, TERMINÉ)
+
+**T5.1 est TERMINÉ** : clôturé par le propriétaire le 2026-11-12 après
+un test sur téléphone réel jugé OK (constat du propriétaire, détail des
+appareils non communiqué).
 
 Lot client seulement : aucun service serveur, aucune valeur économique,
 aucun schéma modifié. Détail : `phases/T5_PREFLIGHT.md`, section 9.
@@ -594,7 +598,8 @@ aucun schéma modifié. Détail : `phases/T5_PREFLIGHT.md`, section 9.
 | Synchronisation Rojo | Studio | Exécuté — 47 / 47 scripts identiques au dépôt |
 | Collecte, presque plein, plein, refus `INVENTORY_FULL`, vente, Boutique, doublons après réapparition | Studio, piloté par MCP | Exécuté — OK (détail : `phases/T5_PREFLIGHT.md`, section 9) |
 | Formats : PC 990 × 512, téléphone tactile 801 × 413, tablette 1179 × 819, PC 16:9 à l'échelle | Studio, émulateur | Exécuté — aucun chevauchement ; Boutique sous le sac |
-| Téléphone petit et grand à leurs proportions réelles | Émulateur | **Non exécuté** — réglage non appliqué par Studio (3 essais) ; téléphone réel recommandé |
+| Téléphone petit et grand à leurs proportions réelles | Émulateur | Non exécuté — réglage non appliqué par Studio (3 essais) |
+| Téléphone réel | Manuel, propriétaire | **OK** (constat du propriétaire, 2026-11-12) |
 | Défauts trouvés et corrigés : remplissage sous l'icône, contraste « Sac plein ! » | Studio | Corrigés et revérifiés |
 | Sauvegarde du place de test (accord du propriétaire) | Studio | **Version 41** (Team Create), non publiée ; avant sauvegarde : 47 / 47 scripts identiques au dépôt, `useMemoryStore = true`, station présente, pas de `ResourceNodes` |
 | Commit local (accord du propriétaire) | Git | `feat(hud)` T5.1 ; aucun push |
@@ -649,7 +654,7 @@ aucun schéma modifié. Détail : `phases/T5_PREFLIGHT.md`, section 9.
 | A-27 | Marges de sécurité de la collecte (4 studs, 0,1 s, 5 demandes/s) jamais mesurées avec une latence mobile réelle | **Ouverte, à traiter en T6** (D-012) : marges conservées comme hypothèses jusqu'aux tests sur mobile avec latence réelle |
 | A-28 | Collecte par toucher et collecte en maintien implémentées toutes les deux (GDD 5.1) | **Levée** le 2026-11-11 (propriétaire, D-012) : les deux modes sont conservés. Maintien mesuré sur émulateur (39 collectes en 60 s) ; toucher non mesuré |
 | A-29 | Aucun son ni animation de personnage à la collecte ; modèles de ressources provisoires | **Décidée** (D-012) : reportée à une phase dédiée à l'expérience utilisateur |
-| A-30 | Barre du sac affichée en pastille ronde à faible remplissage (largeur du remplissage inférieure à l'arrondi des coins) | **Corrigée en T5.1, vérifiée dans Studio** (2 / 50 : barre, plus de point rond) : remplissage à coins de 6 px, largeur minimale 6 px, inséré dans une piste de 26 px ; la pastille compacte est désormais un état voulu de la piste entière (sac < 25 %) |
+| A-30 | Barre du sac affichée en pastille ronde à faible remplissage (largeur du remplissage inférieure à l'arrondi des coins) | **Corrigée en T5.1, validée** (Studio, 2 / 50 : barre, plus de point rond ; téléphone réel OK, propriétaire) : remplissage à coins de 6 px, largeur minimale 6 px, inséré dans une piste de 26 px ; la pastille compacte est désormais un état voulu de la piste entière (sac < 25 %) |
 
 ## Vérifications avant le commit D-008 (2026-11-11)
 
@@ -694,10 +699,9 @@ Non vérifié sur DataStore réel :
 ## Décisions en attente
 
 1. Push GitHub des commits T1, T2 et T3 (non autorisé à ce jour).
-2. Validation de T5.1 après les vérifications Studio.
 
 ## Prochaine étape
 
-1. T5.1 : test sur téléphone réel (petit et grand écran, paysage) pour
-   clôturer le lot. Place version 41 et commit local faits ; aucun push.
-   T5.2 non commencé.
+1. T5.2 — Feedback (sons D-1, éclat de collecte, pièces à la vente,
+   impulsion à l'achat, option D-6) : à démarrer sur autorisation du
+   propriétaire. Aucun push.

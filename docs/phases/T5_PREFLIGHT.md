@@ -1,7 +1,7 @@
 # T5 — HUD et feedback mobile : préflight
 
 Date : 2026-11-12. Statut : **préflight validé** (décisions D-1 à D-7 :
-recommandations acceptées, D-016) ; T5.1 implémenté, PARTIEL (section 9).
+recommandations acceptées, D-016) ; T5.1 terminé (section 9) ; T5.2 non commencé.
 
 Critère de la phase (architecture 20, ROADMAP) : **boucle complète
 utilisable sur téléphone.**
@@ -104,7 +104,9 @@ refonte serveur. Aucun changement de règle de jeu.
 - Téléphone réel : parcours « nouveau joueur » complet, portrait et paysage.
 - Manette : si disponible.
 
-## 9. Lot T5.1 — HUD (2026-11-12, PARTIEL)
+## 9. Lot T5.1 — HUD (2026-11-12, TERMINÉ)
+
+Clôturé par le propriétaire le 2026-11-12 : test sur téléphone réel OK.
 
 ### Audit de départ
 
@@ -193,9 +195,8 @@ Avant (code T4) : PC 30 / 50, PC 2 / 50 (point rond A-30). Après : PC
 tablette (Boutique) ; PC 16:9 (30 / 50). Dossier :
 `~/.claude/projects/D--Projet-grabgrow/<session>/tool-results/`.
 
-### Reste à faire avant clôture
+### Clôture
 
-1. Téléphone réel (petit et grand écran, paysage) : lisibilité du détail en
-   13 px, sac, Boutique, Prendre ; à faire au plus tard en T5.5.
+1. Fait : téléphone réel OK (propriétaire, 2026-11-12).
 2. Fait (accord du propriétaire) : place de test sauvegardé en version 41
    (non publié), commit local ; aucun push.
