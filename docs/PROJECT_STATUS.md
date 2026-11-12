@@ -28,7 +28,7 @@ dans les journaux : E1, E2, E5 vérifiés ; E9 (DataStore de test) vérifié
 par Claude ; E3, E4, E6 (2 joueurs, ventes simultanées), E8 et rendu 3D
 exécutés par Claude et validés par le propriétaire (2026-11-12) ; E7
 (émulateur mobile) : toucher réel validé en portrait et paysage ; E8
-partiel accepté (manette physique reportée) ; A-34 et A-35 corrigés. Place de test sauvegardé avec la station corrigée (version 24,
+partiel accepté (manette physique reportée) ; A-34 et A-35 corrigés. Place de test sauvegardé avec la station corrigée et A-35 (version 25,
 non publiée, 2026-11-12). Commit local T3 autorisé et créé (aucun push).
 Copie locale `GrabAndGrow.rbxl` rafraîchie et vérifiée.
 D-014 **validée** par le propriétaire (2026-11-11) ; paramètres de sécurité
@@ -472,7 +472,8 @@ reportée).
 |---|---|
 | Synchronisation Rojo, avant sauvegarde | Mode Edit ; 35 / 35 scripts du place identiques au dépôt (empreinte, fins de ligne normalisées), aucun script en trop ou manquant ; `DataConfig` `useMemoryStore = true` |
 | Station dans le place | `Workspace.SellZones.GreenValley` : `SellZonePad` (`GreenValley_Main`), comptoir, poteaux, toit, pièce ; 36 points de spawn ; pas de `ResourceNodes` (nœuds d'exécution absents) |
-| `save_place` | **Version 24** sur Roblox (Team Create), non publiée |
+| `save_place` | **Version 24** sur Roblox (Team Create), non publiée (station, A-34) |
+| `save_place` après A-35 (commit `e2090c4`) | 35 / 35 scripts du place identiques au dépôt (empreinte), `useMemoryStore = true`, station présente, pas de `ResourceNodes` ; **version 25** sur Roblox (Team Create), non publiée. Copie locale `GrabAndGrow.rbxl` non rafraîchie (sans A-35, non versionnée) |
 | Profil DataStore de test | Non touché (11 Coins, 2 feuilles) |
 | Copie locale `GrabAndGrow.rbxl` | Rafraîchie par le propriétaire (2026-11-12 10:37 UTC, 141 092 octets). Contrôle Lune : `SellZones.GreenValley` complet (`SellZonePad` `GreenValley_Main`), 36 points de spawn (16 / 12 / 8), pas de `ResourceNodes`, 35 / 35 scripts identiques au dépôt (empreinte), `DataConfig` compris (`useMemoryStore = true`) |
 
