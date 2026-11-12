@@ -22,7 +22,6 @@ local Workspace = game:GetService("Workspace")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Config = Shared:WaitForChild("Config")
-local GameConfig = require(Config:WaitForChild("GameConfig"))
 local ResourceConfig = require(Config:WaitForChild("ResourceConfig"))
 local UpgradeConfig = require(Config:WaitForChild("UpgradeConfig"))
 local Remotes = require(Shared:WaitForChild("Remotes"):WaitForChild("Remotes"))
@@ -81,7 +80,7 @@ end
 
 local function collectRange(): number
 	local state = InventoryController.getState()
-	return if state then state.collectRangeStuds else GameConfig.Collection.baseRangeStuds
+	return if state then state.collectRangeStuds else UpgradeConfig.Magnet.levels[1].value
 end
 
 local function setTarget(part: BasePart?)

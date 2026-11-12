@@ -1,6 +1,6 @@
 # GRAB & GROW — Stratégie de tests
 
-Dernière mise à jour : 2026-11-11
+Dernière mise à jour : 2026-11-12 (T4)
 
 Règle : un test n'est « réussi » que s'il a été exécuté. Chaque rapport de
 lot distingue tests automatisés, tests manuels et vérifications non faites.
@@ -11,8 +11,8 @@ lot distingue tests automatisés, tests manuels et vérifications non faites.
 |---|---|---|---|
 | 1. Analyse statique | Syntaxe, types `--!strict` | `luau-lsp analyze` en terminal ; Script Analysis de Studio | Oui |
 | 2. Configurations | Cohérence structurelle et références croisées | `Tests/ConfigTests.lua` | Oui |
-| 3. Logique serveur | Règles des services (collecte, vente, achat, migration) | Modules de test en Luau pur, dépendances simulées | Oui pour T1 (`DataSchemaTests`, `PlayerDataServiceTests`) T2 (`InventoryServiceTests`, `ResourceSpawnerTests`, `CollectionServiceTests`) et T3 (`SellServiceTests`) |
-| 4. Intégration | Remotes, validation, rate limit | Play dans Studio piloté par MCP : demandes envoyées depuis le client, réponses lues sur `ActionResult` | Oui (T2 et T3, un joueur) |
+| 3. Logique serveur | Règles des services (collecte, vente, achat, migration) | Modules de test en Luau pur, dépendances simulées | Oui pour T1 (`DataSchemaTests`, `PlayerDataServiceTests`) T2 (`InventoryServiceTests`, `ResourceSpawnerTests`, `CollectionServiceTests`) et T3 (`SellServiceTests`) et T4 (`EconomyServiceTests`, `UpgradeServiceTests`) |
+| 4. Intégration | Remotes, validation, rate limit | Play dans Studio piloté par MCP : demandes envoyées depuis le client, réponses lues sur `ActionResult` | Oui (T2, T3 et T4, un joueur) |
 | 5. Multijoueur | Isolation des données, double collecte | Simulation : deux `UserId` sur le même service (Lune). Réel : Studio, Test > Local Server, 2 joueurs ou plus | Simulé : oui. Réel : oui pour T2 (2 joueurs, propriétaire) |
 | 6. Sauvegarde | Nouveau profil, reconnexion, échecs, migration | `MemoryDataStore` injecté dans `PlayerDataService` ; puis expérience de test avec accès API, pilotée par le serveur MCP Roblox Studio | Simulé : oui. DataStore réel : V-01, V-02, V-03, V-05 faits ; V-04 partiel (`PROJECT_STATUS.md`) |
 | 7. Appareils | Lisibilité, tactile, performances | Émulateur d'appareils de Studio, puis téléphone réel | À partir de T5 |
@@ -45,12 +45,14 @@ aucun échec. Résultat attendu :
 
 ```text
 [Tests] ConfigTests : OK
-[Tests] DataSchemaTests : OK (17 cas)
+[Tests] DataSchemaTests : OK (18 cas)
 [Tests] PlayerDataServiceTests : OK (35 cas)
 [Tests] InventoryServiceTests : OK (14 cas)
 [Tests] ResourceSpawnerTests : OK (9 cas)
 [Tests] CollectionServiceTests : OK (22 cas)
 [Tests] SellServiceTests : OK (25 cas)
+[Tests] EconomyServiceTests : OK (10 cas)
+[Tests] UpgradeServiceTests : OK (22 cas)
 [Tests] TOUS LES TESTS : OK
 ```
 
@@ -152,6 +154,102 @@ vente présente), `useMemoryStore = true` sauf en E.
 | E8 | Manette (si disponible) | Bouton Y à portée | Vente ; X reste la collecte |
 | E9 | Reconnexion sur DataStore de test (accord préalable requis) | `useMemoryStore = false`, collecter, vendre, collecter 2, Stop, Play | Coins, statistiques et sac restaurés ; remettre `true` et vérifier avant toute sauvegarde du place |
 
+## Tests manuels T4 (à faire par le propriétaire)
+
+### Préparation
+
+1. Place de test ouvert (`Test de prise et de croissance`), `rojo serve`
+   actif, plugin connecté. Attendre quelques secondes après une
+   modification de `src/` avant Play : un Play lancé trop tôt tourne sur
+   l'ancienne version.
+2. `DataConfig.Studio.useMemoryStore = true` pour U1 à U7, U9, U10.
+3. Play (F5). Output attendu : `[Tests] TOUS LES TESTS : OK` et
+   `[StudioTest] préréglages disponibles : ...`.
+4. Préréglage : barre de commande de Studio, **contexte Serveur** (bascule
+   Client/Serveur de l'onglet Test), pendant Play :
+
+```lua
+game.ServerStorage.StudioTestHooks.ApplyPreset:Invoke("U1")
+```
+
+Le préréglage remet le profil à zéro (solde, niveaux, mondes, sac,
+statistiques) puis fixe l'état du scénario ; Output :
+`[StudioTest] <joueur> : préréglage U1 appliqué (...)`. Outil Studio
+uniquement (`Systems/StudioTestPresets`) : absent d'un serveur publié,
+inaccessible au client, aucun paramètre économique modifié.
+
+| Préréglage | État |
+|---|---|
+| `reset` | Nouveau joueur |
+| `U1` | 100 Coins |
+| `U2` | 150 Coins |
+| `U3` | 200 Coins |
+| `U4` | 250 Coins |
+| `U5` | 300 Coins, sac : 10 Feuille, 10 Bois, 10 Pierre (base 60 Coins) |
+| `U6` | 50 Coins |
+| `U7_locked` | 1 500 Coins, Backpack 4 |
+| `U7_ready` | 1 500 Coins, Backpack 5 |
+| `U8` | 1 000 Coins, Backpack 5, Grabber 2, Magnet 1, Boots 2, Multiplier 2, Golden Desert débloqué, sac 3 Feuille + 2 Bois |
+| `U9` | 500 Coins, Backpack 3, Grabber 10 (MAX) |
+
+Mesures facultatives, barre de commande en **contexte Client** :
+
+```lua
+-- Distance à la ressource disponible la plus proche (U3)
+local root = game.Players.LocalPlayer.Character.HumanoidRootPart local best = math.huge for _, p in workspace.ResourceNodes:GetDescendants() do if p:IsA("BasePart") and p:GetAttribute("Available") then best = math.min(best, (p.Position - root.Position).Magnitude) end end print("distance", best)
+```
+
+```lua
+-- Collectes réussies pendant 20 s (U2)
+local n = 0 local c = game.ReplicatedStorage.Remotes.ActionResult.OnClientEvent:Connect(function(r) if r.action == "Collect" and r.ok then n += 1 end end) task.wait(20) c:Disconnect() print("collectes en 20 s", n)
+```
+
+```lua
+-- Vitesse appliquée (U4)
+print("WalkSpeed", game.Players.LocalPlayer.Character.Humanoid.WalkSpeed)
+```
+
+### Scénarios
+
+Environnement : **Studio** = Play sur PC ; **Émulateur** = Test > Device
+de Studio (simulation, pas un téléphone) ; **Appareil réel** = téléphone ;
+**Manette physique** = manette branchée. Un résultat obtenu en simulation
+ne vaut pas validation sur appareil réel.
+
+| # | Environnement | Préréglage | Action | Attendu |
+|---|---|---|---|---|
+| U1 | Studio | `U1` | Boutique (bouton ou B) > Backpack ; collecter jusqu'au plein | Toast « Amélioré ! » ; Coins 0 ; sac `x / 75` ; plein à 75, rien perdu |
+| U2 | Studio | `U2` | Mesure 20 s en maintien, acheter Grabber, nouvelle mesure 20 s | Achat −150 ; mesure 2 ≥ mesure 1 (cadence 0,75 → 0,70 s ; plafond ≈ 28 en 20 s, limité aussi par les ressources disponibles) |
+| U3 | Studio | `U3` | Approcher une ressource : noter la distance d'apparition du ciblage ; acheter Magnet ; recommencer | Avant : ciblage à ≤ 12 studs ; après : ≤ 14 studs ; −200 Coins |
+| U4 | Studio | `U4` | Acheter Boots ; mesure vitesse ; réinitialiser le personnage (Échap > Réinitialiser) ; mesure | 16 → 16,5 ; 16,5 après réapparition ; −250 Coins |
+| U5 | Studio | `U5` | Vendre au stand ; noter le gain ; `U5` de nouveau ; acheter Multiplier ; vendre | 1re vente : +60 ; après achat (solde 0) : +63 ; Output `base 60 x1.05` |
+| U6 | Studio | `U6` | Ouvrir la boutique, appuyer sur chaque bouton | Boutons gris « Manque N » ; toast « Pas assez de Coins » ; Coins 50 inchangés |
+| U7 | Studio | `U7_locked` puis `U7_ready` | Mondes > Golden Desert : appuyer ; puis `U7_ready`, appuyer deux fois | Verrouillé : statut rouge, refus, 1 500 inchangés. Prêt : « Confirmer ? », 2e appui : « Monde débloqué ! », Coins 0, « Débloqué · Contenu à venir » ; Frozen Peaks : « Sac à dos niv. 8 · 35000 Coins » |
+| U8 | Studio, DataStore de test | `U8` | Voir procédure ci-dessous | Après Stop puis Play : même état (Coins 1 000, niveaux, Golden Desert, vitesse 16,5, sac 5/180) |
+| U9a | Émulateur (simulation), paysage puis portrait | `U9` | Ouvrir, faire défiler, acheter Magnet, fermer (X) | Bouton Boutique au-dessus de Prendre (ou à sa gauche), sans chevauchement, en paysage comme en portrait (A-39) ; hors du stick et du saut ; cartes lisibles ; Grabber « MAX » doré ; Backpack « Manque 100 » ; Magnet payable ; défilement jusqu'aux mondes |
+| U9b | Appareil réel (si disponible) | `U9` (publication de test requise : hors Studio, préréglages absents) | Mêmes gestes | Même rendu ; icônes (glyphes) visibles (A-38) |
+| U10a | Émulateur de manette de Studio (simulation, si disponible) | `U9` | Croix haut, naviguer, A, B | Ouverture, sélection du 1er bouton, achat, fermeture |
+| U10b | Manette physique (si disponible) | `U9` | Idem | Idem |
+
+### Procédure U8 (DataStore de test uniquement)
+
+1. Stop. Dans `src/ReplicatedStorage/Shared/Config/DataConfig.lua` :
+   `useMemoryStore = false` (ou demander à Claude de le faire). Attendre
+   la synchronisation Rojo.
+2. Play. Output : `[Bootstrap] DataStore : GrabAndGrow_PlayerData_v1_Studio`
+   (DataStore de test ; Studio n'utilise jamais `GrabAndGrow_PlayerData_v1`).
+3. Préréglage `U8`. Noter l'état affiché.
+4. Stop. Output : `sauvegarde (fermeture serveur) OK`.
+5. Play. Output : `profil chargé` ; ouvrir la boutique et vérifier l'état
+   noté, vitesse 16,5.
+6. Stop. Remettre `useMemoryStore = true`, attendre la synchronisation,
+   vérifier dans Studio avant toute sauvegarde du place.
+
+### Bilan à transmettre
+
+Pour chaque scénario : OK / KO, environnement réel utilisé, et, en cas de
+KO, l'action, le résultat observé et l'extrait d'Output ou une capture.
+
 ## Lancer les tests automatisés (Studio)
 
 1. Ouvrir `GrabAndGrow.rbxl`.
@@ -190,7 +288,7 @@ de relire le résultat depuis le terminal après exécution.
 | T1 | Nouveau profil ; profil existant ; échec de chargement sans écrasement ; échec de sauvegarde ; reconnexion ; migration ; sauvegardes concurrentes ; verrou actif, expiré, renouvelé, libéré ; données corrompues ; version future ; fermeture serveur |
 | T2 | Collecte valide ; ressource inexistante ; ressource inactive ; trop loin ; trop rapide ; sac plein ; sac presque plein ; profil non chargé ; personnage absent ; payload invalide ou falsifié ; rejeu ; trajet implausible ; deux joueurs sur la même ressource ; inventaires indépendants ; réapparition ; quantité invalide ou négative ; persistance après reconnexion |
 | T3 | Vente d'une et de plusieurs ressources ; calcul exact ; sac vide ; quantités à zéro ; inconnues seules ; sac mixte ; statistiques (`totalCoinsEarned`, `totalSales`, `totalCoinsSpent` intact) ; payload invalide ou falsifié ; zone inconnue ; trop loin ; personnage absent ; profil non chargé, en chargement, libéré ; limite de fréquence ; ventes concurrentes ; vente pendant une sauvegarde ; échec et erreur de mutation sans perte ; dépassements numériques ; état client après vente ; vente puis collecte ; deux joueurs ; persistance après rechargement |
-| T4 | Solde suffisant ; solde insuffisant ; niveau maximum ; identifiant inconnu |
+| T4 | Achat de chaque amélioration ; débit exact ; fonds insuffisants ; niveau maximum ; effets réels (capacité, cadence, portée, vitesse et contrôle de trajet, Multiplier) ; état client ; achats répétés et coût cumulé ; achats concurrents ; deux joueurs ; statistiques avec ventes ; persistance et reconnexion ; payloads falsifiés ; profil en chargement, libéré, en fermeture ; limite de fréquence ; déblocage autorisé, refusé (niveau, fonds, ordre, déjà débloqué, inconnu) ; crédit et débit invalides ou en dépassement ; arrondi du Multiplier |
 | T6 | Remote à cadence excessive ; arguments de type invalide ; valeurs falsifiées ; isolation entre joueurs |
 
 ## Limites de l'environnement

@@ -3,8 +3,9 @@
 --   * le serveur (SellService) l'applique au profil autoritatif ;
 --   * le client l'utilise seulement pour afficher une estimation.
 --
--- Formule MVP (Bible économique 3.1) : SaleValue = somme(quantité × sellValue).
--- Aucun multiplicateur, bonus, taxe ni arrondi en T3.
+-- Formule (Bible économique 3.1) : base = somme(quantité × sellValue).
+-- T4 (D-015) : montant crédité = applyMultiplier(base, Multiplier), arrondi
+-- à l'entier inférieur, une fois par vente. Aucun bonus ni taxe.
 --
 -- Vendable = identifiant présent dans ResourceConfig, avec un sellValue
 -- entier >= 1, et une quantité entière >= 1. Les ressources inconnues de
@@ -86,6 +87,34 @@ function SaleValue.quote(resources: { [string]: number }): Quote
 		end
 	end
 	return quote
+end
+
+-- Multiplicateur de vente exprimé en centièmes entiers (1,05 -> 105), borné
+-- à [1, maxMultiplier]. Le calcul en centièmes évite les erreurs de
+-- flottant (20 × 1,15 = 22,999… en double précision). nil si invalide.
+function SaleValue.multiplierHundredths(multiplier: number, maxMultiplier: number): number?
+	if type(multiplier) ~= "number" or multiplier ~= multiplier or multiplier < 1 or multiplier == math.huge then
+		return nil
+	end
+	local capped = math.min(multiplier, maxMultiplier)
+	return math.floor(capped * 100 + 0.5)
+end
+
+-- Montant final d'une vente (D-015) : floor(total × multiplicateur), calculé
+-- une seule fois sur le total, en entiers. nil si le calcul dépasserait
+-- MAX_SAFE_INTEGER ou si une entrée est invalide.
+function SaleValue.applyMultiplier(total: number, multiplier: number, maxMultiplier: number): number?
+	if type(total) ~= "number" or total % 1 ~= 0 or total < 0 or total > SaleValue.MAX_SAFE_INTEGER then
+		return nil
+	end
+	local hundredths = SaleValue.multiplierHundredths(multiplier, maxMultiplier)
+	if hundredths == nil then
+		return nil
+	end
+	if total > math.floor(SaleValue.MAX_SAFE_INTEGER / hundredths) then
+		return nil
+	end
+	return (total * hundredths) // 100
 end
 
 -- a + b reste-t-il un entier exact ? (a, b >= 0)

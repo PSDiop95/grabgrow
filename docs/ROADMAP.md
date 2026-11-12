@@ -18,7 +18,7 @@ réellement exécuté. État détaillé : `PROJECT_STATUS.md`.
 | T1 | Profil joueur et sauvegarde | Chargement, sauvegarde, reconnexion, pas d'écrasement | **Validé avec réserves** le 2026-11-11 — V-01, V-02, V-03, V-05 validés sur DataStore réel ; V-04 partiel ; copie D-008 non vérifiée sur DataStore réel (`PROJECT_STATUS.md`, R-01 à R-04) |
 | T2 | Collecte et inventaire | Collecte validée serveur, sac limité | **Validé et clôturé** le 2026-11-11 — tests automatisés, Studio à 1 et 2 joueurs, émulateur mobile, reconnexion sur DataStore de test ; commit local. Risques ouverts pour T6 : A-26, A-27 (`PROJECT_STATUS.md`) |
 | T3 | Vente et Coins | Transaction fiable, inventaire vidé correctement | **Terminé** (clôturé le 2026-11-12) — E1–E7, E9 et rendu 3D validés, E8 partiel accepté (manette physique reportée) ; A-34 et A-35 corrigés ; place version 25 ; commits locaux, non poussés |
-| T4 | Améliorations (Backpack, Grabber) | Achats validés côté serveur | À faire |
+| T4 | Améliorations (5) et progression des mondes | Achats validés côté serveur | **PARTIEL** (2026-11-12) — implémenté, tests automatisés et parcours Studio OK ; tests manuels U1–U10 et commit en attente du propriétaire (D-015) |
 | T5 | HUD et feedback mobile | Boucle complète utilisable sur téléphone | À faire |
 | T6 | Tests multijoueurs et anti-exploit | Aucun exploit simple, aucune fuite de données | À faire |
 | T7 | Équilibrage MVP | Première session compréhensible et satisfaisante | À faire |
@@ -33,19 +33,18 @@ zone de vente provisoire, HUD Coins. D-014 validée (pas d'`EconomyService`
 avant T4 ; paramètres de sécurité provisoires, à réévaluer en T6).
 Clôturée le 2026-11-12 ; réserve : E8 sur manette physique reporté.
 
-Aucune phase en cours.
+## Phase en cours : T4
 
-## Prochaine phase : T4
-
-Améliorations Backpack et Grabber (premier débit de Coins, extraction de
-`CreditCurrency` / `DebitCurrency`). T3 clôturée ; ne commence qu'avec
-l'accord explicite du propriétaire.
+Améliorations et progression (`UPGRADES.md`, `PROGRESSION.md`, D-015) :
+`EconomyService`, `UpgradeService` (Backpack, Grabber, Magnet, Boots,
+Multiplier, achat x1), `WorldUnlockService` (quatre mondes, sans contenu),
+boutique client. Reste : tests manuels U1–U10, validation et commit.
 
 ## Après le MVP (ne pas commencer avant validation de T0 à T8)
 
-- Magnet, Boots, Multiplier ; achats x10 / x100 / MAX.
+- Achats x10 / x100 / MAX (Magnet, Boots, Multiplier faits en T4, D-015).
 - Wild Fruit, Green Crystal ; Grab Combo.
-- Golden Desert (contenu réel ; seule l'entrée verrouillée existe), Frozen Peaks, Mystic World.
+- Contenu réel de Golden Desert, Frozen Peaks, Mystic World (déblocage seul en T4).
 - Gems, Stars et Prestige.
 - Pets et œufs ; quêtes et succès ; événements coopératifs.
 - Monétisation (Game Pass, Developer Products).

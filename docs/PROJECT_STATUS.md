@@ -1,6 +1,6 @@
 # GRAB & GROW — État du projet
 
-Dernière mise à jour : 2026-11-12 (clôture de T3 — vente et Coins)
+Dernière mise à jour : 2026-11-12 (T4 — améliorations et progression, implémenté, PARTIEL)
 
 ## Résumé
 
@@ -33,9 +33,17 @@ non publiée, 2026-11-12). Commit local T3 autorisé et créé (aucun push).
 Copie locale `GrabAndGrow.rbxl` rafraîchie et vérifiée.
 D-014 **validée** par le propriétaire (2026-11-11) ; paramètres de sécurité
 de la vente validés provisoirement, à réévaluer en T6. Réserve acceptée :
-E8 sur manette physique reporté. T4 ne commence qu'avec l'accord explicite
-du propriétaire.
+E8 sur manette physique reporté.
 Détail : `SELLING.md` et « Vérifications T3 » ci-dessous.
+
+**T4 est IMPLÉMENTÉ, PARTIEL** (2026-11-12) : cinq améliorations
+achetables (Backpack, Grabber, Magnet, Boots, Multiplier), effets réels
+côté serveur, déblocage des quatre mondes (sans contenu), `EconomyService`,
+boutique client. Décisions du propriétaire au préflight : D-015 (périmètre
+étendu, Magnet décalé d'un niveau, Multiplier arrondi à l'inférieur, ordre
+strict des mondes). Tests automatisés (Lune et Studio) et parcours Studio à
+un joueur OK. Tests manuels U1 à U10 à faire par le propriétaire. Aucun
+commit. Détail : `UPGRADES.md`, `PROGRESSION.md`, « Vérifications T4 ».
 
 ### Réserves de T1
 
@@ -71,21 +79,24 @@ src/
   ReplicatedStorage/Shared/
     Config/GameConfig.lua            Paramètres globaux MVP
     Config/ResourceConfig.lua        green_leaf, wood, stone
-    Config/UpgradeConfig.lua         Backpack (16 niveaux), Grabber (10 niveaux)
-    Config/WorldConfig.lua           GreenValley, GoldenDesert (verrouillé, test)
+    Config/UpgradeConfig.lua         Cinq améliorations (Bible 5.2–5.6, T4)
+    Config/WorldConfig.lua           Quatre mondes ; seul GreenValley jouable (T4)
     Config/DataConfig.lua            Persistance : schéma v1, DataStore, reprises, verrou
     Util/TableUtil.lua               deepFreeze, deepCopy
     Util/Localization.lua            Textes en / fr par clé (provisoire, T2 ; vente T3)
-    Util/SaleValue.lua               Formule de vente partagée (T3)
+    Util/SaleValue.lua               Formule de vente partagée (T3), Multiplier (T4)
+    Util/UpgradeMath.lua             Lecture des tables d'amélioration (T4)
     Remotes/Remotes.lua              RemoteEvents et codes de résultat (T2)
   ServerStorage/ServerOnlyConfig/
     CollectionSecurityConfig.lua     Marges de sécurité de la collecte, non répliquées (T2)
     SellSecurityConfig.lua           Marges de sécurité de la vente, non répliquées (T3)
+    EconomySecurityConfig.lua        Limites des achats et déblocages (T4)
   StarterPlayer/StarterPlayerScripts/
     ClientBootstrap.client.lua       Point d'entrée client (T2)
     Controllers/InventoryController.lua   Affichage du sac
     Controllers/CollectionController.lua  Ciblage, entrées, retour visuel
     Controllers/SellController.lua   Prompt de vente, étiquette, retours (T3)
+    Controllers/UpgradeController.lua Boutique et mondes (T4)
   ServerScriptService/
     Bootstrap.server.lua             Point d'entrée serveur, magasin, branchement de la collecte
     Services/PlayerDataService.lua   Chargement, Update, sauvegarde, verrou de session
@@ -93,19 +104,25 @@ src/
     Services/CollectionService.lua   Validation serveur d'une collecte (T2)
     Services/RateLimitService.lua    Limite de fréquence par joueur et action (T2)
     Services/SellService.lua         Vente : validation et transaction unique (T3)
+    Services/EconomyService.lua      Crédit, débit, journal (T4)
+    Services/UpgradeService.lua      Achat des améliorations (T4)
+    Services/WorldUnlockService.lua  Déblocage des mondes (T4)
     Systems/ResourceSpawner.lua      Nœuds, états, réapparition (T2)
     Systems/ResourceNodes.lua        Points de spawn -> Parts du Workspace (T2)
     Systems/SellZones.lua            Zones de vente du Workspace (T3)
+    Systems/StudioTestPresets.lua    Préréglages des tests manuels U1–U10, Studio uniquement (T4)
     Systems/DataSchema.lua           Profil par défaut, intégrité, migrations
     Systems/MemoryDataStore.lua      Magasin en mémoire (tests, Studio)
     Systems/PlayerSession.lua        PlayerAdded, PlayerRemoving, sauvegarde auto, BindToClose
     Tests/ConfigTests.lua            Cohérence structurelle des configs
-    Tests/DataSchemaTests.lua        Schéma, intégrité, migrations (17 cas)
+    Tests/DataSchemaTests.lua        Schéma, intégrité, migrations (18 cas)
     Tests/PlayerDataServiceTests.lua Chargement, sauvegarde, sessions (27 cas)
     Tests/InventoryServiceTests.lua  Sac (14 cas)
     Tests/ResourceSpawnerTests.lua   Nœuds et limite de fréquence (9 cas)
     Tests/CollectionServiceTests.lua Collecte, anti-exploit, multijoueur simulé (22 cas)
     Tests/SellServiceTests.lua       Vente, invariants, concurrence, persistance (25 cas)
+    Tests/EconomyServiceTests.lua    Crédit, débit, arrondi du Multiplier (10 cas, T4)
+    Tests/UpgradeServiceTests.lua    Achats, effets, concurrence, mondes, persistance, préréglages (23 cas, T4)
     Tests/RunTests.server.lua        Lanceur, Studio uniquement
 tools/run_tests.luau                 Lanceur des tests en terminal (Lune)
 tools/studio/build_test_map.luau     Carte de test Green Valley (sol, spawn, 36 points, station de vente)
@@ -478,6 +495,87 @@ manette physique reporté (X et Y validés en simulation).
 | Profil DataStore de test | Non touché (11 Coins, 2 feuilles) |
 | Copie locale `GrabAndGrow.rbxl` | Rafraîchie par le propriétaire (2026-11-12 10:37 UTC, 141 092 octets). Contrôle Lune : `SellZones.GreenValley` complet (`SellZonePad` `GreenValley_Main`), 36 points de spawn (16 / 12 / 8), pas de `ResourceNodes`, 35 / 35 scripts identiques au dépôt (empreinte), `DataConfig` compris (`useMemoryStore = true`) |
 
+## Vérifications T4 (2026-11-12)
+
+### Automatisées
+
+| Vérification | Résultat |
+|---|---|
+| Lune (`lune run tools/run_tests.luau`) | Exécuté — `TOUS LES TESTS : OK` : 155 cas et ConfigTests (32 cas T4 nouveaux, 1 cas DataSchema nouveau) |
+| Mêmes suites dans Studio (Play, magasin en mémoire) | Exécuté — `TOUS LES TESTS : OK` |
+| `luau-lsp analyze` (strict, définitions Roblox) | Exécuté — 0 erreur, 0 avertissement |
+| `rojo build` (vers un fichier temporaire, copie locale intacte) | Exécuté — OK |
+| Synchronisation Rojo | Exécuté — nouveaux modules présents dans Studio ; `UpgradeController` identique au dépôt (19 042 octets) |
+| Contrôle négatif : débit supprimé ; portée et vitesse figées | Exécuté — 18 et 2 échecs détectés, code restauré |
+| Régressions T1, T2, T3 (suites existantes) | Exécuté — OK |
+
+### Dans Studio, un joueur (Play piloté par MCP, magasin en mémoire)
+
+| Vérification | Résultat |
+|---|---|
+| Achat Backpack sans fonds | `INSUFFICIENT_FUNDS`, rien dépensé |
+| Payload falsifié `{ upgradeId, price = 0, level = 16 }` | `INVALID_TARGET` |
+| Golden Desert et Frozen Peaks sans prérequis | `REQUIREMENT_NOT_MET` |
+| Collecte, 4 ventes (132 Coins), achat Backpack | `SUCCESS`, −100, solde 32, capacité 75, niveau 2 ; journal `motif Upgrade:Backpack, opération Upgrade-1` |
+| Suite de ventes, achat Boots | `SUCCESS`, −250 ; `Humanoid.WalkSpeed` 16 → 16,5 vu du client |
+| `ShopUI` créé côté client | Oui |
+
+Les avertissements « déplacement implausible » de ce parcours viennent du
+script de test (téléportation entre nœuds) : contrôle anti-exploit actif.
+
+### Préparation des tests manuels (2026-11-12, accord du propriétaire)
+
+- Préréglages de profil `StudioTestPresets` (reset, U1 à U9), branchés
+  seulement dans Studio (`ServerStorage.StudioTestHooks.ApplyPreset`) ;
+  testés en Lune (1 cas) et dans Studio : `U9`, `U8` appliqués, préréglage
+  inconnu refusé ; boutique client : « Manque 1500 », prix payables, Golden
+  Desert masqué (débloqué), Frozen Peaks « Débloquer » ; WalkSpeed 16,5.
+- Fiche U1 à U10 avec environnement (Studio, émulateur, appareil réel,
+  manette physique) et procédure U8 sur DataStore de test :
+  `tests/TEST_STRATEGY.md`.
+- Aucun paramètre économique modifié ; `GrabAndGrow.rbxl` non touché ;
+  `useMemoryStore = true`.
+
+### Scénarios U1 à U10 exécutés par Claude dans Studio (2026-11-12)
+
+Play sur PC (fenêtre 1630 × 734), préréglages `StudioTestPresets`. Achats
+et ventes envoyés par les RemoteEvents réels (même chemin serveur que
+l'interface) ; U7 et U9 par vrais clics souris (outil Studio) ; U10 par
+touches injectées. Simulation : ni téléphone, ni émulateur, ni manette.
+
+| # | Résultat | Constat |
+|---|---|---|
+| U1 | OK | −100, Coins 0, capacité 75 ; toast « Amélioré ! » ; 75 collectes réelles (MoveTo) : sac 75/75, « Sac plein ! », puis 2 refus `INVENTORY_FULL`, rien perdu |
+| U2 | OK | Sonde 2 ressources à 0,63 s d'écart : avant achat `SUCCESS,COOLDOWN`, après `SUCCESS,SUCCESS` ; cadence d'état 0,70 s ; −150. Mesure 20 s : 21 puis 21 (limitée par les déplacements, pas par la cadence) |
+| U3 | OK | Ressource à 12,60 studs : aucune cible avant, cible (`stone_002`) après ; portée 14 ; −200 |
+| U4 | OK | WalkSpeed 16 → 16,5 ; 16,5 après mort et réapparition ; vitesse mesurée 16,50 studs/s ; −250 |
+| U5 | OK | Vente +60 (`base 60 x1`) ; après achat (−300, solde 0) +63 (`base 60 x1.05`) |
+| U6 | OK | Boutons « Manque 50 à 250 » ; 5 × `INSUFFICIENT_FUNDS`, toast « Pas assez de Coins » ; Golden Desert `REQUIREMENT_NOT_MET` ; Coins 50 |
+| U7 | OK | Verrouillé : statut rouge, clics → `REQUIREMENT_NOT_MET`, toast « Verrouillé ». Prêt : 1er clic « Confirmer ? » sans envoi, 2e clic `SUCCESS`, « Monde débloqué ! », Coins 0, « Débloqué · Contenu à venir », Mondes 2/4 ; Frozen Peaks « Sac à dos niv. 8 · 35000 Coins » |
+| U8 | OK | DataStore de test `GrabAndGrow_PlayerData_v1_Studio` (`useMemoryStore = false` le temps du test, puis remis à `true`, vérifié dans Studio) : après Stop puis Play, même état (1 000 Coins, niveaux 5/2/1/2/2, Golden Desert, sac 5/180, 16,5) ; `lastSaveAt` 1794432687 → 1794490886 ; verrou précédent libéré. Aucune écriture en production |
+| U9a | OK | PC (Claude) : ouverture par clic, Grabber « MAX » doré, Backpack « Manque 100 », Magnet / Boots / Multiplier payables (verts), défilement molette jusqu'à Mystic World, achat Magnet `SUCCESS`, fermeture X. Émulateur paysage et portrait : testé par le propriétaire (2026-11-12), aucun défaut signalé (A-39) |
+| U9b | OK | Téléphone réel, propriétaire (2026-11-12), place de test publié (version T4, profil neuf, DataStore de l'expérience de test, option B acceptée) : rendu, icônes, placement des boutons, états « Manque N » OK. États MAX et payable non couverts sur appareil (couverts en Studio) |
+| U10a | PARTIEL | DPadUp ouvre, ButtonB ferme. Sélection du 1er bouton non testable : aucune manette connectée (`GamepadEnabled = false`, entrée vue comme clavier) |
+| U10b | REPORTÉ | Décision du propriétaire (2026-11-12) : manette non testée en T4 |
+
+### Non exécutées
+
+- U10 manette (sélection du 1er bouton, achat par A) : reporté par le
+  propriétaire (2026-11-12).
+
+### Contrôle du diff avant commit (2026-11-12)
+
+- Tables Backpack, Grabber, Magnet (décalage D-015), Boots, Multiplier et
+  coûts des 4 mondes identiques à la Bible (5.2 à 5.6, 6) ; Bible : notes
+  seulement, aucune valeur modifiée.
+- `useMemoryStore = true` ; noms des DataStores inchangés ; préréglages et
+  `StudioTestHooks` branchés seulement si `RunService:IsStudio()`.
+- Lune : TOUS LES TESTS OK ; luau-lsp strict : 0 erreur ; `git diff
+  --check` : propre. `GrabAndGrow.rbxl` non modifié.
+- Place de test publié par le propriétaire avec ce code (U9b, A-41).
+- Deux joueurs réels (Local Server) : simulé seulement.
+- Magnet : effet vérifié (U3), non perçu en jeu par le propriétaire (A-40).
+
 ## Anomalies
 
 ### Résolues
@@ -504,7 +602,11 @@ manette physique reporté (X et Y validés en simulation).
 | A-10 | Bible section 2 : « Capacité d'équipement initial : 1 Pet » contre « Pets équipables gratuits au départ : 2 » | Avant le lot Pets |
 | A-12 | Golden Desert exige niveau de sac ET Coins ; le GDD 7.3 déconseille les conditions simultanées | Avant l'ouverture réelle de Golden Desert |
 | A-14 | Les documents se citent sous `docs/GDD.md`, etc. ; noms réels `docs/GRAB_AND_GROW_*_v1.0.md` | Sans effet technique |
-| A-17 | Table Magnet de la Bible (niveau 1 gratuit à 12 studs) à réaligner sur `magnetLevel = 0` | Avec l'amélioration Magnet (hors MVP) |
+| A-17 | Table Magnet de la Bible (niveau 1 gratuit à 12 studs) à réaligner sur `magnetLevel = 0` | **Décidée** (D-015, propriétaire, 2026-11-12) : niveau k = ligne k + 1, maximum 9 ; note ajoutée à la Bible 5.4 |
+| A-36 | Projection : niveaux au-delà de 5 rentabilisés en dizaines d'heures tant que Green Valley est le seul monde jouable ; Golden Desert à ≈ 85 min (actif) | À mesurer en T7 (`PROGRESSION.md`) |
+| A-37 | `WalkSpeed` fixé par le serveur mais modifiable localement par un client tricheur ; la collecte reste bornée par la vitesse des Boots du profil | T6, avec A-26 |
+| A-40 | Magnet : achat sans effet perçu (retour du propriétaire, U3). Effet réel vérifié dans Studio (`U3` : ressource à 12,6 studs hors portée avant achat, collectée après) mais faible (+2 studs, valeur de la Bible) et sans retour visuel de la portée | Feedback (anneau de portée ou message « portée 12 → 14 ») à décider par le propriétaire ; aucun changement d'effet |
+| A-38 | Icônes de la boutique en glyphes Unicode (rendu OK sur un téléphone réel, U9b, 2026-11-12 ; autres appareils non vérifiés) ; noms de mondes identiques en anglais et en français | Phase UX (T5) |
 | A-18 | GDD 15.5 et 20 non alignés sur D-004 et D-006 ; l'exemple de l'architecture 8.1 indique encore Stone « Uncommon » | Prochaine révision des documents |
 | A-20 | Le prompt T1 cite `docs/GRAB_AND_GROW_ECONOMY_v1.0.1.md` ; le fichier réel est `..._v1.0.md` (contenu 1.0.1, en-tête encore « Version : 1.0 ») | Sans effet technique |
 | A-21 | `stats.playTimeSeconds` existe dans le schéma mais aucun système ne l'alimente | À décider avant T5 |
@@ -513,10 +615,12 @@ manette physique reporté (X et Y validés en simulation).
 | A-23 | `rojo serve` lancé avant T2 ne prenait pas en compte les nouvelles entrées de `default.project.json` (`ServerStorage`, `StarterPlayer`) | **Levée** le 2026-11-11 : `rojo serve` relancé, plugin reconnecté par le propriétaire ; dans Studio, 29 scripts identiques au dépôt (empreinte comparée), aucun doublon |
 | A-24 | La carte de test n'existait que dans le place ouvert, non enregistré | **Levée** le 2026-11-11 : carte reconstruite par script, place de test sauvegardé en version 15 (non publié), copie locale `GrabAndGrow.rbxl` contenant la carte vérifiée (18:59 UTC). Non versionnée dans Git (D-013) : sauvegarde de travail locale |
 | A-25 | Ressources inconnues de `ResourceConfig` conservées par D-008 | **Décidée** (propriétaire, 2026-11-11, D-012) : conservées, et comptées dans l'occupation du sac pour empêcher tout dépassement de capacité. Comportement actuel, documenté dans `COLLECTION.md`. Vente (T3, D-014) : jamais vendues ni supprimées ; `NOTHING_TO_SELL` si elles sont seules |
-| A-31 | `EconomyService` de l'architecture (5.4, 9.3) non créé : le crédit de la vente vit dans la transaction de `SellService` | **Décidée** (D-014, propriétaire, 2026-11-11) : extraction autorisée en T4, avec le premier débit |
+| A-31 | `EconomyService` de l'architecture (5.4, 9.3) non créé : le crédit de la vente vit dans la transaction de `SellService` | **Résolue en T4** (D-015) : `EconomyService.credit` / `debit`, utilisés par la vente, les achats et les déblocages |
 | A-32 | Distance de vente (10 studs), marge (4) et limite (rafale 3, 1/s) absentes de la Bible | **Validées provisoirement** (propriétaire, 2026-11-11, D-014) : configurables, à réévaluer en T6 |
 | A-33 | Pas de son ni d'effet de pièces à la vente (GDD 13.4) | Phase UX, avec A-29 |
 | A-34 | Près de la station, l'étiquette « Vente » (BillboardGui, décalage 9) apparaît derrière le panneau du sac en haut de l'écran : lisibilité réduite | **Corrigé en T3** (décision du propriétaire, 2026-11-12) : `SellController` masque l'étiquette tant que le prompt de vente est affiché (`PromptShown` / `PromptHidden`, sans boucle). Vérifié dans Studio : masquée à 6,2 studs, visible à 12,3 et 15,4 studs sans chevauchement du HUD ; vente F toujours OK (`NOTHING_TO_SELL`, sac vide). **Validé** par le propriétaire (2026-11-12) |
+| A-41 | Téléphone : le panneau du sac (en haut au centre) masque le texte du chat Roblox, en haut à gauche (constat du propriétaire, appareil réel, 2026-11-12) | **Corrigé en T4, validé** (téléphone réel, propriétaire, 2026-11-12) : essai en haut à droite refusé par le propriétaire (« le sac doit être centré et en haut au milieu », capture du 2026-11-12) ; 2e capture : sac monté dans la bande de la barre Roblox, zone annotée par le propriétaire (`IgnoreGuiInset = true`, 8 px du bord, toast juste dessous) ; sac en haut au centre, largeur réduite de 60 % à 45 % de l'écran (170 à 300 px, auparavant 200 à 320), ligne Coins réduite plutôt que tronquée ; `UpgradeController` place Boutique à gauche de Prendre si le sac gêne au-dessus. Vérifié dans Studio (705 × 280, bande 58 px) : sac centré (centre 352 / 352), à 8 px du bord réel, Boutique au-dessus de Prendre sans chevauchement pour les positions réalistes. **Reste** : chat ouvert sur téléphone, recouvrement réduit mais pas supprimé (fenêtre du chat ≈ 50 % de la largeur, valeur Roblox supposée) ; écran très bas, Boutique à gauche de Prendre peut toucher le coin du sac |
+| A-39 | Mobile paysage : bouton « Boutique » (bord droit, 38 % de la hauteur) posé sur le bouton « Prendre » (constat du propriétaire, émulateur, 2026-11-12) | **Corrigé en T4, validé** (U9a émulateur, propriétaire, 2026-11-12) : `UpgradeController` place Boutique juste au-dessus de Prendre (écart 12 px), ou à sa gauche si la place manque ; position fixe d'origine quand Prendre est masqué (PC). Vérifié dans Studio (positions de Prendre simulées, écran 705 × 280) : aucun chevauchement avec Prendre, bouton toujours à l'écran. Aucun chevauchement signalé |
 | A-35 | Mobile portrait : bouton « Prendre » placé à 190 px du bord droit, donc dans la zone du stick gauche sur un écran étroit (constat du propriétaire, émulateur) | **Corrigé en T3** (décision du propriétaire, 2026-11-12) : `CollectionController` place le bouton juste au-dessus du `JumpButton` de Roblox (positions suivies par événements, repli en bas à droite). Vérifié en portrait et en paysage, touchers réels du propriétaire : aucun chevauchement, collecte et vente OK. Acceptée par le propriétaire ; commit local autorisé |
 | A-26 | Position du personnage simulée par le client : le contrôle de trajet ne bloque que la téléportation entre deux collectes | **Ouverte, à traiter en T6** (D-012) : contrôle actuel conservé comme protection provisoire ; validation renforcée des déplacements côté serveur en T6. Concerne aussi la vente depuis T3 (D-014) : position falsifiée = vente à distance, sans gain de Coins |
 | A-27 | Marges de sécurité de la collecte (4 studs, 0,1 s, 5 demandes/s) jamais mesurées avec une latence mobile réelle | **Ouverte, à traiter en T6** (D-012) : marges conservées comme hypothèses jusqu'aux tests sur mobile avec latence réelle |
@@ -566,11 +670,12 @@ Non vérifié sur DataStore réel :
 
 ## Décisions en attente
 
-1. Push GitHub des commits T1 et T2 (non autorisé à ce jour).
-2. Push des commits locaux T3 (non autorisé à ce jour).
-3. Lancement de T4 (accord explicite du propriétaire).
+1. Push GitHub des commits T1, T2 et T3 (non autorisé à ce jour).
+2. Commit local de T4 (non autorisé à ce jour).
+3. Validation de T4 après les tests manuels U1 à U10.
 
 ## Prochaine étape
 
-1. Propriétaire : instructions pour T4 et décision sur le push. T4 non
-   commencé, aucun push.
+1. Propriétaire : tests manuels U1 à U10 (fiche prête), puis contrôle
+   final du diff et décision sur le commit de T4. Aucun commit, aucun
+   push, T5 non commencé. A-36 à A-38 ouvertes.

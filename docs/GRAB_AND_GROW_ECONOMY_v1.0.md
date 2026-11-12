@@ -350,6 +350,11 @@ La portée ne dispense jamais des vérifications de distance serveur. Elle
 définit une portée de confort, pas une autorisation de collecte à
 distance.
 
+> Note d'implémentation (D-015, 2026-11-12, valeurs inchangées) : le profil
+> démarre à `magnetLevel = 0` (D-006). Le niveau k du jeu correspond à la
+> ligne k + 1 de ce tableau : niveau 0 = 12 studs, niveau maximum 9 =
+> 30 studs.
+
 ### 5.5 Boots
 
     Niveau   Vitesse cible   Coût Coins
@@ -388,6 +393,10 @@ récompenses de quêtes, les Gems ou les Stars.
 
 Le multiplicateur est plafonné. Les multiplicateurs d'autres systèmes
 doivent respecter le plafond global de vente.
+
+> Note d'implémentation (D-015, 2026-11-12) : montant crédité =
+> `floor(valeur de base × multiplicateur)`, appliqué une fois au total de
+> la vente, en calcul entier (centièmes). Plafond global x5,00.
 
 ### 5.7 Achat multiple
 

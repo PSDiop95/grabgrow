@@ -34,14 +34,16 @@ DataSchema.MAX_SAFE_INTEGER = MAX_SAFE_INTEGER
 
 type LevelBounds = { min: number, max: number }
 
--- min = niveau de départ. magnetLevel = 0 : non acquis (D-006).
-local LEVEL_BOUNDS: { [string]: LevelBounds } = {
-	backpackLevel = { min = 1, max = #UpgradeConfig.Backpack.levels },
-	grabberLevel = { min = 1, max = #UpgradeConfig.Grabber.levels },
-	magnetLevel = { min = 0, max = DataConfig.NonMvpUpgradeMaxLevels.magnetLevel },
-	bootsLevel = { min = 1, max = DataConfig.NonMvpUpgradeMaxLevels.bootsLevel },
-	multiplierLevel = { min = 1, max = DataConfig.NonMvpUpgradeMaxLevels.multiplierLevel },
-}
+-- min = niveau de départ, max = niveau maximum, lus dans UpgradeConfig
+-- pour les cinq améliorations (T4, D-015). magnetLevel = 0 : non acquis
+-- (D-006).
+local LEVEL_BOUNDS: { [string]: LevelBounds } = {}
+for _, definition in pairs(UpgradeConfig) do
+	LEVEL_BOUNDS[definition.profileKey] = {
+		min = definition.startLevel,
+		max = definition.startLevel + #definition.levels - 1,
+	}
+end
 
 local CURRENCY_IDS = { "coins", "gems", "stars" }
 

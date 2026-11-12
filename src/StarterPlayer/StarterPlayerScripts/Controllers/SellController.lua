@@ -8,7 +8,7 @@
 --   * mobile  : toucher le bouton du prompt ;
 --   * manette : bouton Y (X reste la collecte).
 -- Le prompt n'apparaît qu'à portée : c'est l'indication de proximité. Il
--- affiche la valeur estimée (SaleValue) ou « Sac vide ». Une étiquette
+-- affiche la valeur estimée (Multiplier compris) ou « Sac vide ». Une étiquette
 -- « Vente » flotte au-dessus de chaque station, visible de loin et masquée
 -- tant que le prompt est affiché (A-34).
 --
@@ -23,7 +23,6 @@ local Shared = ReplicatedStorage:WaitForChild("Shared")
 local GameConfig = require(Shared:WaitForChild("Config"):WaitForChild("GameConfig"))
 local Remotes = require(Shared:WaitForChild("Remotes"):WaitForChild("Remotes"))
 local Localization = require(Shared:WaitForChild("Util"):WaitForChild("Localization"))
-local SaleValue = require(Shared:WaitForChild("Util"):WaitForChild("SaleValue"))
 local InventoryController = require(script.Parent:WaitForChild("InventoryController"))
 
 local SellController = {}
@@ -53,7 +52,7 @@ local function promptObjectText(): string
 	if state == nil then
 		return ""
 	end
-	local estimate = SaleValue.quote(state.inventory.resources).total
+	local estimate = InventoryController.estimateSale()
 	if estimate <= 0 then
 		return translate("sell.empty")
 	end

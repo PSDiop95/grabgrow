@@ -56,16 +56,6 @@ local DataConfig = {
 		-- Période d'attente quand une sauvegarde du même profil est en cours.
 		busyPollSeconds = 0.1,
 	},
-
-	-- Niveau maximum des améliorations présentes dans le schéma mais hors
-	-- MVP, donc absentes de UpgradeConfig (Bible 5.4 à 5.6 : 10 niveaux).
-	-- Sert uniquement à borner les valeurs chargées. Backpack et Grabber
-	-- sont bornés par UpgradeConfig.
-	NonMvpUpgradeMaxLevels = {
-		magnetLevel = 10,
-		bootsLevel = 10,
-		multiplierLevel = 10,
-	},
 }
 
 return TableUtil.deepFreeze(DataConfig)

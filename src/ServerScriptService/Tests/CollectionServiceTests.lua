@@ -42,7 +42,6 @@ function CollectionServiceTests.run(modules: Modules): ({ string }, number)
 	local ResourceSpawner = modules.ResourceSpawner
 	local MemoryDataStore = modules.MemoryDataStore
 	local DataSchema = modules.DataSchema
-	local GameConfig = modules.GameConfig
 	local ResourceConfig = modules.ResourceConfig
 	local UpgradeConfig = modules.UpgradeConfig
 	local Security = modules.CollectionSecurityConfig
@@ -66,7 +65,7 @@ function CollectionServiceTests.run(modules: Modules): ({ string }, number)
 
 	local interval = UpgradeConfig.Grabber.levels[1].value
 	local jitter = Security.Cooldown.jitterToleranceSeconds
-	local maxDistance = GameConfig.Collection.baseRangeStuds + Security.Distance.toleranceStuds
+	local maxDistance = UpgradeConfig.Magnet.levels[1].value + Security.Distance.toleranceStuds
 	local baseCapacity = UpgradeConfig.Backpack.levels[1].value
 	local burst = Security.RateLimits.Collect.burst
 
@@ -448,7 +447,7 @@ function CollectionServiceTests.run(modules: Modules): ({ string }, number)
 		check(#env.logs == 1, `{#env.logs} ligne(s) de journal`)
 
 		-- Le temps de faire le trajet à pied : accepté.
-		local speed = GameConfig.Movement.baseWalkSpeed * Security.Travel.speedFactor
+		local speed = UpgradeConfig.Boots.levels[1].value * Security.Travel.speedFactor
 		env.advance(300 / speed)
 		check(env.collect(USER_A, STONE_FAR).ok, "collecte refusée après un trajet plausible")
 	end)
@@ -471,7 +470,7 @@ function CollectionServiceTests.run(modules: Modules): ({ string }, number)
 		check(state ~= nil, "état absent")
 		check(state.inventory.used == 1 and state.inventory.capacity == baseCapacity, "inventaire incorrect")
 		check(state.collectIntervalSeconds == interval, "intervalle incorrect")
-		check(state.collectRangeStuds == GameConfig.Collection.baseRangeStuds, "portée incorrecte")
+		check(state.collectRangeStuds == UpgradeConfig.Magnet.levels[1].value, "portée incorrecte")
 	end)
 
 	case("départ du joueur : état de collecte nettoyé", function(check)

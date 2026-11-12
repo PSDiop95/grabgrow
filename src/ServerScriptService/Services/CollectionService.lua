@@ -3,8 +3,11 @@
 --
 -- Le client n'envoie qu'un identifiant de nœud ({ resourceId = "..." }).
 -- Quantité, cadence, portée et capacité sont calculées ici à partir des
--- configurations et du profil serveur. Aucun Coin n'est crédité : la vente
--- arrive en T3.
+-- configurations et du profil serveur. Aucun Coin n'est crédité ici.
+--
+-- T4 (D-015) : portée = Magnet, intervalle = Grabber, vitesse de référence
+-- du contrôle de trajet = Boots, tous lus à chaque demande dans le profil
+-- serveur. Une amélioration achetée s'applique donc à la demande suivante.
 --
 -- Ordre des contrôles (le moins coûteux d'abord) :
 --   limite de fréquence -> profil chargé -> payload -> nœud connu -> nœud
@@ -21,10 +24,10 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerStorage = game:GetService("ServerStorage")
 
 local Config = ReplicatedStorage.Shared.Config
-local GameConfig = require(Config.GameConfig)
 local ResourceConfig = require(Config.ResourceConfig)
 local UpgradeConfig = require(Config.UpgradeConfig)
 local Remotes = require(ReplicatedStorage.Shared.Remotes.Remotes)
+local UpgradeMath = require(ReplicatedStorage.Shared.Util.UpgradeMath)
 local SecurityConfig = require(ServerStorage.ServerOnlyConfig.CollectionSecurityConfig)
 local InventoryService = require(script.Parent.InventoryService)
 local ResourceSpawner = require(script.Parent.Parent.Systems.ResourceSpawner)
@@ -58,6 +61,12 @@ export type ClientState = {
 	coins: number,
 	collectIntervalSeconds: number,
 	collectRangeStuds: number,
+	-- T4 : niveaux par amélioration (clés de UpgradeConfig), mondes
+	-- débloqués, multiplicateur de vente et vitesse. Affichage seulement.
+	upgrades: { [string]: number },
+	worlds: { [string]: boolean },
+	sellMultiplier: number,
+	walkSpeed: number,
 }
 
 export type Dependencies = {
@@ -156,13 +165,14 @@ function CollectionService.new(dependencies: Dependencies)
 
 	-- Distance parcourue depuis la dernière collecte réussie, comparée à ce
 	-- qu'un personnage peut couvrir à pied dans le temps écoulé.
-	local function isTravelPlausible(state: PlayerState, position: Position, now: number): boolean
+	-- `walkSpeed` = vitesse des Boots du profil serveur.
+	local function isTravelPlausible(state: PlayerState, position: Position, now: number, walkSpeed: number): boolean
 		local lastPosition = state.lastPosition
 		if lastPosition == nil then
 			return true
 		end
 		local elapsed = math.max(now - state.lastCollectAt, 0)
-		local allowed = GameConfig.Movement.baseWalkSpeed * SecurityConfig.Travel.speedFactor * elapsed
+		local allowed = walkSpeed * SecurityConfig.Travel.speedFactor * elapsed
 			+ SecurityConfig.Travel.slackStuds
 		return distanceBetween(position, lastPosition) <= allowed
 	end
@@ -201,12 +211,18 @@ function CollectionService.new(dependencies: Dependencies)
 		if position == nil then
 			return reject(ResultCode.NoCharacter, nodeId)
 		end
-		-- Portée nominale sans Magnet (hors MVP) + marge de sécurité.
-		local maxDistance = GameConfig.Collection.baseRangeStuds + SecurityConfig.Distance.toleranceStuds
+		-- Portée nominale du Magnet (profil serveur) + marge de sécurité.
+		local range = UpgradeMath.valueFor(profile, "Magnet")
+		local walkSpeed = UpgradeMath.valueFor(profile, "Boots")
+		if range == nil or walkSpeed == nil then
+			log("error", `joueur {userId} : magnetLevel ou bootsLevel inconnu`)
+			return reject(ResultCode.InternalError, nodeId)
+		end
+		local maxDistance = range + SecurityConfig.Distance.toleranceStuds
 		if distanceBetween(position, node.position) > maxDistance then
 			return reject(ResultCode.TooFar, nodeId)
 		end
-		if not isTravelPlausible(state, position, now) then
+		if not isTravelPlausible(state, position, now, walkSpeed) then
 			if now - state.lastSuspiciousLogAt >= SecurityConfig.Logging.suspiciousIntervalSeconds then
 				state.lastSuspiciousLogAt = now
 				log("warn", `joueur {userId} : déplacement implausible entre deux collectes ({nodeId})`)
@@ -265,15 +281,32 @@ function CollectionService.new(dependencies: Dependencies)
 			return nil
 		end
 		local inventoryState = InventoryService.describe(profile)
-		local grabber = UpgradeConfig.Grabber.levels[profile.upgrades.grabberLevel]
-		if inventoryState == nil or grabber == nil then
+		local interval = UpgradeMath.valueFor(profile, "Grabber")
+		local range = UpgradeMath.valueFor(profile, "Magnet")
+		local multiplier = UpgradeMath.valueFor(profile, "Multiplier")
+		local walkSpeed = UpgradeMath.valueFor(profile, "Boots")
+		if inventoryState == nil or interval == nil or range == nil or multiplier == nil or walkSpeed == nil then
 			return nil
+		end
+		local upgrades: { [string]: number } = {}
+		for _, upgradeId in ipairs(UpgradeMath.ids()) do
+			upgrades[upgradeId] = UpgradeMath.levelOf(profile, upgradeId) :: number
+		end
+		local worlds: { [string]: boolean } = {}
+		for worldId, unlocked in pairs(profile.worlds) do
+			if type(worldId) == "string" and unlocked == true then
+				worlds[worldId] = true
+			end
 		end
 		return {
 			inventory = inventoryState,
 			coins = profile.currencies.coins,
-			collectIntervalSeconds = grabber.value,
-			collectRangeStuds = GameConfig.Collection.baseRangeStuds,
+			collectIntervalSeconds = interval,
+			collectRangeStuds = range,
+			upgrades = upgrades,
+			worlds = worlds,
+			sellMultiplier = multiplier,
+			walkSpeed = walkSpeed,
 		}
 	end
 

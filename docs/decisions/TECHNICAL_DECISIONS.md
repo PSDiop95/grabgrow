@@ -443,3 +443,69 @@ propriétaire), ACCEPTÉE, REMPLACÉE.
 - **Affecte :** `SellService`, `SellZones`, `SaleValue`, `Remotes`,
   `GameConfig`, `SellSecurityConfig`, contrôleurs client,
   `docs/SELLING.md`.
+
+## D-015 — T4 : cinq améliorations, quatre mondes, EconomyService
+
+- **Date :** 2026-11-12
+- **Statut :** ACCEPTÉE (choix du propriétaire, 2026-11-12, en réponse au
+  préflight T4)
+- **Contexte :** le prompt T4 demande cinq améliorations et la préparation
+  des quatre mondes. CLAUDE.md 5.1, GDD 19.2 et D-003 limitaient le MVP à
+  Backpack et Grabber, et GoldenDesert seul. Le préflight a relevé quatre
+  points non tranchés par la Bible : alignement du Magnet (D-006),
+  arrondi du Multiplier, ordre de déblocage, extraction d'EconomyService
+  (prévue par D-014).
+- **Décision :**
+  - **Périmètre** (amende D-003) : Backpack, Grabber, Magnet, Boots et
+    Multiplier, tables de la Bible 5.2 à 5.6 sans changement de coût ni
+    d'effet. Achat x1 seulement (x10, x100, MAX restent reportés).
+    FrozenPeaks et MysticWorld ajoutés à `WorldConfig` (Bible 6),
+    verrouillés, **sans contenu** : débloquer un monde ne téléporte pas.
+  - **Magnet** : niveau k du profil = ligne k + 1 de la Bible. Niveau 0
+    (départ) = 12 studs, niveau 1 = 14 studs pour 200 Coins, niveau
+    maximum 9 = 30 studs. `magnetLevel = 0` conservé (D-006).
+  - **Multiplier** : montant crédité = `floor(base × multiplicateur)`,
+    une fois par vente, calculé en centièmes entiers ; multiplicateur
+    total plafonné à x5,00 (`GameConfig.Selling.maxSellMultiplier`, Bible
+    2 et 10.2). Aucune vente passée n'est recalculée.
+  - **Ordre strict des mondes** : un monde d'ordre n exige le monde
+    n − 1 débloqué, `backpackLevel >= requiredBackpackLevel` et un solde
+    `>= unlockCost`, débité une seule fois.
+  - **EconomyService** : module de fonctions `credit` / `debit` appliquées
+    au brouillon d'un `PlayerDataService.Update` (pas un service à état).
+    Utilisé par `SellService`, `UpgradeService` et `WorldUnlockService`.
+    Journal (Bible 13.3) : motif, montant, identifiant d'opération, solde.
+  - **Effets** lus dans le profil serveur à chaque usage : capacité
+    (`InventoryService`), intervalle et portée (`CollectionService`),
+    vitesse (`Humanoid.WalkSpeed` fixé par le serveur au chargement, à
+    l'apparition et après achat ; contrôle de trajet de la collecte calé
+    sur la vitesse des Boots), Multiplier (`SellService`).
+  - **Source unique** : `UpgradeConfig` gagne `order`, `profileKey`,
+    `startLevel`. `DataSchema` en tire les bornes des cinq niveaux
+    (`DataConfig.NonMvpUpgradeMaxLevels` supprimé). Portée et vitesse de
+    base retirées de `GameConfig` (elles dupliquaient Magnet et Boots
+    niveau de départ). Lecture partagée : `Shared/Util/UpgradeMath`.
+  - **Remotes** : `RequestUpgrade { upgradeId }`,
+    `RequestUnlockWorld { worldId }` ; codes `INSUFFICIENT_FUNDS`,
+    `MAX_LEVEL`, `ALREADY_UNLOCKED`, `REQUIREMENT_NOT_MET`. Tout champ
+    supplémentaire fait refuser la demande.
+  - Limites de fréquence (`EconomySecurityConfig`, hypothèses hors Bible) :
+    achats 5 puis 3/s ; déblocages 2 puis 0,5/s. À réévaluer en T6.
+- **Justification :** décision explicite du propriétaire ; aucune valeur
+  économique inventée ; atomicité garantie par l'existant (`Update` tout
+  ou rien, sans suspension) ; une seule source par valeur.
+- **Conséquences :**
+  - Schéma de profil inchangé (v1) : aucune migration. Seule la borne de
+    `magnetLevel` passe de 10 à 9 ; un profil à 10 (impossible jusqu'ici,
+    aucun achat n'existait) serait ramené à 9 par la normalisation D-008,
+    avec copie de récupération.
+  - Les niveaux élevés sont hors de portée tant que Green Valley est le
+    seul monde jouable (voir `PROGRESSION.md`).
+  - La vitesse n'est pas protégée contre un client qui modifie localement
+    son `WalkSpeed` (contrôle complet du déplacement : T6, A-26) ; la
+    collecte reste bornée par la vitesse des Boots du profil.
+- **Affecte :** `UpgradeConfig`, `WorldConfig`, `GameConfig`, `DataConfig`,
+  `DataSchema`, `SaleValue`, `UpgradeMath`, `Remotes`, `Localization`,
+  `EconomyService`, `UpgradeService`, `WorldUnlockService`, `SellService`,
+  `CollectionService`, `Bootstrap`, contrôleurs client, Bible 5.4 et 5.6
+  (notes), `docs/UPGRADES.md`, `docs/PROGRESSION.md`.

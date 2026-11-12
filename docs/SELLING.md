@@ -70,6 +70,11 @@ le même profil : une sauvegarde contient les deux ou aucun.
 bonus, taxe, arrondi ni nouvelle monnaie. Aucune valeur économique modifiée
 en T3.
 
+T4 (D-015) : montant crédité = `floor(SaleValue × Multiplier)`, Multiplier
+lu dans le profil serveur, une fois par vente, plafond x5,00 ; crédit par
+`EconomyService.credit`. Au niveau 1 (x1,00), résultat identique à T3.
+Détail : `UPGRADES.md`.
+
 Impact : nul sur les hypothèses de la Bible (temps jusqu'à la première
 vente, première amélioration, revenu par minute) ; le montant crédité est
 exactement celui de la Bible. A-19 (première amélioration à la 2e vente,

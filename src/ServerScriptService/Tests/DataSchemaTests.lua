@@ -233,7 +233,7 @@ function DataSchemaTests.run(modules: Modules): ({ string }, number)
 		raw.upgrades.grabberLevel = 0
 		raw.upgrades.magnetLevel = -3
 		raw.upgrades.bootsLevel = 2.7
-		raw.upgrades.multiplierLevel = DataConfig.NonMvpUpgradeMaxLevels.multiplierLevel + 1
+		raw.upgrades.multiplierLevel = #modules.UpgradeConfig.Multiplier.levels + 1
 		local profile, _, _, repairs = DataSchema.normalize(raw)
 		check(profile ~= nil, "refusé")
 		if profile == nil then
@@ -244,11 +244,21 @@ function DataSchemaTests.run(modules: Modules): ({ string }, number)
 		check(profile.upgrades.magnetLevel == 0, "magnetLevel non borné à 0")
 		check(profile.upgrades.bootsLevel == 2, "bootsLevel décimal non arrondi")
 		check(
-			profile.upgrades.multiplierLevel == DataConfig.NonMvpUpgradeMaxLevels.multiplierLevel,
+			profile.upgrades.multiplierLevel == #modules.UpgradeConfig.Multiplier.levels,
 			"multiplierLevel non borné"
 		)
 		check(grabberMax >= 1 and #repairs == 5, `5 réparations attendues, trouvé {#repairs}`)
 		check(not DataSchema.validate(raw), "validate doit refuser un niveau hors limites")
+	end)
+
+	-- D-015 : le Magnet s'arrête au niveau 9 (ancienne borne : 10).
+	case("magnetLevel 10 (ancienne borne) ramené à 9", function(check)
+		local raw = DataSchema.newProfile()
+		raw.upgrades.magnetLevel = 10
+		local profile = DataSchema.normalize(raw)
+		check(profile ~= nil and profile.upgrades.magnetLevel == 9, "magnetLevel non borné à 9")
+		raw.upgrades.magnetLevel = 9
+		check(DataSchema.validate(raw), "magnetLevel 9 doit être valide")
 	end)
 
 	case("valeurs numériques invalides bornées", function(check)

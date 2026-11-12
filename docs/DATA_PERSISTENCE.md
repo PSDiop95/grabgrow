@@ -90,8 +90,8 @@ end)
 | Migration absente ou en erreur | **Refus** `MigrationFailed` |
 
 Un profil refusé reste intact dans le DataStore : correction manuelle
-nécessaire. Bornes des niveaux : `UpgradeConfig` pour Backpack et Grabber,
-`DataConfig.NonMvpUpgradeMaxLevels` pour Magnet, Boots et Multiplier.
+nécessaire. Bornes des niveaux : `UpgradeConfig` pour les cinq améliorations
+(`startLevel` à `startLevel + #levels − 1`, D-015).
 
 ### Profil normalisé : copie avant réécriture (D-008, décision définitive)
 

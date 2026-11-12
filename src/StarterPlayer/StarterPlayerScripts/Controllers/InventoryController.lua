@@ -6,12 +6,15 @@
 -- en T5. Placée en haut au centre : hors des zones du stick et du saut.
 -- T3 : solde de Coins, valeur vendable estimée (SaleValue, affichage
 -- seulement) et confirmation du montant crédité par le serveur.
+-- T4 : l'estimation applique le Multiplier reçu du serveur (affichage) ;
+-- niveaux, mondes et vitesse sont relayés aux autres contrôleurs.
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
+local GameConfig = require(Shared:WaitForChild("Config"):WaitForChild("GameConfig"))
 local ResourceConfig = require(Shared:WaitForChild("Config"):WaitForChild("ResourceConfig"))
 local Remotes = require(Shared:WaitForChild("Remotes"):WaitForChild("Remotes"))
 local Localization = require(Shared:WaitForChild("Util"):WaitForChild("Localization"))
@@ -29,6 +32,10 @@ export type State = {
 	coins: number,
 	collectIntervalSeconds: number,
 	collectRangeStuds: number,
+	upgrades: { [string]: number },
+	worlds: { [string]: boolean },
+	sellMultiplier: number,
+	walkSpeed: number,
 }
 
 local COLOR_PANEL = Color3.fromRGB(24, 28, 36)
@@ -38,6 +45,7 @@ local COLOR_BAR_FULL = Color3.fromRGB(230, 80, 70)
 local COLOR_GAIN = Color3.fromRGB(190, 255, 170)
 local COLOR_WARNING = Color3.fromRGB(255, 200, 90)
 local COLOR_COINS = Color3.fromRGB(255, 214, 92)
+local COLOR_SUCCESS = Color3.fromRGB(120, 230, 140)
 local COIN_COUNT_SECONDS = 0.5
 local TOAST_HOLD_SECONDS = 0.7
 local TOAST_FADE_SECONDS = 0.4
@@ -95,20 +103,27 @@ local function buildInterface()
 	screenGui.Name = "InventoryHUD"
 	screenGui.ResetOnSpawn = false
 	screenGui.DisplayOrder = 5
+	-- Le sac monte dans la bande de la barre Roblox, au centre (libre),
+	-- aligné sur ses boutons (décision du propriétaire, A-41).
+	screenGui.IgnoreGuiInset = true
 
 	local panel = Instance.new("Frame")
 	panel.Name = "BagPanel"
+	-- En haut au centre, dans la bande de la barre Roblox (décision du
+	-- propriétaire, A-41). Largeur limitée à
+	-- 45 % de l'écran pour réduire le recouvrement de la fenêtre du chat
+	-- Roblox (en haut à gauche) quand elle est ouverte.
 	panel.AnchorPoint = Vector2.new(0.5, 0)
 	panel.Position = UDim2.new(0.5, 0, 0, 8)
-	panel.Size = UDim2.new(0.6, 0, 0, 82)
+	panel.Size = UDim2.new(0.45, 0, 0, 82)
 	panel.BackgroundColor3 = COLOR_PANEL
 	panel.BackgroundTransparency = 0.25
 	panel.BorderSizePixel = 0
 	panel.Parent = screenGui
 
 	local sizeLimit = Instance.new("UISizeConstraint")
-	sizeLimit.MinSize = Vector2.new(200, 82)
-	sizeLimit.MaxSize = Vector2.new(320, 82)
+	sizeLimit.MinSize = Vector2.new(170, 82)
+	sizeLimit.MaxSize = Vector2.new(300, 82)
 	sizeLimit.Parent = panel
 
 	local corner = Instance.new("UICorner")
@@ -149,6 +164,12 @@ local function buildInterface()
 	coinsLabel = newLabel(panel, UDim2.new(1, -20, 0, 18), UDim2.new(0, 10, 0, 60), 15)
 	coinsLabel.Name = "Coins"
 	coinsLabel.TextColor3 = COLOR_COINS
+	-- Panneau étroit (téléphone en portrait) : réduire plutôt que tronquer.
+	coinsLabel.TextScaled = true
+	local coinsTextSize = Instance.new("UITextSizeConstraint")
+	coinsTextSize.MinTextSize = 10
+	coinsTextSize.MaxTextSize = 15
+	coinsTextSize.Parent = coinsLabel
 
 	-- Compteur animé du solde affiché (purement visuel).
 	coinValue = Instance.new("NumberValue")
@@ -170,7 +191,7 @@ local function renderCoins()
 		coinsLabel.Text = ""
 		return
 	end
-	local estimate = SaleValue.quote(current.inventory.resources).total
+	local estimate = InventoryController.estimateSale()
 	coinsLabel.Text = string.format(
 		"%s %d   |   %s ~%d",
 		translate("hud.coins"),
@@ -269,11 +290,26 @@ local function isValidState(value: any): boolean
 		and type(value.coins) == "number"
 		and type(value.collectIntervalSeconds) == "number"
 		and type(value.collectRangeStuds) == "number"
+		and type(value.upgrades) == "table"
+		and type(value.worlds) == "table"
+		and type(value.sellMultiplier) == "number"
+		and type(value.walkSpeed) == "number"
 end
 
 -- Dernier état reçu du serveur, ou nil avant le premier.
 function InventoryController.getState(): State?
 	return state
+end
+
+-- Valeur estimée du sac, Multiplier compris (affichage seulement : le
+-- serveur recalcule le montant crédité).
+function InventoryController.estimateSale(): number
+	local current = state
+	if current == nil then
+		return 0
+	end
+	local base = SaleValue.quote(current.inventory.resources).total
+	return SaleValue.applyMultiplier(base, current.sellMultiplier, GameConfig.Selling.maxSellMultiplier) or base
 end
 
 function InventoryController.isFull(): boolean
@@ -291,6 +327,12 @@ end
 
 function InventoryController.showMessage(key: string)
 	showToast(translate(key), COLOR_WARNING)
+end
+
+-- Message positif (achat ou déblocage confirmé par le serveur).
+function InventoryController.showSuccess(key: string)
+	showToast(translate(key), COLOR_SUCCESS)
+	pulsePanel()
 end
 
 -- Retour visuel d'une vente confirmée par le serveur : seul `coinsEarned`

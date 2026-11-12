@@ -7,9 +7,9 @@
 -- économique. À mesurer en test réel (latence mobile) et à ajuster en T6/T7.
 --
 -- Ne pas dupliquer ici ce qui est défini ailleurs :
---   * portée nominale de collecte    -> GameConfig.Collection.baseRangeStuds
+--   * portée nominale de collecte    -> UpgradeConfig.Magnet (niveau du profil)
 --   * intervalle nominal de collecte -> UpgradeConfig.Grabber.levels[n].value
---   * vitesse de marche de référence -> GameConfig.Movement.baseWalkSpeed
+--   * vitesse de marche de référence -> UpgradeConfig.Boots (niveau du profil)
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
@@ -20,7 +20,7 @@ local CollectionSecurityConfig = {
 		-- Marge ajoutée à la portée nominale (studs). Couvre l'écart entre la
 		-- position vue par le client et celle répliquée au serveur (16 studs/s
 		-- et 150 ms de latence = 2,4 studs) et la taille de la ressource.
-		-- Distincte de la portée du Magnet (amélioration hors MVP).
+		-- S'ajoute à la portée du Magnet du joueur.
 		toleranceStuds = 4,
 	},
 
@@ -32,7 +32,7 @@ local CollectionSecurityConfig = {
 	},
 
 	-- Plausibilité du déplacement entre deux collectes réussies : distance
-	-- maximale = vitesse de référence x speedFactor x temps écoulé + slackStuds.
+	-- maximale = vitesse des Boots du joueur x speedFactor x temps écoulé + slackStuds.
 	-- Limite la collecte par téléportation. Volontairement large (chute,
 	-- poussée physique) : ce n'est pas un anti-triche de déplacement complet.
 	Travel = {

@@ -21,6 +21,8 @@ local InventoryServiceTests = require(script.Parent.InventoryServiceTests)
 local ResourceSpawnerTests = require(script.Parent.ResourceSpawnerTests)
 local CollectionServiceTests = require(script.Parent.CollectionServiceTests)
 local SellServiceTests = require(script.Parent.SellServiceTests)
+local EconomyServiceTests = require(script.Parent.EconomyServiceTests)
+local UpgradeServiceTests = require(script.Parent.UpgradeServiceTests)
 
 local GameConfig = require(Config.GameConfig)
 local ResourceConfig = require(Config.ResourceConfig)
@@ -34,12 +36,18 @@ local InventoryService = require(ServerScriptService.Services.InventoryService)
 local RateLimitService = require(ServerScriptService.Services.RateLimitService)
 local CollectionService = require(ServerScriptService.Services.CollectionService)
 local SellService = require(ServerScriptService.Services.SellService)
+local EconomyService = require(ServerScriptService.Services.EconomyService)
+local UpgradeService = require(ServerScriptService.Services.UpgradeService)
+local WorldUnlockService = require(ServerScriptService.Services.WorldUnlockService)
 local ResourceSpawner = require(ServerScriptService.Systems.ResourceSpawner)
+local StudioTestPresets = require(ServerScriptService.Systems.StudioTestPresets)
 local Remotes = require(ReplicatedStorage.Shared.Remotes.Remotes)
 local Localization = require(ReplicatedStorage.Shared.Util.Localization)
 local SaleValue = require(ReplicatedStorage.Shared.Util.SaleValue)
+local UpgradeMath = require(ReplicatedStorage.Shared.Util.UpgradeMath)
 local CollectionSecurityConfig = require(ServerStorage:WaitForChild("ServerOnlyConfig").CollectionSecurityConfig)
 local SellSecurityConfig = require(ServerStorage:WaitForChild("ServerOnlyConfig").SellSecurityConfig)
+local EconomySecurityConfig = require(ServerStorage:WaitForChild("ServerOnlyConfig").EconomySecurityConfig)
 
 local totalFailures = 0
 
@@ -65,6 +73,7 @@ report(
 		WorldConfig = WorldConfig,
 		CollectionSecurityConfig = CollectionSecurityConfig,
 		SellSecurityConfig = SellSecurityConfig,
+		EconomySecurityConfig = EconomySecurityConfig,
 		Localization = Localization,
 	})
 )
@@ -147,6 +156,42 @@ report(
 		CollectionSecurityConfig = CollectionSecurityConfig,
 		SellSecurityConfig = SellSecurityConfig,
 		Remotes = Remotes,
+	})
+)
+
+report(
+	"EconomyServiceTests",
+	EconomyServiceTests.run({
+		EconomyService = EconomyService,
+		SaleValue = SaleValue,
+		DataSchema = DataSchema,
+		UpgradeConfig = UpgradeConfig,
+		GameConfig = GameConfig,
+	})
+)
+
+report(
+	"UpgradeServiceTests",
+	UpgradeServiceTests.run({
+		UpgradeService = UpgradeService,
+		WorldUnlockService = WorldUnlockService,
+		EconomyService = EconomyService,
+		SellService = SellService,
+		CollectionService = CollectionService,
+		InventoryService = InventoryService,
+		PlayerDataService = PlayerDataService,
+		RateLimitService = RateLimitService,
+		ResourceSpawner = ResourceSpawner,
+		MemoryDataStore = MemoryDataStore,
+		DataSchema = DataSchema,
+		UpgradeMath = UpgradeMath,
+		UpgradeConfig = UpgradeConfig,
+		WorldConfig = WorldConfig,
+		ResourceConfig = ResourceConfig,
+		CollectionSecurityConfig = CollectionSecurityConfig,
+		EconomySecurityConfig = EconomySecurityConfig,
+		Remotes = Remotes,
+		StudioTestPresets = StudioTestPresets,
 	})
 )
 

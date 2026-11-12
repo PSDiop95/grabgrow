@@ -12,7 +12,8 @@
 --
 -- Transaction atomique : dans la même mutation, lecture de l'inventaire,
 -- calcul, retrait des ressources vendues, crédit des Coins et mise à jour
--- des statistiques. Un refus, une erreur ou un profil invalide annulent
+-- des statistiques. T4 (D-015) : le crédit passe par EconomyService.credit
+-- et le montant est floor(base × Multiplier), lu dans le profil serveur. Un refus, une erreur ou un profil invalide annulent
 -- tout (tout ou rien, garanti par Update). La mutation ne suspend jamais
 -- le fil : deux ventes ne peuvent pas lire le même inventaire, une même
 -- ressource ne peut pas être vendue deux fois.
@@ -29,7 +30,9 @@ local ServerStorage = game:GetService("ServerStorage")
 local GameConfig = require(ReplicatedStorage.Shared.Config.GameConfig)
 local Remotes = require(ReplicatedStorage.Shared.Remotes.Remotes)
 local SaleValue = require(ReplicatedStorage.Shared.Util.SaleValue)
+local UpgradeMath = require(ReplicatedStorage.Shared.Util.UpgradeMath)
 local SecurityConfig = require(ServerStorage.ServerOnlyConfig.SellSecurityConfig)
+local EconomyService = require(script.Parent.EconomyService)
 local PlayerDataService = require(script.Parent.PlayerDataService)
 
 local SellService = {}
@@ -53,8 +56,12 @@ export type Result = {
 	code: string,
 	-- Zone demandée, si elle était lisible.
 	sellZoneId: string?,
-	-- Coins réellement crédités (0 en cas de refus).
+	-- Coins réellement crédités, Multiplier compris (0 en cas de refus).
 	coinsEarned: number,
+	-- Valeur avant Multiplier (0 en cas de refus).
+	baseValue: number,
+	-- Multiplicateur appliqué (1 en cas de refus).
+	multiplier: number,
 	-- Unités retirées du sac (0 en cas de refus).
 	quantitySold: number,
 	-- Quantités vendues par ressource (vide en cas de refus).
@@ -128,6 +135,8 @@ function SellService.new(dependencies: Dependencies)
 
 	-- Dernière réponse RATE_LIMITED envoyée, par joueur.
 	local lastRateNoticeAt: { [number]: number } = {}
+	-- Identifiant d'opération du journal (unique par serveur).
+	local operationCount = 0
 
 	local service = {}
 
@@ -137,6 +146,8 @@ function SellService.new(dependencies: Dependencies)
 			code = code,
 			sellZoneId = zoneId,
 			coinsEarned = 0,
+			baseValue = 0,
+			multiplier = 1,
 			quantitySold = 0,
 			items = {},
 			silent = silent == true,
@@ -148,6 +159,8 @@ function SellService.new(dependencies: Dependencies)
 	local function sellInventory(userId: number, zoneId: string): Result
 		local outcome: string? = nil
 		local sold: SaleValue.Quote? = nil
+		local credited: EconomyService.Entry? = nil
+		local multiplier = 1
 
 		local result = playerData.Update(userId, function(draft: any): boolean?
 			-- Lecture de l'inventaire et calcul DANS la mutation : aucune
@@ -161,11 +174,15 @@ function SellService.new(dependencies: Dependencies)
 				outcome = "nothing"
 				return false
 			end
-			local currencies, stats = draft.currencies, draft.stats
-			if not SaleValue.canAdd(currencies.coins, quote.total)
-				or not SaleValue.canAdd(stats.totalCoinsEarned, quote.total)
-				or not SaleValue.canAdd(stats.totalSales, 1)
-			then
+			-- Multiplier du profil serveur ; un niveau illisible annule tout.
+			local level = UpgradeMath.valueFor(draft, "Multiplier")
+			if level == nil then
+				outcome = "multiplier"
+				return false
+			end
+			multiplier = level
+			local amount = SaleValue.applyMultiplier(quote.total, multiplier, GameConfig.Selling.maxSellMultiplier)
+			if amount == nil or not SaleValue.canAdd(draft.stats.totalSales, 1) then
 				outcome = "overflow"
 				return false
 			end
@@ -179,25 +196,35 @@ function SellService.new(dependencies: Dependencies)
 				end
 				resources[resourceId] = nil
 			end
-			currencies.coins += quote.total
-			stats.totalCoinsEarned += quote.total
-			stats.totalSales += 1
+			-- Crédit centralisé : solde et totalCoinsEarned, bornés.
 			-- totalCoinsSpent n'est jamais touché par une vente.
+			local entry, code = EconomyService.credit(draft, amount, SellService.TRANSACTION_REASON)
+			if entry == nil then
+				outcome = if code == EconomyService.Code.Overflow then "overflow" else tostring(code)
+				return false
+			end
+			credited = entry
+			draft.stats.totalSales += 1
 			sold = quote
 			return nil
 		end)
 
-		if result.ok and sold ~= nil then
+		if result.ok and sold ~= nil and credited ~= nil then
 			local quote = sold :: SaleValue.Quote
+			local entry = credited :: EconomyService.Entry
+			operationCount += 1
+			local operationId = `Sell-{operationCount}`
 			log(
 				"info",
-				`joueur {userId} : +{quote.total} Coins (motif {SellService.TRANSACTION_REASON}, zone {zoneId}, {quote.quantity} unité(s) : {describeItems(quote.items)})`
+				`{EconomyService.describe(userId, operationId, entry)} ; zone {zoneId}, base {quote.total} x{multiplier}, {quote.quantity} unité(s) : {describeItems(quote.items)}`
 			)
 			return {
 				ok = true,
 				code = ResultCode.Success,
 				sellZoneId = zoneId,
-				coinsEarned = quote.total,
+				coinsEarned = entry.amount,
+				baseValue = quote.total,
+				multiplier = multiplier,
 				quantitySold = quote.quantity,
 				items = quote.items,
 				silent = false,

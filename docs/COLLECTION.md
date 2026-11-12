@@ -74,7 +74,8 @@ mesurer sur appareils réels puis ajuster (T6, T7) :
 | `RateLimitFeedback` | 1 s ; 50 | Une réponse `RATE_LIMITED` par seconde au plus ; une ligne de journal tous les 50 rejets |
 | `Payload.maxResourceIdLength` | 64 | Longueur maximale de l'identifiant |
 
-La portée du Magnet (hors MVP) n'intervient pas : `magnetLevel` n'est pas lu.
+Depuis T4, la portée de base est celle du Magnet du profil (12 studs au
+niveau 0, `UpgradeConfig`), marge comprise ; voir `UPGRADES.md`.
 
 Cadence : l'échéance suivante vaut `max(maintenant, échéance) + intervalle`.
 Une demande en avance est acceptée mais ne décale pas l'échéance : la
@@ -133,7 +134,8 @@ Aucun bannissement : les demandes anormales sont refusées et journalisées.
   dans la zone du stick sur un écran étroit)
   (maintenir pour enchaîner) ou toucher la ressource.
 - Manette : bouton X.
-- Sac : panneau en haut au centre (occupation, barre, détail par
+- Sac : panneau en haut au centre, dans la bande de la barre Roblox
+  (`IgnoreGuiInset`), 45 % de la largeur au plus (A-41) (occupation, barre, détail par
   ressource), message « +1 … » à chaque collecte, « Bag full! / Sac plein ! »
   et barre rouge quand il est plein.
 - Une seule demande à la fois ; sans réponse après 1 s, une nouvelle

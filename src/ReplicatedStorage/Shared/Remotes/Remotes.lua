@@ -15,9 +15,16 @@ Remotes.Name = table.freeze({
 	RequestCollect = "RequestCollect",
 	-- Client -> Serveur. Payload : { sellZoneId = "GreenValley_Main" } (T3).
 	RequestSell = "RequestSell",
+	-- Client -> Serveur. Payload : { upgradeId = "Backpack" } (T4). Jamais
+	-- de prix, de niveau ni d'effet : tout est recalculé par le serveur.
+	RequestUpgrade = "RequestUpgrade",
+	-- Client -> Serveur. Payload : { worldId = "GoldenDesert" } (T4).
+	RequestUnlockWorld = "RequestUnlockWorld",
 	-- Serveur -> Client. Payload : { action, ok, code, ... }.
 	--   Collect : resourceId?, resourceType?, amount?
 	--   Sell    : sellZoneId?, coinsEarned, quantitySold
+	--   Upgrade : upgradeId?, level?, coinsSpent
+	--   UnlockWorld : worldId?, coinsSpent
 	ActionResult = "ActionResult",
 	-- Serveur -> Client. Payload : état public du joueur (voir
 	-- CollectionService.GetClientState).
@@ -27,6 +34,8 @@ Remotes.Name = table.freeze({
 Remotes.Action = table.freeze({
 	Collect = "Collect",
 	Sell = "Sell",
+	Upgrade = "Upgrade",
+	UnlockWorld = "UnlockWorld",
 })
 
 Remotes.ResultCode = table.freeze({
@@ -39,6 +48,10 @@ Remotes.ResultCode = table.freeze({
 	ProfileNotLoaded = "PROFILE_NOT_LOADED",
 	NoCharacter = "NO_CHARACTER", -- personnage absent ou mort
 	NothingToSell = "NOTHING_TO_SELL", -- sac vide ou sans ressource vendable (T3)
+	InsufficientFunds = "INSUFFICIENT_FUNDS", -- solde insuffisant (T4)
+	MaxLevel = "MAX_LEVEL", -- amélioration déjà au niveau maximum (T4)
+	AlreadyUnlocked = "ALREADY_UNLOCKED", -- monde déjà débloqué (T4)
+	RequirementNotMet = "REQUIREMENT_NOT_MET", -- monde précédent ou niveau de Backpack manquant (T4)
 	RateLimited = "RATE_LIMITED",
 	InternalError = "INTERNAL_ERROR",
 })

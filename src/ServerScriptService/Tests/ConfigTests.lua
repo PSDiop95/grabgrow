@@ -18,11 +18,15 @@ export type Configs = {
 	CollectionSecurityConfig: any,
 	-- T3 : paramètres de sécurité de la vente.
 	SellSecurityConfig: any,
+	-- T4 : paramètres de sécurité des achats (améliorations, mondes).
+	EconomySecurityConfig: any,
 	Localization: any,
 }
 
 local MVP_RESOURCE_COUNT = 3
-local MVP_UPGRADE_COUNT = 2
+-- T4 (D-015) : les cinq améliorations et les quatre mondes de la Bible.
+local MVP_UPGRADE_COUNT = 5
+local WORLD_COUNT = 4
 
 local function isPositiveInteger(value: any): boolean
 	return type(value) == "number" and value > 0 and value % 1 == 0
@@ -72,14 +76,9 @@ function ConfigTests.run(configs: Configs): { string }
 			`Currencies.{currencyId}.startingBalance doit être un entier >= 0`
 		)
 	end
-	check(
-		type(gameConfig.Collection.baseRangeStuds) == "number" and gameConfig.Collection.baseRangeStuds > 0,
-		"Collection.baseRangeStuds doit être > 0"
-	)
-	check(
-		type(gameConfig.Movement.baseWalkSpeed) == "number" and gameConfig.Movement.baseWalkSpeed > 0,
-		"Movement.baseWalkSpeed doit être > 0"
-	)
+	-- Portée et vitesse de base vivent dans UpgradeConfig (D-015).
+	check(gameConfig.Collection == nil, "GameConfig.Collection dupliquerait UpgradeConfig.Magnet")
+	check(gameConfig.Movement == nil, "GameConfig.Movement dupliquerait UpgradeConfig.Boots")
 
 	-- WorldConfig
 	local defaultWorldCount = 0
@@ -97,6 +96,19 @@ function ConfigTests.run(configs: Configs): { string }
 		end
 	end
 	check(defaultWorldCount == 1, "exactement un monde doit être débloqué par défaut")
+	check(count(worlds) == WORLD_COUNT, `{WORLD_COUNT} mondes attendus, trouvé {count(worlds)}`)
+	-- Ordre strict (D-015) : ordres 1..n contigus, uniques.
+	local seenOrders: { [number]: string } = {}
+	for worldId, world in pairs(worlds) do
+		check(seenOrders[world.order] == nil, `{worldId}.order en double`)
+		seenOrders[world.order] = worldId
+	end
+	for order = 1, count(worlds) do
+		check(seenOrders[order] ~= nil, `aucun monde d'ordre {order}`)
+	end
+	if startingWorld ~= nil then
+		check(startingWorld.order == 1, "le monde de départ doit être d'ordre 1")
+	end
 
 	-- ResourceConfig
 	check(
@@ -124,8 +136,17 @@ function ConfigTests.run(configs: Configs): { string }
 		count(upgrades) == MVP_UPGRADE_COUNT,
 		`le MVP attend {MVP_UPGRADE_COUNT} améliorations, trouvé {count(upgrades)}`
 	)
+	local seenProfileKeys: { [string]: boolean } = {}
+	local seenUpgradeOrders: { [number]: boolean } = {}
 	for upgradeId, upgrade in pairs(upgrades) do
 		check(isNonEmptyString(upgrade.displayNameKey), `{upgradeId}.displayNameKey manquant`)
+		check(isNonEmptyString(upgrade.profileKey), `{upgradeId}.profileKey manquant`)
+		check(not seenProfileKeys[upgrade.profileKey], `{upgradeId}.profileKey en double`)
+		seenProfileKeys[upgrade.profileKey] = true
+		check(isPositiveInteger(upgrade.order), `{upgradeId}.order doit être un entier > 0`)
+		check(not seenUpgradeOrders[upgrade.order], `{upgradeId}.order en double`)
+		seenUpgradeOrders[upgrade.order] = true
+		check(isNonNegativeInteger(upgrade.startLevel), `{upgradeId}.startLevel doit être un entier >= 0`)
 		check(gameConfig.Currencies[upgrade.currency] ~= nil, `{upgradeId}.currency inconnue de GameConfig`)
 		check(isNonEmptyString(upgrade.stat), `{upgradeId}.stat manquant`)
 		check(#upgrade.levels >= 2, `{upgradeId} doit avoir au moins 2 niveaux`)
@@ -138,7 +159,7 @@ function ConfigTests.run(configs: Configs): { string }
 				`{upgradeId} niveau {level} : value doit être > 0`
 			)
 			if level == 1 then
-				check(entry.cost == 0, `{upgradeId} niveau 1 doit être gratuit`)
+				check(entry.cost == 0, `{upgradeId} niveau de départ doit être gratuit`)
 			else
 				check(
 					entry.cost > upgrade.levels[level - 1].cost,
@@ -178,6 +199,41 @@ function ConfigTests.run(configs: Configs): { string }
 		end
 	end
 
+	-- Magnet, Boots, Multiplier : statistique strictement croissante.
+	for _, upgradeId in ipairs({ "Magnet", "Boots", "Multiplier" }) do
+		local upgrade = upgrades[upgradeId]
+		check(upgrade ~= nil, `UpgradeConfig.{upgradeId} manquant`)
+		if upgrade then
+			for index = 2, #upgrade.levels do
+				check(
+					upgrade.levels[index].value > upgrade.levels[index - 1].value,
+					`{upgradeId} entrée {index} : la statistique doit augmenter`
+				)
+			end
+		end
+	end
+	-- D-006 / D-015 : Magnet démarre au niveau 0 (non acquis), les autres à 1.
+	check(upgrades.Magnet ~= nil and upgrades.Magnet.startLevel == 0, "Magnet.startLevel doit valoir 0 (D-006)")
+	for _, upgradeId in ipairs({ "Backpack", "Grabber", "Boots", "Multiplier" }) do
+		check(upgrades[upgradeId] ~= nil and upgrades[upgradeId].startLevel == 1, `{upgradeId}.startLevel doit valoir 1`)
+	end
+	-- Multiplier : centièmes exacts, départ x1, plafond global respecté.
+	local multiplier = upgrades.Multiplier
+	if multiplier then
+		check(multiplier.levels[1].value == 1, "Multiplier de départ doit valoir x1")
+		for index, entry in ipairs(multiplier.levels) do
+			local hundredths = entry.value * 100
+			check(
+				math.abs(hundredths - math.floor(hundredths + 0.5)) < 1e-9,
+				`Multiplier entrée {index} : valeur non exprimable en centièmes`
+			)
+			check(
+				entry.value <= gameConfig.Selling.maxSellMultiplier,
+				`Multiplier entrée {index} : dépasse Selling.maxSellMultiplier`
+			)
+		end
+	end
+
 	-- CollectionSecurityConfig (T2, hypothèses de départ : cohérence seulement)
 	local security = configs.CollectionSecurityConfig
 	local grabberLevels = upgrades.Grabber.levels
@@ -187,7 +243,7 @@ function ConfigTests.run(configs: Configs): { string }
 		"Distance.toleranceStuds doit être >= 0"
 	)
 	check(
-		security.Distance.toleranceStuds < gameConfig.Collection.baseRangeStuds,
+		security.Distance.toleranceStuds < upgrades.Magnet.levels[1].value,
 		"la tolérance de distance doit rester inférieure à la portée nominale"
 	)
 	check(
@@ -214,6 +270,26 @@ function ConfigTests.run(configs: Configs): { string }
 		type(gameConfig.Selling) == "table" and isPositiveInteger(gameConfig.Selling.interactRangeStuds),
 		"GameConfig.Selling.interactRangeStuds doit être un entier > 0"
 	)
+	check(
+		type(gameConfig.Selling) == "table"
+			and type(gameConfig.Selling.maxSellMultiplier) == "number"
+			and gameConfig.Selling.maxSellMultiplier >= 1,
+		"GameConfig.Selling.maxSellMultiplier doit être >= 1"
+	)
+	-- T4 : paramètres de sécurité des achats.
+	local economySecurity = configs.EconomySecurityConfig
+	check(economySecurity ~= nil, "EconomySecurityConfig manquant")
+	if economySecurity ~= nil then
+		for _, action in ipairs({ "Upgrade", "UnlockWorld" }) do
+			local limit = economySecurity.RateLimits[action]
+			check(
+				limit ~= nil and isPositiveInteger(limit.burst) and limit.refillPerSecond > 0,
+				`EconomySecurityConfig.RateLimits.{action} invalide`
+			)
+		end
+		check(isPositiveInteger(economySecurity.RateLimitFeedback.logEveryRejections), "Economy logEveryRejections doit être un entier > 0")
+		check(isPositiveInteger(economySecurity.Payload.maxIdLength), "Economy maxIdLength doit être un entier > 0")
+	end
 	local sellSecurity = configs.SellSecurityConfig
 	check(sellSecurity ~= nil, "SellSecurityConfig manquant")
 	if sellSecurity ~= nil and type(gameConfig.Selling) == "table" then
@@ -251,7 +327,22 @@ function ConfigTests.run(configs: Configs): { string }
 		"hud.bag", "hud.bag_full", "collect.action", "collect.too_far",
 		"hud.coins", "hud.sell_value", "sell.action", "sell.station", "sell.estimate",
 		"sell.gain", "sell.empty", "sell.nothing", "sell.too_far", "sell.failed", "sell.go_sell",
+		-- T4 : boutique et mondes.
+		"shop.open", "shop.title", "shop.close", "shop.level", "shop.max", "shop.price", "shop.need",
+		"shop.pending", "shop.bought", "shop.failed", "shop.insufficient", "shop.max_reached",
+		"shop.worlds", "hud.worlds", "world.unlocked", "world.locked", "world.requires_backpack",
+		"world.requires_previous", "world.unlock", "world.confirm", "world.unlocked_toast",
+		"world.coming_soon", "world.failed",
 	}
+	-- Noms des améliorations et des mondes.
+	for _, language in ipairs(localization.languages()) do
+		for upgradeId, upgrade in pairs(upgrades) do
+			check(localization.has(upgrade.displayNameKey, language), `texte manquant ({language}) : {upgradeId}`)
+		end
+		for worldId, world in pairs(worlds) do
+			check(localization.has(world.displayNameKey, language), `texte manquant ({language}) : {worldId}`)
+		end
+	end
 	for _, language in ipairs(localization.languages()) do
 		for _, key in ipairs(uiKeys) do
 			check(localization.has(key, language), `texte manquant ({language}) : {key}`)
