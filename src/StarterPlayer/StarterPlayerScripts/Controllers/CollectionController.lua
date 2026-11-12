@@ -42,6 +42,13 @@ local SEND_MARGIN_SECONDS = 0.03
 local TAP_RAY_LENGTH_STUDS = 300
 local COLLECT_KEY = Enum.KeyCode.E
 local COLLECT_GAMEPAD_BUTTON = Enum.KeyCode.ButtonX
+-- Bouton tactile de collecte (pixels), placé au-dessus du saut de Roblox.
+local GRAB_BUTTON_SIZE = 90
+local GRAB_BUTTON_GAP = 12
+local JUMP_BUTTON_NAME = "JumpButton"
+-- Sans bouton de saut (pas encore créé) : en bas à droite, au-dessus de
+-- son emplacement habituel.
+local GRAB_BUTTON_FALLBACK_POSITION = UDim2.new(1, -60, 1, -172)
 
 type TrackedNode = {
 	available: boolean,
@@ -235,6 +242,60 @@ local function onPointerPressed(input: InputObject, nodeFolder: Instance)
 	end
 end
 
+-- Place le bouton de collecte au-dessus du bouton de saut de Roblox
+-- (TouchGui), quelle que soit la taille ou l'orientation de l'écran. Suit
+-- ses déplacements par événements ; position de repli s'il n'existe pas.
+local function anchorAboveJumpButton(playerGui: Instance, screenGui: ScreenGui, button: GuiObject)
+	local jumpConnections: { RBXScriptConnection } = {}
+
+	local function disconnectJump()
+		for _, connection in ipairs(jumpConnections) do
+			connection:Disconnect()
+		end
+		table.clear(jumpConnections)
+	end
+
+	local function place(jump: GuiObject?)
+		if jump == nil or jump.Parent == nil or jump.AbsoluteSize.X <= 0 then
+			button.Position = GRAB_BUTTON_FALLBACK_POSITION
+			return
+		end
+		local relative = jump.AbsolutePosition - screenGui.AbsolutePosition
+		button.Position = UDim2.fromOffset(
+			math.floor(relative.X + jump.AbsoluteSize.X / 2),
+			math.floor(relative.Y - GRAB_BUTTON_GAP)
+		)
+	end
+
+	local function follow(jump: GuiObject)
+		disconnectJump()
+		local function update()
+			place(jump)
+		end
+		table.insert(jumpConnections, jump:GetPropertyChangedSignal("AbsolutePosition"):Connect(update))
+		table.insert(jumpConnections, jump:GetPropertyChangedSignal("AbsoluteSize"):Connect(update))
+		table.insert(jumpConnections, screenGui:GetPropertyChangedSignal("AbsolutePosition"):Connect(update))
+		table.insert(jumpConnections, jump.AncestryChanged:Connect(function()
+			if jump.Parent == nil then
+				disconnectJump()
+				place(nil)
+			end
+		end))
+		update()
+	end
+
+	local function consider(instance: Instance)
+		if instance.Name == JUMP_BUTTON_NAME and instance:IsA("GuiObject") then
+			follow(instance)
+		end
+	end
+
+	playerGui.DescendantAdded:Connect(consider)
+	for _, descendant in ipairs(playerGui:GetDescendants()) do
+		consider(descendant)
+	end
+end
+
 local function buildInterface()
 	local playerGui = localPlayer:WaitForChild("PlayerGui")
 
@@ -274,12 +335,14 @@ local function buildInterface()
 	screenGui.DisplayOrder = 5
 	screenGui.Parent = playerGui
 
-	-- Bouton tactile : à gauche du bouton de saut, sous le pouce droit.
+	-- Bouton tactile : juste au-dessus du bouton de saut, sous le pouce
+	-- droit (A-35 : décalé depuis le bord droit, il entrait dans la zone du
+	-- stick gauche sur un écran étroit).
 	local button = Instance.new("TextButton")
 	button.Name = "GrabButton"
-	button.AnchorPoint = Vector2.new(1, 1)
-	button.Position = UDim2.new(1, -190, 1, -60)
-	button.Size = UDim2.new(0, 90, 0, 90)
+	button.AnchorPoint = Vector2.new(0.5, 1)
+	button.Position = GRAB_BUTTON_FALLBACK_POSITION
+	button.Size = UDim2.new(0, GRAB_BUTTON_SIZE, 0, GRAB_BUTTON_SIZE)
 	button.BackgroundColor3 = Color3.fromRGB(96, 204, 78)
 	button.BackgroundTransparency = 0.15
 	button.AutoButtonColor = true
@@ -303,6 +366,8 @@ local function buildInterface()
 			setHolding(false)
 		end
 	end)
+
+	anchorAboveJumpButton(playerGui, screenGui, button)
 end
 
 function CollectionController.start()

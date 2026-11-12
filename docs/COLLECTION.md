@@ -128,7 +128,9 @@ Aucun bannissement : les demandes anormales sont refusées et journalisées.
 - Cible : ressource disponible la plus proche à portée, recalculée 10 fois
   par seconde ; contour blanc et nom au-dessus.
 - PC : touche E (maintenir pour enchaîner) ou clic sur la ressource.
-- Mobile : bouton rond « Grab / Prendre » à gauche du bouton de saut
+- Mobile : bouton rond « Grab / Prendre » juste au-dessus du bouton de saut
+  de Roblox, suivi par événements (A-35, T3 ; avant : à gauche du saut,
+  dans la zone du stick sur un écran étroit)
   (maintenir pour enchaîner) ou toucher la ressource.
 - Manette : bouton X.
 - Sac : panneau en haut au centre (occupation, barre, détail par

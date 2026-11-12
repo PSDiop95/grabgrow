@@ -27,8 +27,8 @@ et parcours Studio à un joueur OK. Tests manuels du propriétaire contrôlés
 dans les journaux : E1, E2, E5 vérifiés ; E9 (DataStore de test) vérifié
 par Claude ; E3, E4, E6 (2 joueurs, ventes simultanées), E8 et rendu 3D
 exécutés par Claude et validés par le propriétaire (2026-11-12) ; E7
-(émulateur mobile) testé et validé par le propriétaire ; A-34 corrigé et
-validé. Place de test sauvegardé avec la station corrigée (version 24,
+(émulateur mobile) : toucher réel validé en portrait et paysage ; E8
+partiel accepté (manette physique reportée) ; A-34 et A-35 corrigés. Place de test sauvegardé avec la station corrigée (version 24,
 non publiée, 2026-11-12). Commit local T3 autorisé et créé (aucun push).
 Copie locale `GrabAndGrow.rbxl` rafraîchie et vérifiée.
 D-014 **validée** par le propriétaire (2026-11-11) ; paramètres de sécurité
@@ -350,8 +350,8 @@ lecture seule (`GetAsync`) de la clé de test. Chaque montant journalisé a
 | E4 | Distance | `TOO_FAR` n'est pas journalisé ; exécuté ensuite par Claude (voir ci-dessous) | **Validé** (2026-11-12) |
 | E5 | Double vente | Une seule ligne `[Sell]` à 21:18:15, suivie d'un rejet `[RateLimit]` 0,5 s après : demandes répétées, un seul crédit | **Vérifié** |
 | E6 | Deux joueurs (Local Server) | Serveur : `TOUS LES TESTS : OK`, `Player_-1` et `Player_-2` créés, sauvegardes auto et de sortie OK, aucune erreur du jeu. **Une seule vente** journalisée (`joueur -1 : +37 Coins`) : aucune vente du joueur 2, donc pas de vente simultanée prouvée. Refait ensuite par Claude avec ventes simultanées (voir ci-dessous) | **Validé** (2026-11-12) |
-| E7 | Émulateur mobile | Aucune trace exploitable dans les journaux (session 21:23:49, `+14 Coins`, non attribuable à un appareil) ; retesté le 2026-11-12 (voir « E7 » ci-dessous) | **Validé** (propriétaire, 2026-11-12) |
-| E8 | Manette | Aucune trace exploitable ; ButtonY simulé ensuite par Claude (voir ci-dessous) | **Validé** (2026-11-12) |
+| E7 | Émulateur mobile | Aucune trace exploitable dans les journaux (session 21:23:49, `+14 Coins`, non attribuable à un appareil) ; repris le 2026-11-12 (voir « Bilan final E7 / E8 ») | Voir bilan final |
+| E8 | Manette | Aucune trace exploitable ; repris par Claude (voir « Bilan final E7 / E8 ») | Voir bilan final |
 | E9 | Reconnexion sur DataStore de test | Exécuté ensuite par Claude, avec l'accord du propriétaire : voir « E9 » ci-dessous | **Vérifié** |
 | — | Rendu 3D de la station | Non vérifiable par journal ; station présente dans le place (`GreenValley_Main` en -12 / 0,2 / -16) ; rendu vu ensuite dans les captures Local Server | **Validé** (2026-11-12) |
 | — | Erreurs | Seule erreur : `ChatScript` de Roblox (`CoreGuiChatConnections`), étrangère au projet | OK |
@@ -414,6 +414,52 @@ le constat du propriétaire. **Validé** (propriétaire).
 | 3D | Captures des clients Local Server | Station rendue : dalle jaune, comptoir, toit rouge, pièce dorée, étiquette « Vente ». Constat A-34 ci-dessous |
 | — | Erreurs | Seules : assets d'avatar Roblox 203785492 et 81504106 (absents du dépôt), étrangères au projet |
 
+### Bilan final E7 / E8 (Claude, 2026-11-12)
+
+Statut accepté par le propriétaire avant ces vérifications : E1–E6, E9,
+rendu 3D et A-34 validés ; E7 et E8 partiels. Studio Play, profils en
+mémoire, profil DataStore de test non touché. Aucun système économique ou
+serveur modifié.
+
+| # | Vérification | Résultat | Preuve |
+|---|---|---|---|
+| E8 | ButtonX près d'une ressource (simulé) | PASS : `Collect/SUCCESS`, sac 1 | Résultat client relu |
+| E8 | ButtonX sur la dalle de vente | PASS : aucune vente déclenchée (X reste la collecte) | Aucun `ActionResult` Sell |
+| E8 | ButtonY sur la dalle, sac 1 (simulé) | PASS : `Sell/SUCCESS +1` | Journal `[Sell] joueur 11975439775 : +1 Coins` |
+| E8 | Manette physique | **NON TESTÉ** : aucune manette (`GamepadEnabled = false`, 0 connectée). Limite matérielle : E8 reste **PARTIEL** | — |
+| E7 | Orientation | Jeu configuré en paysage (`StarterGui.ScreenOrientation = LandscapeSensor`) ; demande du propriétaire : paysage. L'émulateur Studio permet malgré tout le portrait | Propriété lue dans le client |
+| E7 | Portrait (capture du propriétaire) | **FAIL → A-35** : bouton « Prendre » dans la zone du stick gauche (359 × 718, bouton en 79–169 / 510–600) | Capture du propriétaire |
+| E7 | Paysage après correction A-35 (705 × 338, `LandscapeLeft`, `TouchEnabled`) | PASS : Grab 600–690 / 88–178 centré au-dessus du saut 610–680 / 190–260 ; stick dynamique x ≤ 282 ; sac 192–512 / 8–90 ; prompt tactile (`TextButton` 148 × 72) centré vers (447, 217), soit 373–521 / 181–253 : aucun chevauchement | Positions relues ; capture `E7_paysage_apres_vente.jpg` (dossier temporaire de session) |
+| E7 | Prompt tactile affiché | PASS à 9,2 studs, station à l'écran (prompt masqué si la station est hors champ, comportement Roblox) | `PromptShown`, étiquette masquée |
+| E7 | Vente | PASS : `Sell/SUCCESS +1`, sac 0, Coins 1, toast `+1 Coins` | Résultat client ; capture |
+| E7 | Toucher réel du prompt et du bouton Grab | **NON TESTÉ** : l'outil MCP injecte des `Touch` non routés vers les boutons GUI (`GetGuiObjectsAtPosition` vide). Vente déclenchée par `InputHoldBegin` / `InputHoldEnd` (même événement `Triggered` que le toucher), collecte par la touche E | — |
+| E7 | Captures | La capture de l'émulateur ne montre ni `TouchGui` ni prompt (CoreGui) ; une capture en portrait était sans 3D | `E7_capture_emulateur_sans_3D.jpg` |
+
+Décisions du propriétaire (2026-11-12) : E8 **PARTIEL ACCEPTÉ** (X et Y
+validés en simulation, manette physique reportée) ; A-35 acceptée
+techniquement sous réserve du contrôle tactile ; E7 à compléter par le
+toucher réel en portrait et paysage.
+
+### E7 — toucher réel et A-35 (propriétaire et Claude, 2026-11-12)
+
+Émulateur Studio, Play, profils en mémoire. Touchers réels du
+propriétaire ; Claude relit un enregistreur client (entrées, prompts,
+résultats) et le journal serveur.
+
+| Orientation | Disposition (A-35) | Toucher « Prendre » | Toucher « Vendre » |
+|---|---|---|---|
+| Portrait 359 × 718 | Prendre 254–344 / 468–558, juste au-dessus du saut 264–334 / 570–640 (écart 12 px), côté droit ; sac 71–286 / 8–90 | PASS : 5 × `GRAB Touch` → 5 × `Collect/SUCCESS` | PASS : `TRIGGERED SellPrompt` (toucher) → `Sell/SUCCESS +9` (green_leaf 4, stone 1, wood 1, exact) ; second toucher → `NOTHING_TO_SELL` ; une seule ligne `[Sell]` |
+| Paysage 705 × 338 | Prendre 600–690 / 88–178 au-dessus du saut 610–680 / 190–260 ; stick x ≤ 282 ; prompt 373–521 / 181–253 : aucun chevauchement | PASS : 4 touchers, 3 × `Collect/SUCCESS` (le 4e sans réponse : hors cadence ou sans cible, aucun crédit) | PASS : `TRIGGERED SellPrompt` (toucher) → `Sell/SUCCESS +4` (green_leaf 2, wood 1, exact) |
+
+En portrait, la zone du stick dynamique de Roblox
+(`DynamicThumbstickFrame`) couvre tout le bas de l'écran, bouton de saut
+compris ; les boutons captent leurs touchers (`Touch (gui)` journalisé),
+le stick reste utilisable à gauche.
+
+**E7 : PASS** (portrait et paysage, toucher réel). **A-35 : PASS**
+(portrait et paysage). **E8 : PARTIEL ACCEPTÉ** (manette physique
+reportée).
+
 ### Restant avant clôture de T3
 
 | Vérification | Raison |
@@ -469,6 +515,7 @@ le constat du propriétaire. **Validé** (propriétaire).
 | A-32 | Distance de vente (10 studs), marge (4) et limite (rafale 3, 1/s) absentes de la Bible | **Validées provisoirement** (propriétaire, 2026-11-11, D-014) : configurables, à réévaluer en T6 |
 | A-33 | Pas de son ni d'effet de pièces à la vente (GDD 13.4) | Phase UX, avec A-29 |
 | A-34 | Près de la station, l'étiquette « Vente » (BillboardGui, décalage 9) apparaît derrière le panneau du sac en haut de l'écran : lisibilité réduite | **Corrigé en T3** (décision du propriétaire, 2026-11-12) : `SellController` masque l'étiquette tant que le prompt de vente est affiché (`PromptShown` / `PromptHidden`, sans boucle). Vérifié dans Studio : masquée à 6,2 studs, visible à 12,3 et 15,4 studs sans chevauchement du HUD ; vente F toujours OK (`NOTHING_TO_SELL`, sac vide). **Validé** par le propriétaire (2026-11-12) |
+| A-35 | Mobile portrait : bouton « Prendre » placé à 190 px du bord droit, donc dans la zone du stick gauche sur un écran étroit (constat du propriétaire, émulateur) | **Corrigé en T3** (décision du propriétaire, 2026-11-12) : `CollectionController` place le bouton juste au-dessus du `JumpButton` de Roblox (positions suivies par événements, repli en bas à droite). Vérifié en portrait et en paysage, touchers réels du propriétaire : aucun chevauchement, collecte et vente OK. Acceptée par le propriétaire ; commit local autorisé |
 | A-26 | Position du personnage simulée par le client : le contrôle de trajet ne bloque que la téléportation entre deux collectes | **Ouverte, à traiter en T6** (D-012) : contrôle actuel conservé comme protection provisoire ; validation renforcée des déplacements côté serveur en T6. Concerne aussi la vente depuis T3 (D-014) : position falsifiée = vente à distance, sans gain de Coins |
 | A-27 | Marges de sécurité de la collecte (4 studs, 0,1 s, 5 demandes/s) jamais mesurées avec une latence mobile réelle | **Ouverte, à traiter en T6** (D-012) : marges conservées comme hypothèses jusqu'aux tests sur mobile avec latence réelle |
 | A-28 | Collecte par toucher et collecte en maintien implémentées toutes les deux (GDD 5.1) | **Levée** le 2026-11-11 (propriétaire, D-012) : les deux modes sont conservés. Maintien mesuré sur émulateur (39 collectes en 60 s) ; toucher non mesuré |
