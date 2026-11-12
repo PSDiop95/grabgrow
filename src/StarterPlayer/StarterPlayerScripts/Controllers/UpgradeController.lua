@@ -31,6 +31,7 @@ local Remotes = require(Shared:WaitForChild("Remotes"):WaitForChild("Remotes"))
 local Localization = require(Shared:WaitForChild("Util"):WaitForChild("Localization"))
 local UpgradeMath = require(Shared:WaitForChild("Util"):WaitForChild("UpgradeMath"))
 local InventoryController = require(script.Parent:WaitForChild("InventoryController"))
+local RangeRing = require(script.Parent:WaitForChild("RangeRing"))
 
 local UpgradeController = {}
 
@@ -149,6 +150,22 @@ local function formatEffect(upgradeId: string, level: number): string
 		return `x{formatNumber(value)}`
 	end
 	return formatNumber(value)
+end
+
+-- Message d'achat « valeur avant → valeur après » (A-40), unité à la fin :
+-- « Portée 12 → 14 studs ». `level` est le nouveau niveau renvoyé par le
+-- serveur ; les valeurs viennent de UpgradeConfig. Nil si incohérent.
+local function gainText(upgradeId: string, level: number): string?
+	local definition = UpgradeConfig[upgradeId]
+	local before = UpgradeMath.valueAt(upgradeId, level - 1)
+	if definition == nil or before == nil or UpgradeMath.valueAt(upgradeId, level) == nil then
+		return nil
+	end
+	local from = if definition.stat == "sellMultiplier" then `x{formatNumber(before)}` else formatNumber(before)
+	return Localization.fill(`{definition.displayNameKey}.gain`, localPlayer.LocaleId, {
+		from = from,
+		to = formatEffect(upgradeId, level),
+	})
 end
 
 local function newLabel(parent: Instance, text: string, textSize: number, color: Color3): TextLabel
@@ -337,7 +354,21 @@ local function onActionResult(result: any)
 		end
 		local card = if type(result.upgradeId) == "string" then cards[result.upgradeId] else nil
 		if result.ok == true then
-			InventoryController.showSuccess("shop.bought")
+			local level = result.level
+			local text = if type(result.upgradeId) == "string" and type(level) == "number"
+				then gainText(result.upgradeId, level)
+				else nil
+			if text then
+				InventoryController.showSuccessText(text)
+			else
+				InventoryController.showSuccess("shop.bought")
+			end
+			if result.upgradeId == "Magnet" and type(level) == "number" then
+				local range = UpgradeMath.valueAt("Magnet", level)
+				if range then
+					RangeRing.show(range)
+				end
+			end
 			if card then
 				flash(card.stroke, COLOR_SUCCESS)
 			end

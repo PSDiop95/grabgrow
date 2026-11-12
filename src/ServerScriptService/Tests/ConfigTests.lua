@@ -338,6 +338,14 @@ function ConfigTests.run(configs: Configs): { string }
 	for _, language in ipairs(localization.languages()) do
 		for upgradeId, upgrade in pairs(upgrades) do
 			check(localization.has(upgrade.displayNameKey, language), `texte manquant ({language}) : {upgradeId}`)
+			-- Message d'achat « avant → après » (A-40).
+			local gainKey = `{upgrade.displayNameKey}.gain`
+			check(localization.has(gainKey, language), `texte manquant ({language}) : {gainKey}`)
+			local filled = localization.fill(gainKey, language, { from = "1", to = "2" })
+			check(
+				string.find(filled, "1", 1, true) ~= nil and string.find(filled, "2", 1, true) ~= nil and string.find(filled, "{", 1, true) == nil,
+				`motifs from/to incomplets ({language}) : {gainKey}`
+			)
 		end
 		for worldId, world in pairs(worlds) do
 			check(localization.has(world.displayNameKey, language), `texte manquant ({language}) : {worldId}`)

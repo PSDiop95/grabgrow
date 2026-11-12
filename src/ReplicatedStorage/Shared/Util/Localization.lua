@@ -38,6 +38,12 @@ local STRINGS: { [string]: { [string]: string } } = {
 		["upgrade.magnet"] = "Magnet",
 		["upgrade.boots"] = "Boots",
 		["upgrade.multiplier"] = "Multiplier",
+		-- Message d'achat : valeur avant -> après (A-40).
+		["upgrade.backpack.gain"] = "Bag {from} → {to}",
+		["upgrade.grabber.gain"] = "Grab delay {from} → {to}",
+		["upgrade.magnet.gain"] = "Range {from} → {to}",
+		["upgrade.boots.gain"] = "Speed {from} → {to}",
+		["upgrade.multiplier.gain"] = "Sell value {from} → {to}",
 		["world.green_valley"] = "Green Valley",
 		["world.golden_desert"] = "Golden Desert",
 		["world.frozen_peaks"] = "Frozen Peaks",
@@ -91,6 +97,11 @@ local STRINGS: { [string]: { [string]: string } } = {
 		["upgrade.magnet"] = "Aimant",
 		["upgrade.boots"] = "Bottes",
 		["upgrade.multiplier"] = "Multiplicateur",
+		["upgrade.backpack.gain"] = "Sac {from} → {to}",
+		["upgrade.grabber.gain"] = "Délai de collecte {from} → {to}",
+		["upgrade.magnet.gain"] = "Portée {from} → {to}",
+		["upgrade.boots.gain"] = "Vitesse {from} → {to}",
+		["upgrade.multiplier.gain"] = "Valeur de vente {from} → {to}",
 		["world.green_valley"] = "Green Valley",
 		["world.golden_desert"] = "Golden Desert",
 		["world.frozen_peaks"] = "Frozen Peaks",
@@ -142,6 +153,14 @@ end
 -- Texte de `key` dont le motif `%d` reçoit `value` (entier).
 function Localization.format(key: string, localeId: string?, value: number): string
 	return (string.gsub(Localization.get(key, localeId), "%%d", string.format("%d", value)))
+end
+
+-- Texte de `key` dont chaque motif `{nom}` reçoit `values[nom]` (texte déjà
+-- mis en forme). Motif sans valeur : laissé tel quel (oubli visible).
+function Localization.fill(key: string, localeId: string?, values: { [string]: string }): string
+	return (string.gsub(Localization.get(key, localeId), "{(%w+)}", function(name: string): string
+		return values[name] or `\{{name}\}`
+	end))
 end
 
 function Localization.has(key: string, language: string): boolean

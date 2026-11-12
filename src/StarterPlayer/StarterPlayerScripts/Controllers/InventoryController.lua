@@ -176,7 +176,16 @@ local function buildInterface()
 	coinValue.Name = "DisplayedCoins"
 	coinValue.Parent = screenGui
 
-	toastLabel = newLabel(screenGui, UDim2.new(1, 0, 0, 30), UDim2.new(0, 0, 0, 96), 22)
+	-- Messages dans un ScreenGui à part, au-dessus de la boutique
+	-- (DisplayOrder 6) : le résultat d'un achat reste visible panneau ouvert.
+	local notifications = Instance.new("ScreenGui")
+	notifications.Name = "NotificationsUI"
+	notifications.ResetOnSpawn = false
+	notifications.DisplayOrder = 10
+	notifications.IgnoreGuiInset = true
+	notifications.Parent = localPlayer:WaitForChild("PlayerGui")
+
+	toastLabel = newLabel(notifications, UDim2.new(1, 0, 0, 30), UDim2.new(0, 0, 0, 96), 22)
 	toastLabel.Name = "Toast"
 	toastLabel.TextTransparency = 1
 	toastLabel.TextStrokeTransparency = 1
@@ -331,7 +340,12 @@ end
 
 -- Message positif (achat ou déblocage confirmé par le serveur).
 function InventoryController.showSuccess(key: string)
-	showToast(translate(key), COLOR_SUCCESS)
+	InventoryController.showSuccessText(translate(key))
+end
+
+-- Même retour, texte déjà localisé et mis en forme par l'appelant.
+function InventoryController.showSuccessText(text: string)
+	showToast(text, COLOR_SUCCESS)
 	pulsePanel()
 end
 

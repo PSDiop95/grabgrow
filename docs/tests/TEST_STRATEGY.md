@@ -218,9 +218,9 @@ ne vaut pas validation sur appareil réel.
 
 | # | Environnement | Préréglage | Action | Attendu |
 |---|---|---|---|---|
-| U1 | Studio | `U1` | Boutique (bouton ou B) > Backpack ; collecter jusqu'au plein | Toast « Amélioré ! » ; Coins 0 ; sac `x / 75` ; plein à 75, rien perdu |
+| U1 | Studio | `U1` | Boutique (bouton ou B) > Backpack ; collecter jusqu'au plein | Message « Sac 50 → 75 » ; Coins 0 ; sac `x / 75` ; plein à 75, rien perdu |
 | U2 | Studio | `U2` | Mesure 20 s en maintien, acheter Grabber, nouvelle mesure 20 s | Achat −150 ; mesure 2 ≥ mesure 1 (cadence 0,75 → 0,70 s ; plafond ≈ 28 en 20 s, limité aussi par les ressources disponibles) |
-| U3 | Studio | `U3` | Approcher une ressource : noter la distance d'apparition du ciblage ; acheter Magnet ; recommencer | Avant : ciblage à ≤ 12 studs ; après : ≤ 14 studs ; −200 Coins |
+| U3 | Studio | `U3` | Approcher une ressource : noter la distance d'apparition du ciblage ; acheter Magnet ; recommencer | Avant : ciblage à ≤ 12 studs ; après : ≤ 14 studs ; −200 Coins ; message « Portée 12 → 14 studs » ; anneau bleu de 14 studs au sol pendant 2,5 s (A-40) |
 | U4 | Studio | `U4` | Acheter Boots ; mesure vitesse ; réinitialiser le personnage (Échap > Réinitialiser) ; mesure | 16 → 16,5 ; 16,5 après réapparition ; −250 Coins |
 | U5 | Studio | `U5` | Vendre au stand ; noter le gain ; `U5` de nouveau ; acheter Multiplier ; vendre | 1re vente : +60 ; après achat (solde 0) : +63 ; Output `base 60 x1.05` |
 | U6 | Studio | `U6` | Ouvrir la boutique, appuyer sur chaque bouton | Boutons gris « Manque N » ; toast « Pas assez de Coins » ; Coins 50 inchangés |

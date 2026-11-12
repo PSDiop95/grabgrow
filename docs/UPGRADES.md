@@ -102,8 +102,13 @@ affiché (« Contenu à venir »), sans téléportation.
   (icône, nom, niveau → niveau suivant, effet → effet suivant, prix),
   puis les quatre mondes.
 - États du bouton : prix (achetable), « Manque N » (fonds insuffisants),
-  MAX, « ... » (achat en cours, 2 s au plus). Succès : message et contour
-  vert ; échec : message, rien n'est dépensé.
+  MAX, « ... » (achat en cours, 2 s au plus). Succès : message « valeur
+  avant → après » (« Portée 12 → 14 studs », clés `upgrade.<id>.gain`) et
+  contour vert ; échec : message, rien n'est dépensé. Messages dans
+  `NotificationsUI`, au-dessus de la boutique.
+- Magnet : anneau de portée au sol (`Controllers/RangeRing`,
+  `CylinderHandleAdornment` évidé, sans ombre ni collision), rayon = portée
+  du nouveau niveau, 2,5 s puis détruit ; aucun affichage permanent (A-40).
 - Monde : premier appui « Confirmer ? », second appui dans les 3 s.
 - Entrées : toucher ; PC touche B ; manette croix haut (ouvrir/fermer),
   B (fermer), navigation native des boutons.
