@@ -473,7 +473,8 @@ reportée).
 | Synchronisation Rojo, avant sauvegarde | Mode Edit ; 35 / 35 scripts du place identiques au dépôt (empreinte, fins de ligne normalisées), aucun script en trop ou manquant ; `DataConfig` `useMemoryStore = true` |
 | Station dans le place | `Workspace.SellZones.GreenValley` : `SellZonePad` (`GreenValley_Main`), comptoir, poteaux, toit, pièce ; 36 points de spawn ; pas de `ResourceNodes` (nœuds d'exécution absents) |
 | `save_place` | **Version 24** sur Roblox (Team Create), non publiée (station, A-34) |
-| `save_place` après A-35 (commit `e2090c4`) | 35 / 35 scripts du place identiques au dépôt (empreinte), `useMemoryStore = true`, station présente, pas de `ResourceNodes` ; **version 25** sur Roblox (Team Create), non publiée. Copie locale `GrabAndGrow.rbxl` non rafraîchie (sans A-35, non versionnée) |
+| `save_place` après A-35 (commit `e2090c4`) | 35 / 35 scripts du place identiques au dépôt (empreinte), `useMemoryStore = true`, station présente, pas de `ResourceNodes` ; **version 25** sur Roblox (Team Create), non publiée |
+| Copie locale `GrabAndGrow.rbxl` après A-35 | Rafraîchie par le propriétaire (2026-11-12 11:17:53 UTC, 142 428 octets). Contrôle Lune : station complète (`GreenValley_Main`), 36 points de spawn (16 / 12 / 8), pas de `ResourceNodes`, 35 / 35 scripts identiques au dépôt (empreinte), `CollectionController` avec A-35, `useMemoryStore = true`. Non versionnée (D-013) |
 | Profil DataStore de test | Non touché (11 Coins, 2 feuilles) |
 | Copie locale `GrabAndGrow.rbxl` | Rafraîchie par le propriétaire (2026-11-12 10:37 UTC, 141 092 octets). Contrôle Lune : `SellZones.GreenValley` complet (`SellZonePad` `GreenValley_Main`), 36 points de spawn (16 / 12 / 8), pas de `ResourceNodes`, 35 / 35 scripts identiques au dépôt (empreinte), `DataConfig` compris (`useMemoryStore = true`) |
 
