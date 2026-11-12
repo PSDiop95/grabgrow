@@ -1,6 +1,6 @@
 # GRAB & GROW — État du projet
 
-Dernière mise à jour : 2026-11-12 (T3 — vente et Coins, commit local, PARTIEL)
+Dernière mise à jour : 2026-11-12 (clôture de T3 — vente et Coins)
 
 ## Résumé
 
@@ -21,7 +21,7 @@ validé (points 1 à 5 OK), copie locale `GrabAndGrow.rbxl` vérifiée,
 maintien conservés tous les deux (maintien : 39 collectes en 60 s). Toutes
 les vérifications manuelles demandées sont faites.
 
-**T3 est IMPLÉMENTÉ, PARTIEL** (2026-11-11) : vente serveur atomique,
+**T3 est TERMINÉ** : clôturé par le propriétaire le 2026-11-12. Vente serveur atomique,
 station de vente provisoire, HUD Coins. Tests automatisés (Lune et Studio)
 et parcours Studio à un joueur OK. Tests manuels du propriétaire contrôlés
 dans les journaux : E1, E2, E5 vérifiés ; E9 (DataStore de test) vérifié
@@ -32,8 +32,9 @@ partiel accepté (manette physique reportée) ; A-34 et A-35 corrigés. Place de
 non publiée, 2026-11-12). Commit local T3 autorisé et créé (aucun push).
 Copie locale `GrabAndGrow.rbxl` rafraîchie et vérifiée.
 D-014 **validée** par le propriétaire (2026-11-11) ; paramètres de sécurité
-de la vente validés provisoirement, à réévaluer en T6. T3 reste PARTIEL
-jusqu'à la clôture explicite par le propriétaire.
+de la vente validés provisoirement, à réévaluer en T6. Réserve acceptée :
+E8 sur manette physique reporté. T4 ne commence qu'avec l'accord explicite
+du propriétaire.
 Détail : `SELLING.md` et « Vérifications T3 » ci-dessous.
 
 ### Réserves de T1
@@ -460,11 +461,10 @@ le stick reste utilisable à gauche.
 (portrait et paysage). **E8 : PARTIEL ACCEPTÉ** (manette physique
 reportée).
 
-### Restant avant clôture de T3
+### Clôture de T3
 
-| Vérification | Raison |
-|---|---|
-| Clôture de T3 | Décision du propriétaire |
+**Clôturé par le propriétaire le 2026-11-12.** Réserve acceptée : E8 sur
+manette physique reporté (X et Y validés en simulation).
 
 ### Sauvegarde du place et commit (2026-11-12, autorisés par le propriétaire)
 
@@ -567,9 +567,10 @@ Non vérifié sur DataStore réel :
 ## Décisions en attente
 
 1. Push GitHub des commits T1 et T2 (non autorisé à ce jour).
-2. Push du commit local T3 (non autorisé à ce jour).
-3. Clôture formelle de T3.
+2. Push des commits locaux T3 (non autorisé à ce jour).
+3. Lancement de T4 (accord explicite du propriétaire).
 
 ## Prochaine étape
 
-1. Propriétaire : clôture de T3. Aucun push, T4 non commencé.
+1. Propriétaire : instructions pour T4 et décision sur le push. T4 non
+   commencé, aucun push.

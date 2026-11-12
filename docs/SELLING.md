@@ -1,6 +1,6 @@
 # GRAB & GROW — Vente et Coins (T3)
 
-Dernière mise à jour : 2026-11-12 — T3 implémenté, PARTIEL (D-014 validée ; E1–E9 et A-34 validés ; clôture en attente).
+Dernière mise à jour : 2026-11-12 — T3 clôturé (D-014 validée ; E8 sur manette physique reporté).
 
 Décision : `decisions/TECHNICAL_DECISIONS.md`, D-014. État et résultats de
 tests : `PROJECT_STATUS.md`. Collecte et inventaire : `COLLECTION.md`.
