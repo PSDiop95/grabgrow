@@ -30,7 +30,7 @@ exécutés par Claude et validés par le propriétaire (2026-11-12) ; E7
 (émulateur mobile) testé et validé par le propriétaire ; A-34 corrigé et
 validé. Place de test sauvegardé avec la station corrigée (version 24,
 non publiée, 2026-11-12). Commit local T3 autorisé et créé (aucun push).
-Copie locale `GrabAndGrow.rbxl` non rafraîchie (voir « Restant »).
+Copie locale `GrabAndGrow.rbxl` rafraîchie et vérifiée.
 D-014 **validée** par le propriétaire (2026-11-11) ; paramètres de sécurité
 de la vente validés provisoirement, à réévaluer en T6. T3 reste PARTIEL
 jusqu'à la clôture explicite par le propriétaire.
@@ -418,7 +418,6 @@ le constat du propriétaire. **Validé** (propriétaire).
 
 | Vérification | Raison |
 |---|---|
-| Copie locale `GrabAndGrow.rbxl` avec la station | Non rafraîchie : le fichier date toujours du 2026-11-11 18:59 (sans `SellZones`, 29 scripts dont 11 différents du dépôt et 6 absents). Deux téléchargements annoncés le 2026-11-12, aucun fichier écrit trouvé. Non versionnée (D-013) : à refaire par le propriétaire (Fichier > Télécharger une copie) |
 | Clôture de T3 | Décision du propriétaire |
 
 ### Sauvegarde du place et commit (2026-11-12, autorisés par le propriétaire)
@@ -429,6 +428,7 @@ le constat du propriétaire. **Validé** (propriétaire).
 | Station dans le place | `Workspace.SellZones.GreenValley` : `SellZonePad` (`GreenValley_Main`), comptoir, poteaux, toit, pièce ; 36 points de spawn ; pas de `ResourceNodes` (nœuds d'exécution absents) |
 | `save_place` | **Version 24** sur Roblox (Team Create), non publiée |
 | Profil DataStore de test | Non touché (11 Coins, 2 feuilles) |
+| Copie locale `GrabAndGrow.rbxl` | Rafraîchie par le propriétaire (2026-11-12 10:37 UTC, 141 092 octets). Contrôle Lune : `SellZones.GreenValley` complet (`SellZonePad` `GreenValley_Main`), 36 points de spawn (16 / 12 / 8), pas de `ResourceNodes`, 35 / 35 scripts identiques au dépôt (empreinte), `DataConfig` compris (`useMemoryStore = true`) |
 
 ## Anomalies
 
@@ -523,6 +523,4 @@ Non vérifié sur DataStore réel :
 
 ## Prochaine étape
 
-1. Propriétaire : rafraîchir la copie locale `GrabAndGrow.rbxl` (station),
-   puis contrôle par Claude.
-2. Propriétaire : clôture de T3. Aucun push, T4 non commencé.
+1. Propriétaire : clôture de T3. Aucun push, T4 non commencé.
