@@ -2,12 +2,15 @@
 -- Affichage du sac : miroir de l'état envoyé par le serveur (StateUpdated).
 -- Aucune autorité : le client n'ajoute jamais de ressource lui-même.
 --
--- Interface minimale de T2, construite par code ; le HUD complet est prévu
--- en T5. Placée en haut au centre : hors des zones du stick et du saut.
+-- Interface construite par code, en haut au centre : hors des zones du
+-- stick et du saut.
 -- T3 : solde de Coins, valeur vendable estimée (SaleValue, affichage
 -- seulement) et confirmation du montant crédité par le serveur.
 -- T4 : l'estimation applique le Multiplier reçu du serveur (affichage) ;
 -- niveaux, mondes et vitesse sont relayés aux autres contrôleurs.
+-- T5.1 : sac en pastille puis en barre (BagDisplay : états et couleurs
+-- déduits de `used` / `capacity` du serveur), ligne Coins mise en avant,
+-- invitation à vendre quand le sac est plein.
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -19,6 +22,7 @@ local ResourceConfig = require(Shared:WaitForChild("Config"):WaitForChild("Resou
 local Remotes = require(Shared:WaitForChild("Remotes"):WaitForChild("Remotes"))
 local Localization = require(Shared:WaitForChild("Util"):WaitForChild("Localization"))
 local SaleValue = require(Shared:WaitForChild("Util"):WaitForChild("SaleValue"))
+local BagDisplay = require(Shared:WaitForChild("Util"):WaitForChild("BagDisplay"))
 
 local InventoryController = {}
 
@@ -40,32 +44,67 @@ export type State = {
 
 local COLOR_PANEL = Color3.fromRGB(24, 28, 36)
 local COLOR_TEXT = Color3.fromRGB(255, 255, 255)
-local COLOR_BAR = Color3.fromRGB(96, 204, 78)
-local COLOR_BAR_FULL = Color3.fromRGB(230, 80, 70)
+local COLOR_MUTED = Color3.fromRGB(190, 198, 210)
+local COLOR_TRACK = Color3.fromRGB(60, 66, 78)
 local COLOR_GAIN = Color3.fromRGB(190, 255, 170)
 local COLOR_WARNING = Color3.fromRGB(255, 200, 90)
 local COLOR_COINS = Color3.fromRGB(255, 214, 92)
+local COLOR_COIN_EDGE = Color3.fromRGB(196, 140, 36)
 local COLOR_SUCCESS = Color3.fromRGB(120, 230, 140)
 local COIN_COUNT_SECONDS = 0.5
 local TOAST_HOLD_SECONDS = 0.7
 local TOAST_FADE_SECONDS = 0.4
 
+-- Panneau du HUD (T5.1), hauteur fixe, trois lignes :
+--   1. sac : pastille compacte (sac presque vide) qui s'élargit en barre ;
+--   2. Coins et valeur estimée du sac ;
+--   3. détail des ressources, ou invitation à vendre quand le sac est plein.
+local PANEL_HEIGHT = 82
+local PANEL_PADDING = 8
+local BAG_ROW_TOP = 6
+local BAG_ROW_HEIGHT = 26
+local COINS_ROW_TOP = 36
+local COINS_ROW_HEIGHT = 22
+local DETAIL_ROW_TOP = 60
+local DETAIL_ROW_HEIGHT = 16
+-- Largeur de la pastille compacte (px) ; la barre prend toute la ligne.
+local BAG_COMPACT_WIDTH = 132
+local BAG_ICON = "🎒"
+-- Largeur réservée à l'icône, à gauche de la piste (px).
+local BAG_ICON_SPACE = 28
+-- Remplissage : coins modérément arrondis et largeur minimale, pour rester
+-- une barre et non une pastille ronde à faible remplissage (A-30).
+local FILL_CORNER = 6
+local FILL_MIN_WIDTH = 6
+local FILL_INSET = 3
+local BAG_RESIZE_SECONDS = 0.25
+local BAG_FILL_SECONDS = 0.15
+local ALERT_STROKE = 2
+
 local localPlayer = Players.LocalPlayer :: Player
 local state: State? = nil
 local started = false
 
-local titleLabel: TextLabel
+local bagTrack: Frame
+local bagStroke: UIStroke
+local bagLabel: TextLabel
+local barFill: Frame
 local detailLabel: TextLabel
 local coinsLabel: TextLabel
+local valueLabel: TextLabel
 local displayedCoins = 0
 local coinTween: Tween? = nil
 local coinValue: NumberValue
 local listeners: { (state: State) -> () } = {}
-local barFill: Frame
 local panelScale: UIScale
 local toastLabel: TextLabel
 local toastTween: Tween? = nil
 local toastToken = 0
+-- Animations du sac en cours : annulées avant d'en lancer d'autres.
+local trackTween: Tween? = nil
+local fillTween: Tween? = nil
+local lastCompact: boolean? = nil
+local lastTier: string? = nil
 
 -- Ressources dans un ordre stable (valeur de vente croissante).
 local resourceOrder: { string } = {}
@@ -84,6 +123,10 @@ local function translate(key: string): string
 	return Localization.get(key, localPlayer.LocaleId)
 end
 
+local function toColor(rgb: BagDisplay.Rgb): Color3
+	return Color3.fromRGB(rgb.r, rgb.g, rgb.b)
+end
+
 local function newLabel(parent: Instance, size: UDim2, position: UDim2, textSize: number): TextLabel
 	local label = Instance.new("TextLabel")
 	label.BackgroundTransparency = 1
@@ -96,6 +139,121 @@ local function newLabel(parent: Instance, size: UDim2, position: UDim2, textSize
 	label.Text = ""
 	label.Parent = parent
 	return label
+end
+
+-- Panneau étroit : texte réduit plutôt que tronqué.
+local function fitText(label: TextLabel, minSize: number, maxSize: number)
+	label.TextScaled = true
+	local constraint = Instance.new("UITextSizeConstraint")
+	constraint.MinTextSize = minSize
+	constraint.MaxTextSize = maxSize
+	constraint.Parent = label
+end
+
+local function round(instance: Instance, radius: UDim)
+	local corner = Instance.new("UICorner")
+	corner.CornerRadius = radius
+	corner.Parent = instance
+end
+
+local function newRow(panel: Frame, name: string, top: number, height: number): Frame
+	local row = Instance.new("Frame")
+	row.Name = name
+	row.BackgroundTransparency = 1
+	row.Position = UDim2.new(0, PANEL_PADDING, 0, top)
+	row.Size = UDim2.new(1, -2 * PANEL_PADDING, 0, height)
+	row.Parent = panel
+	return row
+end
+
+-- Ligne 1 : le sac. La piste est centrée et s'élargit depuis son centre :
+-- passage pastille -> barre sans déplacement brusque.
+local function buildBagRow(panel: Frame)
+	local row = newRow(panel, "BagRow", BAG_ROW_TOP, BAG_ROW_HEIGHT)
+
+	bagTrack = Instance.new("Frame")
+	bagTrack.Name = "Bar"
+	bagTrack.AnchorPoint = Vector2.new(0.5, 0)
+	bagTrack.Position = UDim2.new(0.5, 0, 0, 0)
+	bagTrack.Size = UDim2.new(0, BAG_COMPACT_WIDTH, 1, 0)
+	bagTrack.BackgroundColor3 = COLOR_TRACK
+	bagTrack.BorderSizePixel = 0
+	bagTrack.Parent = row
+	round(bagTrack, UDim.new(0, FILL_CORNER + FILL_INSET))
+
+	bagStroke = Instance.new("UIStroke")
+	bagStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+	bagStroke.Thickness = 0
+	bagStroke.Parent = bagTrack
+
+	-- Zone du remplissage, en retrait de la piste, à droite de l'icône (le
+	-- début de la barre ne passe pas sous le glyphe).
+	local inner = Instance.new("Frame")
+	inner.Name = "Inner"
+	inner.BackgroundTransparency = 1
+	inner.Position = UDim2.new(0, BAG_ICON_SPACE, 0, FILL_INSET)
+	inner.Size = UDim2.new(1, -BAG_ICON_SPACE - FILL_INSET, 1, -2 * FILL_INSET)
+	inner.Parent = bagTrack
+
+	barFill = Instance.new("Frame")
+	barFill.Name = "Fill"
+	barFill.Size = UDim2.new(0, 0, 1, 0)
+	barFill.BackgroundColor3 = toColor(BagDisplay.Colors.green)
+	barFill.BorderSizePixel = 0
+	barFill.Visible = false
+	barFill.Parent = inner
+	round(barFill, UDim.new(0, FILL_CORNER))
+	local fillLimit = Instance.new("UISizeConstraint")
+	fillLimit.MinSize = Vector2.new(FILL_MIN_WIDTH, 0)
+	fillLimit.Parent = barFill
+
+	local icon = newLabel(bagTrack, UDim2.new(0, 24, 1, 0), UDim2.new(0, 4, 0, 0), 16)
+	icon.Name = "Icon"
+	icon.Text = BAG_ICON
+	icon.TextTruncate = Enum.TextTruncate.None
+	icon.ZIndex = 2
+
+	-- Compteur lisible sur toutes les couleurs de remplissage (contour noir).
+	bagLabel = newLabel(bagTrack, UDim2.new(1, -BAG_ICON_SPACE - 8, 1, -4), UDim2.new(0, BAG_ICON_SPACE, 0, 2), 15)
+	bagLabel.Name = "Title"
+	bagLabel.ZIndex = 2
+	bagLabel.TextStrokeTransparency = 0.35
+	bagLabel.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
+	fitText(bagLabel, 10, 15)
+end
+
+-- Ligne 2 : Coins (information principale) et valeur estimée du sac.
+local function buildCoinsRow(panel: Frame)
+	local row = newRow(panel, "CoinsRow", COINS_ROW_TOP, COINS_ROW_HEIGHT)
+
+	-- Pièce dessinée (forme simple, aucun asset).
+	local coin = Instance.new("Frame")
+	coin.Name = "CoinIcon"
+	coin.AnchorPoint = Vector2.new(0, 0.5)
+	coin.Position = UDim2.new(0, 2, 0.5, 0)
+	coin.Size = UDim2.new(0, 16, 0, 16)
+	coin.BackgroundColor3 = COLOR_COINS
+	coin.BorderSizePixel = 0
+	coin.Parent = row
+	round(coin, UDim.new(1, 0))
+	local edge = Instance.new("UIStroke")
+	edge.Color = COLOR_COIN_EDGE
+	edge.Thickness = 2
+	edge.Parent = coin
+
+	coinsLabel = newLabel(row, UDim2.new(0.55, -24, 1, 0), UDim2.new(0, 24, 0, 0), 18)
+	coinsLabel.Name = "Coins"
+	coinsLabel.Font = Enum.Font.GothamBlack
+	coinsLabel.TextColor3 = COLOR_COINS
+	coinsLabel.TextXAlignment = Enum.TextXAlignment.Left
+	fitText(coinsLabel, 11, 18)
+
+	valueLabel = newLabel(row, UDim2.new(0.45, 0, 1, 0), UDim2.new(0.55, 0, 0, 0), 13)
+	valueLabel.Name = "SellValue"
+	valueLabel.Font = Enum.Font.GothamMedium
+	valueLabel.TextColor3 = COLOR_MUTED
+	valueLabel.TextXAlignment = Enum.TextXAlignment.Right
+	fitText(valueLabel, 9, 13)
 end
 
 local function buildInterface()
@@ -115,61 +273,34 @@ local function buildInterface()
 	-- Roblox (en haut à gauche) quand elle est ouverte.
 	panel.AnchorPoint = Vector2.new(0.5, 0)
 	panel.Position = UDim2.new(0.5, 0, 0, 8)
-	panel.Size = UDim2.new(0.45, 0, 0, 82)
+	panel.Size = UDim2.new(0.45, 0, 0, PANEL_HEIGHT)
 	panel.BackgroundColor3 = COLOR_PANEL
 	panel.BackgroundTransparency = 0.25
 	panel.BorderSizePixel = 0
 	panel.Parent = screenGui
 
 	local sizeLimit = Instance.new("UISizeConstraint")
-	sizeLimit.MinSize = Vector2.new(170, 82)
-	sizeLimit.MaxSize = Vector2.new(300, 82)
+	sizeLimit.MinSize = Vector2.new(170, PANEL_HEIGHT)
+	sizeLimit.MaxSize = Vector2.new(300, PANEL_HEIGHT)
 	sizeLimit.Parent = panel
 
-	local corner = Instance.new("UICorner")
-	corner.CornerRadius = UDim.new(0, 12)
-	corner.Parent = panel
+	round(panel, UDim.new(0, 12))
 
 	panelScale = Instance.new("UIScale")
 	panelScale.Parent = panel
 
-	titleLabel = newLabel(panel, UDim2.new(1, -20, 0, 20), UDim2.new(0, 10, 0, 5), 16)
-	titleLabel.Name = "Title"
+	buildBagRow(panel)
+	buildCoinsRow(panel)
 
-	local barBack = Instance.new("Frame")
-	barBack.Name = "Bar"
-	barBack.Position = UDim2.new(0, 10, 0, 28)
-	barBack.Size = UDim2.new(1, -20, 0, 10)
-	barBack.BackgroundColor3 = Color3.fromRGB(60, 66, 78)
-	barBack.BorderSizePixel = 0
-	barBack.Parent = panel
-	local barCorner = Instance.new("UICorner")
-	barCorner.CornerRadius = UDim.new(1, 0)
-	barCorner.Parent = barBack
-
-	barFill = Instance.new("Frame")
-	barFill.Name = "Fill"
-	barFill.Size = UDim2.new(0, 0, 1, 0)
-	barFill.BackgroundColor3 = COLOR_BAR
-	barFill.BorderSizePixel = 0
-	barFill.Parent = barBack
-	local fillCorner = Instance.new("UICorner")
-	fillCorner.CornerRadius = UDim.new(1, 0)
-	fillCorner.Parent = barFill
-
-	detailLabel = newLabel(panel, UDim2.new(1, -20, 0, 16), UDim2.new(0, 10, 0, 42), 13)
+	detailLabel = newLabel(
+		panel,
+		UDim2.new(1, -2 * PANEL_PADDING, 0, DETAIL_ROW_HEIGHT),
+		UDim2.new(0, PANEL_PADDING, 0, DETAIL_ROW_TOP),
+		13
+	)
 	detailLabel.Name = "Detail"
 	detailLabel.Font = Enum.Font.GothamMedium
-
-	coinsLabel = newLabel(panel, UDim2.new(1, -20, 0, 18), UDim2.new(0, 10, 0, 60), 15)
-	coinsLabel.Name = "Coins"
-	coinsLabel.TextColor3 = COLOR_COINS
-	-- Panneau étroit (téléphone en portrait) : réduire plutôt que tronquer.
-	coinsLabel.TextScaled = true
-	local coinsTextSize = Instance.new("UITextSizeConstraint")
-	coinsTextSize.MinTextSize = 10
-	coinsTextSize.MaxTextSize = 15
-	coinsTextSize.Parent = coinsLabel
+	fitText(detailLabel, 9, 13)
 
 	-- Compteur animé du solde affiché (purement visuel).
 	coinValue = Instance.new("NumberValue")
@@ -198,45 +329,107 @@ local function renderCoins()
 	local current = state
 	if current == nil then
 		coinsLabel.Text = ""
+		valueLabel.Text = ""
 		return
 	end
-	local estimate = InventoryController.estimateSale()
-	coinsLabel.Text = string.format(
-		"%s %d   |   %s ~%d",
-		translate("hud.coins"),
-		displayedCoins,
-		translate("hud.sell_value"),
-		estimate
-	)
+	coinsLabel.Text = `{displayedCoins} {translate("hud.coins")}`
+	valueLabel.Text = `{translate("hud.sell_value")} ~{InventoryController.estimateSale()}`
 end
 
-local function render()
+local function pulsePanel()
+	panelScale.Scale = 1.08
+	TweenService:Create(panelScale, TweenInfo.new(0.2, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { Scale = 1 }):Play()
+end
+
+-- Pastille ou barre : la piste ne change de largeur qu'au changement de
+-- forme, jamais à chaque collecte.
+local function setCompact(compact: boolean, animate: boolean)
+	if compact == lastCompact then
+		return
+	end
+	lastCompact = compact
+	local goal = if compact then UDim2.new(0, BAG_COMPACT_WIDTH, 1, 0) else UDim2.new(1, 0, 1, 0)
+	if trackTween then
+		trackTween:Cancel()
+		trackTween = nil
+	end
+	if not animate then
+		bagTrack.Size = goal
+		return
+	end
+	local tween = TweenService:Create(
+		bagTrack,
+		TweenInfo.new(BAG_RESIZE_SECONDS, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+		{ Size = goal }
+	)
+	trackTween = tween
+	tween:Play()
+end
+
+local function renderBag(inventory: { used: number, capacity: number, resources: { [string]: number } }, animate: boolean)
+	local view = BagDisplay.view(inventory.used, inventory.capacity)
+	bagLabel.Text = `{translate(view.labelKey or "hud.bag")}  {inventory.used} / {inventory.capacity}`
+	-- Toujours blanc, contour noir : lisible sur vert, jaune, orange et rouge.
+	bagLabel.TextColor3 = COLOR_TEXT
+
+	setCompact(view.compact, animate)
+
+	local fillColor = toColor(view.fill)
+	local fillSize = UDim2.new(view.ratio, 0, 1, 0)
+	barFill.Visible = view.ratio > 0
+	if fillTween then
+		fillTween:Cancel()
+		fillTween = nil
+	end
+	if animate then
+		local tween = TweenService:Create(
+			barFill,
+			TweenInfo.new(BAG_FILL_SECONDS),
+			{ Size = fillSize, BackgroundColor3 = fillColor }
+		)
+		fillTween = tween
+		tween:Play()
+	else
+		barFill.Size = fillSize
+		barFill.BackgroundColor3 = fillColor
+	end
+
+	-- Alerte : contour de la couleur du remplissage ; jamais la couleur
+	-- seule, le mot d'état l'accompagne toujours (GDD 12.4).
+	bagStroke.Thickness = if view.alert then ALERT_STROKE else 0
+	bagStroke.Color = fillColor
+
+	if view.hintKey then
+		detailLabel.Text = translate(view.hintKey)
+		detailLabel.TextColor3 = COLOR_WARNING
+		detailLabel.Font = Enum.Font.GothamBold
+	else
+		local parts: { string } = {}
+		for _, resourceId in ipairs(resourceOrder) do
+			local quantity = inventory.resources[resourceId] or 0
+			table.insert(parts, `{translate(ResourceConfig[resourceId].displayNameKey)} {quantity}`)
+		end
+		detailLabel.Text = table.concat(parts, "   ")
+		detailLabel.TextColor3 = COLOR_TEXT
+		detailLabel.Font = Enum.Font.GothamMedium
+	end
+
+	-- Entrée dans un état d'alerte : une impulsion, aucune boucle.
+	if animate and view.alert and lastTier ~= nil and lastTier ~= view.tier then
+		pulsePanel()
+	end
+	lastTier = view.tier
+end
+
+local function render(animate: boolean)
 	local current = state
 	if current == nil then
-		titleLabel.Text = translate("hud.bag")
+		bagLabel.Text = translate("hud.bag")
 		detailLabel.Text = ""
 		renderCoins()
 		return
 	end
-	local inventory = current.inventory
-	local full = inventory.used >= inventory.capacity
-	local title = `{translate("hud.bag")}  {inventory.used} / {inventory.capacity}`
-	if full then
-		title = `{translate("hud.bag_full")}  {inventory.used} / {inventory.capacity}`
-	end
-	titleLabel.Text = title
-	titleLabel.TextColor3 = if full then COLOR_WARNING else COLOR_TEXT
-
-	local ratio = if inventory.capacity > 0 then math.clamp(inventory.used / inventory.capacity, 0, 1) else 0
-	barFill.BackgroundColor3 = if full then COLOR_BAR_FULL else COLOR_BAR
-	TweenService:Create(barFill, TweenInfo.new(0.15), { Size = UDim2.new(ratio, 0, 1, 0) }):Play()
-
-	local parts: { string } = {}
-	for _, resourceId in ipairs(resourceOrder) do
-		local quantity = inventory.resources[resourceId] or 0
-		table.insert(parts, `{translate(ResourceConfig[resourceId].displayNameKey)} {quantity}`)
-	end
-	detailLabel.Text = table.concat(parts, "   ")
+	renderBag(current.inventory, animate)
 	renderCoins()
 end
 
@@ -280,11 +473,6 @@ local function showToast(text: string, color: Color3)
 		toastTween = tween
 		tween:Play()
 	end)
-end
-
-local function pulsePanel()
-	panelScale.Scale = 1.08
-	TweenService:Create(panelScale, TweenInfo.new(0.2, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { Scale = 1 }):Play()
 end
 
 -- Forme attendue de l'état serveur. Un état illisible est ignoré.
@@ -369,14 +557,15 @@ function InventoryController.start()
 		displayedCoins = math.floor(value + 0.5)
 		renderCoins()
 	end)
-	render()
+	render(false)
 	Remotes.waitFor(Remotes.Name.StateUpdated).OnClientEvent:Connect(function(newState: any)
 		if not isValidState(newState) then
 			return
 		end
 		local first = state == nil
 		state = newState
-		render()
+		-- Premier état : affiché sans animation.
+		render(not first)
 		if first then
 			-- Arrivée : solde affiché tel quel, sans défilement.
 			displayedCoins = newState.coins

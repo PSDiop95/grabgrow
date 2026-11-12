@@ -23,6 +23,7 @@ local CollectionServiceTests = require(script.Parent.CollectionServiceTests)
 local SellServiceTests = require(script.Parent.SellServiceTests)
 local EconomyServiceTests = require(script.Parent.EconomyServiceTests)
 local UpgradeServiceTests = require(script.Parent.UpgradeServiceTests)
+local HudTests = require(script.Parent.HudTests)
 
 local GameConfig = require(Config.GameConfig)
 local ResourceConfig = require(Config.ResourceConfig)
@@ -45,6 +46,7 @@ local Remotes = require(ReplicatedStorage.Shared.Remotes.Remotes)
 local Localization = require(ReplicatedStorage.Shared.Util.Localization)
 local SaleValue = require(ReplicatedStorage.Shared.Util.SaleValue)
 local UpgradeMath = require(ReplicatedStorage.Shared.Util.UpgradeMath)
+local BagDisplay = require(ReplicatedStorage.Shared.Util.BagDisplay)
 local CollectionSecurityConfig = require(ServerStorage:WaitForChild("ServerOnlyConfig").CollectionSecurityConfig)
 local SellSecurityConfig = require(ServerStorage:WaitForChild("ServerOnlyConfig").SellSecurityConfig)
 local EconomySecurityConfig = require(ServerStorage:WaitForChild("ServerOnlyConfig").EconomySecurityConfig)
@@ -192,6 +194,17 @@ report(
 		EconomySecurityConfig = EconomySecurityConfig,
 		Remotes = Remotes,
 		StudioTestPresets = StudioTestPresets,
+	})
+)
+
+report(
+	"HudTests",
+	HudTests.run({
+		BagDisplay = BagDisplay,
+		InventoryService = InventoryService,
+		DataSchema = DataSchema,
+		UpgradeMath = UpgradeMath,
+		Localization = Localization,
 	})
 )
 

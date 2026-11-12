@@ -1,6 +1,6 @@
 # GRAB & GROW — État du projet
 
-Dernière mise à jour : 2026-11-12 (T4 — améliorations et progression, implémenté, PARTIEL)
+Dernière mise à jour : 2026-11-12 (T5.1 HUD : PARTIEL, Studio OK, téléphone réel restant)
 
 ## Résumé
 
@@ -36,14 +36,15 @@ de la vente validés provisoirement, à réévaluer en T6. Réserve acceptée :
 E8 sur manette physique reporté.
 Détail : `SELLING.md` et « Vérifications T3 » ci-dessous.
 
-**T4 est IMPLÉMENTÉ, PARTIEL** (2026-11-12) : cinq améliorations
+**T4 est TERMINÉ** (clôturé par le propriétaire le 2026-11-12) : cinq améliorations
 achetables (Backpack, Grabber, Magnet, Boots, Multiplier), effets réels
 côté serveur, déblocage des quatre mondes (sans contenu), `EconomyService`,
 boutique client. Décisions du propriétaire au préflight : D-015 (périmètre
 étendu, Magnet décalé d'un niveau, Multiplier arrondi à l'inférieur, ordre
 strict des mondes). Tests automatisés (Lune et Studio) et parcours Studio à
-un joueur OK. Tests manuels U1 à U10 à faire par le propriétaire. Aucun
-commit. Détail : `UPGRADES.md`, `PROGRESSION.md`, « Vérifications T4 ».
+un joueur OK. Tests manuels U1 à U9b validés (Studio, émulateur, téléphone
+réel) ; U10 manette reporté. A-39, A-40, A-41 corrigés et validés. Commits
+locaux 69fb421 et e63039d, aucun push. Détail : `UPGRADES.md`, `PROGRESSION.md`, « Vérifications T4 ».
 
 ### Réserves de T1
 
@@ -86,6 +87,7 @@ src/
     Util/Localization.lua            Textes en / fr par clé (provisoire, T2 ; vente T3)
     Util/SaleValue.lua               Formule de vente partagée (T3), Multiplier (T4)
     Util/UpgradeMath.lua             Lecture des tables d'amélioration (T4)
+    Util/BagDisplay.lua              États d'affichage du sac (T5.1)
     Remotes/Remotes.lua              RemoteEvents et codes de résultat (T2)
   ServerStorage/ServerOnlyConfig/
     CollectionSecurityConfig.lua     Marges de sécurité de la collecte, non répliquées (T2)
@@ -123,6 +125,7 @@ src/
     Tests/SellServiceTests.lua       Vente, invariants, concurrence, persistance (25 cas)
     Tests/EconomyServiceTests.lua    Crédit, débit, arrondi du Multiplier (10 cas, T4)
     Tests/UpgradeServiceTests.lua    Achats, effets, concurrence, mondes, persistance, préréglages (23 cas, T4)
+    Tests/HudTests.lua               États du sac, textes EN/FR (10 cas, T5.1)
     Tests/RunTests.server.lua        Lanceur, Studio uniquement
 tools/run_tests.luau                 Lanceur des tests en terminal (Lune)
 tools/studio/build_test_map.luau     Carte de test Green Valley (sol, spawn, 36 points, station de vente)
@@ -576,6 +579,26 @@ touches injectées. Simulation : ni téléphone, ni émulateur, ni manette.
 - Deux joueurs réels (Local Server) : simulé seulement.
 - Magnet : effet vérifié (U3), non perçu en jeu par le propriétaire (A-40).
 
+## Vérifications T5.1 — HUD (2026-11-12, PARTIEL : téléphone réel restant)
+
+Lot client seulement : aucun service serveur, aucune valeur économique,
+aucun schéma modifié. Détail : `phases/T5_PREFLIGHT.md`, section 9.
+
+| Vérification | Type | Résultat |
+|---|---|---|
+| Lune : toutes les suites, dont `HudTests` (10 cas, nouveau) | Automatisé, terminal | Exécuté — `TOUS LES TESTS : OK`, code de sortie 0 |
+| Contrôle négatif : 7 défauts introduits dans `BagDisplay` (seuil, règle « plein », invitation, pastille, couleur, capacité codée en dur, clé absente) | Lune | Exécuté — 7 détectés sur 7 |
+| `luau-lsp analyze` sur `src/` (`--!strict`) | Terminal | Exécuté — 0 erreur, code de sortie 0 |
+| `rojo build` (fichier temporaire) | Terminal | Exécuté — réussi |
+| Suites dans Studio (Play) | Studio | Exécuté — `TOUS LES TESTS : OK` |
+| Synchronisation Rojo | Studio | Exécuté — 47 / 47 scripts identiques au dépôt |
+| Collecte, presque plein, plein, refus `INVENTORY_FULL`, vente, Boutique, doublons après réapparition | Studio, piloté par MCP | Exécuté — OK (détail : `phases/T5_PREFLIGHT.md`, section 9) |
+| Formats : PC 990 × 512, téléphone tactile 801 × 413, tablette 1179 × 819, PC 16:9 à l'échelle | Studio, émulateur | Exécuté — aucun chevauchement ; Boutique sous le sac |
+| Téléphone petit et grand à leurs proportions réelles | Émulateur | **Non exécuté** — réglage non appliqué par Studio (3 essais) ; téléphone réel recommandé |
+| Défauts trouvés et corrigés : remplissage sous l'icône, contraste « Sac plein ! » | Studio | Corrigés et revérifiés |
+| Sauvegarde du place de test (accord du propriétaire) | Studio | **Version 41** (Team Create), non publiée ; avant sauvegarde : 47 / 47 scripts identiques au dépôt, `useMemoryStore = true`, station présente, pas de `ResourceNodes` |
+| Commit local (accord du propriétaire) | Git | `feat(hud)` T5.1 ; aucun push |
+
 ## Anomalies
 
 ### Résolues
@@ -626,7 +649,7 @@ touches injectées. Simulation : ni téléphone, ni émulateur, ni manette.
 | A-27 | Marges de sécurité de la collecte (4 studs, 0,1 s, 5 demandes/s) jamais mesurées avec une latence mobile réelle | **Ouverte, à traiter en T6** (D-012) : marges conservées comme hypothèses jusqu'aux tests sur mobile avec latence réelle |
 | A-28 | Collecte par toucher et collecte en maintien implémentées toutes les deux (GDD 5.1) | **Levée** le 2026-11-11 (propriétaire, D-012) : les deux modes sont conservés. Maintien mesuré sur émulateur (39 collectes en 60 s) ; toucher non mesuré |
 | A-29 | Aucun son ni animation de personnage à la collecte ; modèles de ressources provisoires | **Décidée** (D-012) : reportée à une phase dédiée à l'expérience utilisateur |
-| A-30 | Barre du sac affichée en pastille ronde à faible remplissage (largeur du remplissage inférieure à l'arrondi des coins) | **Reportée** (propriétaire, 2026-11-11) : phase dédiée à l'expérience utilisateur, avec A-29 |
+| A-30 | Barre du sac affichée en pastille ronde à faible remplissage (largeur du remplissage inférieure à l'arrondi des coins) | **Corrigée en T5.1, vérifiée dans Studio** (2 / 50 : barre, plus de point rond) : remplissage à coins de 6 px, largeur minimale 6 px, inséré dans une piste de 26 px ; la pastille compacte est désormais un état voulu de la piste entière (sac < 25 %) |
 
 ## Vérifications avant le commit D-008 (2026-11-11)
 
@@ -671,11 +694,10 @@ Non vérifié sur DataStore réel :
 ## Décisions en attente
 
 1. Push GitHub des commits T1, T2 et T3 (non autorisé à ce jour).
-2. Commit local de T4 (non autorisé à ce jour).
-3. Validation de T4 après les tests manuels U1 à U10.
+2. Validation de T5.1 après les vérifications Studio.
 
 ## Prochaine étape
 
-1. Propriétaire : tests manuels U1 à U10 (fiche prête), puis contrôle
-   final du diff et décision sur le commit de T4. Aucun commit, aucun
-   push, T5 non commencé. A-36 à A-38 ouvertes.
+1. T5.1 : test sur téléphone réel (petit et grand écran, paysage) pour
+   clôturer le lot. Place version 41 et commit local faits ; aucun push.
+   T5.2 non commencé.

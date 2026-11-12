@@ -509,3 +509,35 @@ propriétaire), ACCEPTÉE, REMPLACÉE.
   `EconomyService`, `UpgradeService`, `WorldUnlockService`, `SellService`,
   `CollectionService`, `Bootstrap`, contrôleurs client, Bible 5.4 et 5.6
   (notes), `docs/UPGRADES.md`, `docs/PROGRESSION.md`.
+
+## D-016 — T5 : cadre du HUD et du feedback mobile
+
+- **Date :** 2026-11-12
+- **Statut :** ACCEPTÉE (recommandations du préflight T5 validées par le
+  propriétaire, 2026-11-12)
+- **Contexte :** préflight T5 (`phases/T5_PREFLIGHT.md`) : sept points non
+  tranchés par le GDD ou l'architecture (sons, mémorisation du guidage,
+  icônes, localisation, temps de jeu, option de réduction, découpage des
+  contrôleurs).
+- **Décision :**
+  - **D-1 Sons** : sons du Creator Store Roblox, 4 à 5 sons courts ;
+    licence et provenance de chacun consignées dans
+    `docs/assets/ASSET_MANIFEST.md` (créé au premier asset).
+  - **D-2 Guidage** : fin de chaque étape déduite des données existantes
+    (inventaire, `totalCoinsEarned`, niveaux), **sans changement de
+    schéma**.
+  - **D-3 Icônes** : glyphes conservés en T5 (A-38 reste ouverte).
+  - **D-4 Localisation** : module `Shared/Util/Localization` conservé ;
+    pas de migration vers `LocalizationService` (amende la note de D-011).
+  - **D-5 Temps de jeu** : `stats.playTimeSeconds` laissé non alimenté
+    jusqu'à T7 (A-21).
+  - **D-6 Réduction** : bouton « son coupé / effets réduits » côté client.
+  - **D-7 Contrôleurs** : organisation actuelle conservée, ajout d'un
+    `FeedbackController` ; pas de refonte en `HUDController` /
+    `InputController` (écart assumé avec l'architecture 13.1).
+- **Justification :** aucun changement serveur, économique ni de schéma ;
+  assets limités et traçables ; coût de refonte sans bénéfice joueur.
+- **Conséquences :** T5 reste client seulement ; A-21 et A-38 restent
+  ouvertes ; manifeste d'assets à créer avant le premier son.
+- **Affecte :** contrôleurs client, `Localization`, `docs/assets/`,
+  `phases/T5_PREFLIGHT.md`, architecture 13.1 (écart).

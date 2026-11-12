@@ -333,6 +333,8 @@ function ConfigTests.run(configs: Configs): { string }
 		"shop.worlds", "hud.worlds", "world.unlocked", "world.locked", "world.requires_backpack",
 		"world.requires_previous", "world.unlock", "world.confirm", "world.unlocked_toast",
 		"world.coming_soon", "world.failed",
+		-- T5.1 : états du sac.
+		"hud.bag_almost_full", "hud.sell_hint",
 	}
 	-- Noms des améliorations et des mondes.
 	for _, language in ipairs(localization.languages()) do

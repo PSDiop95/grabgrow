@@ -47,6 +47,10 @@ local SHOP_BUTTON_GAP = 12
 local SHOP_BUTTON_EDGE = 8
 -- Sans bouton « Prendre » visible (PC, manette) : bord droit, au-dessus du milieu.
 local SHOP_BUTTON_FALLBACK = UDim2.new(1, -12, 0.38, 0)
+-- Panneau ouvert : écart sous le panneau du sac et marge au bas de la zone
+-- sûre (px).
+local SHOP_PANEL_GAP = 8
+local SHOP_PANEL_BOTTOM_MARGIN = 8
 local GRAB_HUD_NAME = "CollectionHUD"
 local GRAB_BUTTON_NAME = "GrabButton"
 local GRAB_WAIT_SECONDS = 10
@@ -517,6 +521,7 @@ local function buildInterface(): ScreenGui
 
 	panel = Instance.new("Frame")
 	panel.Name = "ShopPanel"
+	-- Centré ; T5.1 : recentré sous le panneau du sac par avoidBagPanel.
 	panel.AnchorPoint = Vector2.new(0.5, 0.5)
 	panel.Position = UDim2.new(0.5, 0, 0.5, 0)
 	panel.Size = UDim2.new(0.9, 0, 0.82, 0)
@@ -590,7 +595,7 @@ local function followGrabButton(screenGui: ScreenGui)
 		return
 	end
 	local grabButton = grab :: GuiObject
-	-- Panneau du sac (en haut à droite) : à éviter aussi. Facultatif.
+	-- Panneau du sac (en haut au centre) : à éviter aussi. Facultatif.
 	local inventoryHud = playerGui:WaitForChild(INVENTORY_HUD_NAME, GRAB_WAIT_SECONDS)
 	local bagInstance = if inventoryHud then inventoryHud:WaitForChild(BAG_PANEL_NAME, GRAB_WAIT_SECONDS) else nil
 	local bagPanel: GuiObject? = if bagInstance and bagInstance:IsA("GuiObject") then bagInstance else nil
@@ -644,6 +649,36 @@ local function followGrabButton(screenGui: ScreenGui)
 	place()
 end
 
+-- T5.1 : le panneau ouvert ne recouvre pas le panneau du sac (dessiné dans
+-- la bande de la barre Roblox, A-41) : il occupe la zone sûre située sous
+-- le sac, centré dans cette zone. Recalcul par événements seulement ; la
+-- taille maximale (UISizeConstraint) reste celle de T4.
+local function avoidBagPanel(screenGui: ScreenGui)
+	local playerGui = localPlayer:WaitForChild("PlayerGui")
+	local inventoryHud = playerGui:WaitForChild(INVENTORY_HUD_NAME, GRAB_WAIT_SECONDS)
+	local bagInstance = if inventoryHud then inventoryHud:WaitForChild(BAG_PANEL_NAME, GRAB_WAIT_SECONDS) else nil
+	if bagInstance == nil or not bagInstance:IsA("GuiObject") then
+		return
+	end
+	local bagPanel = bagInstance :: GuiObject
+	local bagScale = bagPanel:FindFirstChildWhichIsA("UIScale")
+
+	local function fit()
+		-- Bas du sac hors impulsion (UIScale) : pas de mouvement du panneau.
+		local scale = if bagScale and bagScale.Scale > 0 then bagScale.Scale else 1
+		local bagBottom = bagPanel.AbsolutePosition.Y + bagPanel.AbsoluteSize.Y / scale
+		local top = math.max(math.ceil(bagBottom - screenGui.AbsolutePosition.Y) + SHOP_PANEL_GAP, 0)
+		local reserved = top + SHOP_PANEL_BOTTOM_MARGIN
+		panel.Size = UDim2.new(0.9, 0, 1, -reserved)
+		panel.Position = UDim2.new(0.5, 0, 0.5, math.floor((top - SHOP_PANEL_BOTTOM_MARGIN) / 2))
+	end
+
+	bagPanel:GetPropertyChangedSignal("AbsolutePosition"):Connect(fit)
+	screenGui:GetPropertyChangedSignal("AbsoluteSize"):Connect(fit)
+	screenGui:GetPropertyChangedSignal("AbsolutePosition"):Connect(fit)
+	fit()
+end
+
 function UpgradeController.start()
 	assert(not started, "UpgradeController.start appelé deux fois")
 	started = true
@@ -653,6 +688,7 @@ function UpgradeController.start()
 	local screenGui = buildInterface()
 	render()
 	task.spawn(followGrabButton, screenGui)
+	task.spawn(avoidBagPanel, screenGui)
 
 	Remotes.waitFor(Remotes.Name.ActionResult).OnClientEvent:Connect(onActionResult)
 	InventoryController.onStateChanged(function()

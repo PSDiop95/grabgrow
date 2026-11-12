@@ -4,9 +4,8 @@
 --
 -- Noms de mondes : noms propres, identiques dans les deux langues.
 --
--- Solution minimale du MVP. À remplacer par les tables de localisation
--- Roblox (LocalizationService) quand l'interface complète sera faite (T5) :
--- les clés resteront les mêmes.
+-- Module conservé pour le MVP (D-016, D-4) : pas de migration vers
+-- LocalizationService ; les clés resteraient les mêmes en cas de migration.
 
 local Localization = {}
 
@@ -19,6 +18,9 @@ local STRINGS: { [string]: { [string]: string } } = {
 		["resource.stone"] = "Stone",
 		["hud.bag"] = "Bag",
 		["hud.bag_full"] = "Bag full!",
+		-- T5.1 : états du sac dans le HUD.
+		["hud.bag_almost_full"] = "Almost full",
+		["hud.sell_hint"] = "Sell at the stand!",
 		["collect.action"] = "Grab",
 		["collect.too_far"] = "Too far",
 		["hud.coins"] = "Coins",
@@ -78,6 +80,8 @@ local STRINGS: { [string]: { [string]: string } } = {
 		["resource.stone"] = "Pierre",
 		["hud.bag"] = "Sac",
 		["hud.bag_full"] = "Sac plein !",
+		["hud.bag_almost_full"] = "Presque plein",
+		["hud.sell_hint"] = "Vendez au stand !",
 		["collect.action"] = "Prendre",
 		["collect.too_far"] = "Trop loin",
 		["hud.coins"] = "Coins",
