@@ -378,3 +378,68 @@ propriétaire), ACCEPTÉE, REMPLACÉE.
   que par le place Roblox et la copie locale. À réexaminer quand une carte
   non scriptée existera.
 - **Affecte :** `.gitignore`, `docs/PROJECT_STATUS.md`.
+
+## D-014 — Vente : transaction unique dans SellService, ressources inconnues conservées
+
+- **Date :** 2026-11-11
+- **Statut :** ACCEPTÉE (propriétaire, 2026-11-11, retour sur T3). Les
+  paramètres de sécurité restent des hypothèses provisoires (voir
+  « Validation »).
+- **Validation du propriétaire (2026-11-11) :**
+  - Pas d'`EconomyService` en T3 : le crédit des Coins reste intégré à la
+    transaction atomique de vente.
+  - Extraction vers `EconomyService` autorisée en T4, lors de
+    l'introduction du premier débit.
+  - `totalSales` = nombre de ventes réussies.
+  - Une vente ne déclenche pas de sauvegarde DataStore : la persistance
+    reste gérée par le cycle normal de `PlayerDataService`.
+  - Une ressource retirée de `ResourceConfig` reste conservée dans les
+    inventaires, sans vente possible ; toute suppression ou conversion
+    exigera une migration explicite.
+  - Paramètres validés **provisoirement** : distance d'interaction 10 studs
+    + marge serveur 4 studs ; limite 3 requêtes initiales puis 1 par
+    seconde. Hypothèses, pas des paramètres définitifs : ils restent
+    configurables (`GameConfig.Selling`, `SellSecurityConfig`) et seront
+    réévalués en T6 (mesures de latence et de cadence réelles).
+  - A-26 reste un risque connu : validation des déplacements renforcée
+    côté serveur en T6 (collecte et vente).
+- **Contexte :** l'architecture (5.4, 9.3) répartit la vente entre
+  `InventoryService` (retrait) et un `EconomyService` (crédit). Deux
+  mutations séparées ne seraient pas atomiques. Le prompt T3 demande un
+  `SellService` et une transaction unique via `PlayerDataService.Update`.
+  A-25 laissait le sort des ressources inconnues à la vente pour T3.
+- **Décision :**
+  - `SellService` exécute retrait, crédit et statistiques dans un seul
+    `Update`. Pas d'`EconomyService` en T3 (il n'aurait qu'une fonction) :
+    `CreditCurrency` / `DebitCurrency` seront extraits en T4, avec le
+    premier débit, sous forme de fonctions appliquées au brouillon du même
+    `Update`.
+  - Formule unique `Shared/Util/SaleValue` (somme quantité × sellValue,
+    entiers, bornée à 2^53 − 1), lue par le serveur pour créditer et par
+    le client pour l'estimation affichée.
+  - Ressources inconnues : jamais vendues, jamais supprimées, comptées
+    dans le sac (D-012). Sac sans ressource vendable : `NOTHING_TO_SELL`,
+    aucune mutation.
+  - `RequestSell { sellZoneId }` (architecture 6.1) ; nouveau code
+    `NOTHING_TO_SELL`. Zones : BaseParts de `Workspace.SellZones` avec
+    l'attribut `SellZoneId`.
+  - `stats.totalSales` = nombre de ventes réussies (une par transaction).
+  - Aucune sauvegarde DataStore déclenchée par une vente.
+  - Hypothèses de départ, hors Bible : distance d'interaction 10 studs
+    (`GameConfig.Selling`), marge serveur 4 studs, limite rafale 3 / 1 par
+    seconde (`SellSecurityConfig`).
+  - Interaction par `ProximityPrompt` créé côté client (F, toucher, Y) :
+    indication de proximité native sur les trois plateformes ; le serveur
+    refait tous les contrôles.
+- **Justification :** atomicité garantie par l'existant (`Update` tout ou
+  rien, sans suspension) ; une seule formule évite toute divergence entre
+  estimation et crédit ; aucun service vide.
+- **Conséquences :** l'économie ne passe pas encore par une fonction
+  centrale de crédit (écart temporaire à l'architecture 9.3). Une ressource
+  retirée de `ResourceConfig` occupe le sac sans être vendable : toute
+  suppression ou tout renommage de ressource exigera une migration. Perte
+  possible d'une vente (Coins et retrait ensemble) en cas de crash avant
+  la sauvegarde suivante (≤ 60 s), sans incohérence.
+- **Affecte :** `SellService`, `SellZones`, `SaleValue`, `Remotes`,
+  `GameConfig`, `SellSecurityConfig`, contrôleurs client,
+  `docs/SELLING.md`.

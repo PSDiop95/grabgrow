@@ -1,6 +1,6 @@
 # GRAB & GROW — État du projet
 
-Dernière mise à jour : 2026-11-11 (clôture de T2 — collecte et inventaire)
+Dernière mise à jour : 2026-11-12 (T3 — vente et Coins, commit local, PARTIEL)
 
 ## Résumé
 
@@ -19,8 +19,22 @@ reconnexion validée sur le DataStore de test, Local Server à 2 joueurs
 validé (points 1 à 5 OK), copie locale `GrabAndGrow.rbxl` vérifiée,
 émulateur mobile validé (protocole B OK), A-28 tranchée : toucher et
 maintien conservés tous les deux (maintien : 39 collectes en 60 s). Toutes
-les vérifications manuelles demandées sont faites. T3 ne commence qu'avec
-l'accord explicite du propriétaire.
+les vérifications manuelles demandées sont faites.
+
+**T3 est IMPLÉMENTÉ, PARTIEL** (2026-11-11) : vente serveur atomique,
+station de vente provisoire, HUD Coins. Tests automatisés (Lune et Studio)
+et parcours Studio à un joueur OK. Tests manuels du propriétaire contrôlés
+dans les journaux : E1, E2, E5 vérifiés ; E9 (DataStore de test) vérifié
+par Claude ; E3, E4, E6 (2 joueurs, ventes simultanées), E8 et rendu 3D
+exécutés par Claude et validés par le propriétaire (2026-11-12) ; E7
+(émulateur mobile) testé et validé par le propriétaire ; A-34 corrigé et
+validé. Place de test sauvegardé avec la station corrigée (version 24,
+non publiée, 2026-11-12). Commit local T3 autorisé et créé (aucun push).
+Copie locale `GrabAndGrow.rbxl` non rafraîchie (voir « Restant »).
+D-014 **validée** par le propriétaire (2026-11-11) ; paramètres de sécurité
+de la vente validés provisoirement, à réévaluer en T6. T3 reste PARTIEL
+jusqu'à la clôture explicite par le propriétaire.
+Détail : `SELLING.md` et « Vérifications T3 » ci-dessous.
 
 ### Réserves de T1
 
@@ -60,22 +74,27 @@ src/
     Config/WorldConfig.lua           GreenValley, GoldenDesert (verrouillé, test)
     Config/DataConfig.lua            Persistance : schéma v1, DataStore, reprises, verrou
     Util/TableUtil.lua               deepFreeze, deepCopy
-    Util/Localization.lua            Textes en / fr par clé (provisoire, T2)
+    Util/Localization.lua            Textes en / fr par clé (provisoire, T2 ; vente T3)
+    Util/SaleValue.lua               Formule de vente partagée (T3)
     Remotes/Remotes.lua              RemoteEvents et codes de résultat (T2)
   ServerStorage/ServerOnlyConfig/
     CollectionSecurityConfig.lua     Marges de sécurité de la collecte, non répliquées (T2)
+    SellSecurityConfig.lua           Marges de sécurité de la vente, non répliquées (T3)
   StarterPlayer/StarterPlayerScripts/
     ClientBootstrap.client.lua       Point d'entrée client (T2)
     Controllers/InventoryController.lua   Affichage du sac
     Controllers/CollectionController.lua  Ciblage, entrées, retour visuel
+    Controllers/SellController.lua   Prompt de vente, étiquette, retours (T3)
   ServerScriptService/
     Bootstrap.server.lua             Point d'entrée serveur, magasin, branchement de la collecte
     Services/PlayerDataService.lua   Chargement, Update, sauvegarde, verrou de session
     Services/InventoryService.lua    Sac : état, capacité, ajout (T2)
     Services/CollectionService.lua   Validation serveur d'une collecte (T2)
     Services/RateLimitService.lua    Limite de fréquence par joueur et action (T2)
+    Services/SellService.lua         Vente : validation et transaction unique (T3)
     Systems/ResourceSpawner.lua      Nœuds, états, réapparition (T2)
     Systems/ResourceNodes.lua        Points de spawn -> Parts du Workspace (T2)
+    Systems/SellZones.lua            Zones de vente du Workspace (T3)
     Systems/DataSchema.lua           Profil par défaut, intégrité, migrations
     Systems/MemoryDataStore.lua      Magasin en mémoire (tests, Studio)
     Systems/PlayerSession.lua        PlayerAdded, PlayerRemoving, sauvegarde auto, BindToClose
@@ -85,9 +104,10 @@ src/
     Tests/InventoryServiceTests.lua  Sac (14 cas)
     Tests/ResourceSpawnerTests.lua   Nœuds et limite de fréquence (9 cas)
     Tests/CollectionServiceTests.lua Collecte, anti-exploit, multijoueur simulé (22 cas)
+    Tests/SellServiceTests.lua       Vente, invariants, concurrence, persistance (25 cas)
     Tests/RunTests.server.lua        Lanceur, Studio uniquement
 tools/run_tests.luau                 Lanceur des tests en terminal (Lune)
-tools/studio/build_test_map.luau     Carte de test Green Valley (sol, spawn, 36 points)
+tools/studio/build_test_map.luau     Carte de test Green Valley (sol, spawn, 36 points, station de vente)
 docs/                                Références, roadmap, décisions, tests
 ```
 
@@ -271,6 +291,145 @@ toucher (D-012).
 | Manette (bouton X) | Pas de manette | Même chemin de code que la touche E |
 | Performances avec plusieurs joueurs | Hors périmètre T2 | T6 |
 
+## Vérifications T3 (2026-11-11)
+
+Détail du système : `SELLING.md`. Décision : D-014 (acceptée le 2026-11-11).
+
+### Automatisées
+
+| Vérification | Type | Résultat |
+|---|---|---|
+| Lune : 7 suites (Config, 17, 35, 14, 9, 22, **SellServiceTests 25**) | Terminal | Exécuté — `TOUS LES TESTS : OK`, code de sortie 0 |
+| Mêmes suites dans Studio (Play, magasin en mémoire) | Piloté par MCP | Exécuté — `TOUS LES TESTS : OK` |
+| `luau-lsp analyze` sur `src/` (`--!strict`) | Terminal | Exécuté — 0 erreur, après correction de 3 erreurs de typage (comparaisons à `nil`, options de test) |
+| `rojo build` (fichier temporaire) | Terminal | Réussi |
+| Synchronisation Rojo | Empreintes Studio / dépôt | 35 / 35 scripts identiques |
+| Contrôle négatif : 11 défauts introduits tour à tour (pas de retrait, pas de distance, champs falsifiés acceptés, `totalSales` oublié, inconnues vendues, pas de limite de fréquence, contrôle de dépassement du solde, `totalCoinsSpent` modifié, vente sans personnage, garde de dépassement par quantité, sac vide accepté) | Lune | 10 détectés sur 11 après renforcement : le contrôle de dépassement du solde n'était d'abord vu que par son effet (le schéma bloquait aussi), les tests vérifient désormais la détection explicite. Non détecté : la garde de quantité, redondante avec la garde de somme qui bloque le même cas (même code, aucune mutation) |
+| Non-régression T0 à T2 | Lune et Studio | Suites T0–T2 inchangées et OK ; `ConfigTests` étendu (vente, textes) |
+| Configurations économiques | Diff | `ResourceConfig`, `UpgradeConfig`, `WorldConfig` inchangés ; `GameConfig` : ajout de `Selling.interactRangeStuds` seulement |
+
+Cas couverts par `SellServiceTests` : les 18 points du prompt T3, plus
+quantités à zéro, zone inconnue, vente pendant une sauvegarde, erreur dans
+la mutation, deux joueurs. Le point 16 (HUD) est couvert côté serveur
+(`GetClientState` après vente, estimation égale au crédit) ; l'affichage
+est vérifié dans Studio ci-dessous.
+
+### Dans Studio, un joueur (Play piloté par MCP, magasin en mémoire)
+
+| Vérification | Résultat |
+|---|---|
+| Carte reconstruite (mode Edit) | Points de spawn identiques (`Spawn_green_leaf_06` en 11,62 / 4,90) ; station `GreenValley_Main`, point de spawn le plus proche à 14,7 studs |
+| Démarrage | `collecte : 36 ressource(s) ; vente : 1 zone(s)` |
+| Vente depuis le point d'apparition (20,4 studs) | `TOO_FAR` |
+| Vente sur la zone, sac vide | `NOTHING_TO_SELL` ; prompt `Vendre` / `Sac vide`, touche F, manette Y |
+| 10 collectes (6 feuilles, 2 bois, 2 pierres) | HUD `Sac 10 / 50`, `Coins 0 / Valeur ~16` ; prompt `~16 Coins` |
+| Vente par le prompt (`InputHoldBegin`) + seconde demande immédiate | `SUCCESS`, `coinsEarned = 16`, `quantitySold = 10`, puis `NOTHING_TO_SELL` ; HUD `Sac 0 / 50`, `Coins 16 / Valeur ~0` ; prompt `Sac vide` |
+| Journal serveur | Une seule ligne `[Sell] ... +16 Coins (motif Sell, zone GreenValley_Main, 10 unité(s) : green_leaf=6, stone=2, wood=2)` |
+| Payloads `nil`, texte, nombre, `amount`/`coins` ajoutés, zone inconnue, `items` | `INVALID_TARGET` puis `RATE_LIMITED` (rafale 3) ; Coins inchangés |
+| 300 demandes d'un coup | 3 `NOTHING_TO_SELL`, 1 `RATE_LIMITED`, le reste silencieux ; Coins inchangés (16) |
+| Capture d'écran | Ligne Coins / Valeur sous le sac, lisible. La 3D n'est pas rendue par l'outil de capture : station et prompt non vus à l'image |
+
+Constat : une seconde réponse (`Rien à vendre`) arrivée juste après une
+vente remplace le toast `+N Coins`. Ne se produit pas par le prompt (une
+demande à la fois côté client) ; seulement en envoyant le RemoteEvent à la
+main.
+
+### Tests manuels du propriétaire (2026-11-11, 21:14–21:25 UTC) — contrôle des preuves
+
+Annoncés « effectués » par le propriétaire. Contrôle par Claude : journaux
+Studio (`%LOCALAPPDATA%\Roblox\logs` : session d'édition `…160046Z_Studio_9D48E`,
+Local Server `…211925Z_Studio_3B179` et clients `…D95FA`, `…90D7D`) et
+lecture seule (`GetAsync`) de la clé de test. Chaque montant journalisé a
+été recalculé (somme quantité × prix) : tous exacts.
+
+| # | Vérification | Preuve | Statut |
+|---|---|---|---|
+| E1 | Vente partielle | `+21 Coins` (4 feuilles, 3 pierres, 4 bois) puis `+12 Coins` (5 unités), 21:14–21:15. Constat du propriétaire : un seul appui sur « Vendre » vend tout le sac (comportement prévu : architecture 9.2, GDD 6.1) | **Vérifié** |
+| E2 | Sac plein puis nouvelle collecte | `+90 Coins (50 unité(s) : green_leaf=24, stone=14, wood=12)` à 21:18:15, puis `+6` et `+8` (collectes après la vente) | **Vérifié** |
+| E3 | Sac vide | `NOTHING_TO_SELL` n'est pas journalisé ; exécuté ensuite par Claude (voir ci-dessous) | **Validé** (2026-11-12) |
+| E4 | Distance | `TOO_FAR` n'est pas journalisé ; exécuté ensuite par Claude (voir ci-dessous) | **Validé** (2026-11-12) |
+| E5 | Double vente | Une seule ligne `[Sell]` à 21:18:15, suivie d'un rejet `[RateLimit]` 0,5 s après : demandes répétées, un seul crédit | **Vérifié** |
+| E6 | Deux joueurs (Local Server) | Serveur : `TOUS LES TESTS : OK`, `Player_-1` et `Player_-2` créés, sauvegardes auto et de sortie OK, aucune erreur du jeu. **Une seule vente** journalisée (`joueur -1 : +37 Coins`) : aucune vente du joueur 2, donc pas de vente simultanée prouvée. Refait ensuite par Claude avec ventes simultanées (voir ci-dessous) | **Validé** (2026-11-12) |
+| E7 | Émulateur mobile | Aucune trace exploitable dans les journaux (session 21:23:49, `+14 Coins`, non attribuable à un appareil) ; retesté le 2026-11-12 (voir « E7 » ci-dessous) | **Validé** (propriétaire, 2026-11-12) |
+| E8 | Manette | Aucune trace exploitable ; ButtonY simulé ensuite par Claude (voir ci-dessous) | **Validé** (2026-11-12) |
+| E9 | Reconnexion sur DataStore de test | Exécuté ensuite par Claude, avec l'accord du propriétaire : voir « E9 » ci-dessous | **Vérifié** |
+| — | Rendu 3D de la station | Non vérifiable par journal ; station présente dans le place (`GreenValley_Main` en -12 / 0,2 / -16) ; rendu vu ensuite dans les captures Local Server | **Validé** (2026-11-12) |
+| — | Erreurs | Seule erreur : `ChatScript` de Roblox (`CoreGuiChatConnections`), étrangère au projet | OK |
+
+### E9 — Reconnexion sur DataStore de test (Claude, 2026-11-11, vers 21:30 UTC)
+
+Autorisé par le propriétaire (DataStore de test uniquement). Place de test
+93404872714886, DataStore `GrabAndGrow_PlayerData_v1_Studio`, clé
+`Player_11975439775`. `useMemoryStore = false` le temps du test (dépôt,
+synchronisé par Rojo), puis remis à `true`. Production non touchée.
+
+| Étape | Résultat | Preuves |
+|---|---|---|
+| Avant | Clé inchangée depuis T2 | `GetAsync` : `lastSaveAt=1794417559`, `coins=0`, sac 2 / 1 / 1 |
+| Play 1 : chargement | Profil T2 lu dans le DataStore de test | `[Bootstrap] DataStore : GrabAndGrow_PlayerData_v1_Studio` ; `profil chargé, lastSaveAt=1794417559` ; HUD `Sac 4 / 50`, `Coins 0 \| Valeur ~7` |
+| 4 collectes | Sac 8 | HUD `Feuille 6 Bois 1 Pierre 1`, `Valeur ~11` |
+| Vente par le prompt | `SUCCESS`, 11 Coins, 8 unités | `[Sell] ... +11 Coins (... green_leaf=6, stone=1, wood=1)` ; HUD `Sac 0 / 50`, `Coins 11` |
+| 2 collectes après vente | Sac 2 | HUD `Feuille 2`, `Coins 11`, `Valeur ~2` |
+| Stop | Sauvegarde de fermeture | `GetAsync` : `coins=11`, `totalSales=1`, `totalCoinsEarned=11`, `totalCoinsSpent=0`, `totalResourcesCollected=10`, sac `green_leaf=2`, `lastSaveAt=1794432655`, verrou libéré |
+| Play 2 : reconnexion | **Coins et sac restaurés** | `profil chargé, lastSaveAt=1794432655, verrou précédent : aucun` ; HUD `Sac 2 / 50 \| Feuille 2 \| Coins 11 \| Valeur ~2` |
+| Stop | Sauvegarde de fermeture | `GetAsync` : `coins=11`, `lastSaveAt=1794432687`, verrou libéré |
+| Remise en état | `useMemoryStore = true` | Dépôt identique à HEAD (`git diff` vide) ; place : empreinte `2442:2008118041`, identique au dépôt |
+
+Une seule écriture de profil par session (fermeture) : la vente n'a
+déclenché aucune écriture (D-014). Le profil de test garde 11 Coins et
+2 feuilles.
+
+État après les tests : `useMemoryStore = true` (dépôt et place). Seules
+écritures : profil de test ci-dessus ; aucune en production.
+
+### E3, E4, E6, E7, E8, rendu 3D — exécutés par Claude (2026-11-12)
+
+Magasin en mémoire (`useMemoryStore = true`) ; aucune écriture DataStore.
+Profil de test `Player_11975439775` (11 Coins, 2 feuilles) non touché.
+Entrées réelles : déplacement par `character_navigation`, touches par
+`user_keyboard_input` (E, F, ButtonY).
+
+**Validés par le propriétaire (2026-11-12) : E3, E4, E6, E8, rendu 3D.**
+E7 : testé ensuite par le propriétaire sur l'émulateur, validé (voir
+« E7 » ci-dessous).
+
+### E7 — Émulateur mobile (propriétaire, 2026-11-12)
+
+Test manuel du propriétaire, déclaré effectué. Trace Studio (magasin en
+mémoire, profil de test non touché) : `[Sell] joueur 11975439775 : +8 Coins
+(motif Sell, zone GreenValley_Main, 6 unité(s) : green_leaf=5, stone=1)`,
+montant recalculé exact (5 × 1 + 1 × 3) ; `sauvegarde (sortie) OK`. Seule
+erreur : asset d'avatar 203785492, étrangère au projet. Le journal ne
+permet pas d'attribuer la session à un appareil : la validation repose sur
+le constat du propriétaire. **Validé** (propriétaire).
+
+| # | Protocole | Résultat observé |
+|---|---|---|
+| E3 | Play, sac vide, sur la dalle, touche F | Prompt `Vendre` / `Sac vide`, touches F et ButtonY ; `NOTHING_TO_SELL` ; toast « Rien à vendre » ; Coins 0 |
+| E4 | Sac 2 (1 feuille, 1 bois, ~3), à 18,3 studs | Prompt caché ; F : aucune demande envoyée ; `RequestSell` direct : `TOO_FAR`, toast « Approchez-vous du stand », sac et Coins inchangés |
+| E4 | Approche | Prompt caché à 11,7 studs, affiché à 9,7 (`~3 Coins`) ; F : `SUCCESS +3`, HUD `Sac 0 / 50`, `Coins 3 \| Valeur ~0` ; une seule ligne `[Sell]` |
+| E8 | ButtonY simulé (aucune manette réelle, `GamepadEnabled = false`) | Déclenche la vente (`NOTHING_TO_SELL` sac vide) ; prompt `GamepadKeyCode = ButtonY` |
+| E7 | Émulateur mobile non pilotable par MCP | **Non exécuté.** Contrôles indirects : prompt `ClickablePrompt = true` (toucher), `HoldDuration 0`, `RequiresLineOfSight = false` ; panneau HUD 320 × 82 px (largeur 0,6, plafonnée) à 990 × 512. Portrait / paysage non vus |
+| E6 | Local Server, 2 joueurs (lancé par le propriétaire), magasin en mémoire | P1 collecte 2 feuilles, P2 1 feuille + 1 bois (touche E). P2 vend seul (F) : `+3`, P1 inchangé (sac 2, Coins 0). P2 recollecte 1 feuille. Ventes simultanées : chaque client envoie 3 `RequestSell` à la même heure serveur (écart 2 ms) : P1 `SUCCESS +2` (2 unités) puis 2 × `NOTHING_TO_SELL` ; P2 `SUCCESS +1` (1 unité) puis 2 × `NOTHING_TO_SELL`. Final : P1 Coins 2, P2 Coins 4, sacs vides. Journal serveur : exactement 3 lignes `[Sell]` (`-2 +3`, `-2 +1`, `-1 +2`), montants exacts ; sauvegardes auto OK. Aucun double crédit, aucune perte |
+| 3D | Captures des clients Local Server | Station rendue : dalle jaune, comptoir, toit rouge, pièce dorée, étiquette « Vente ». Constat A-34 ci-dessous |
+| — | Erreurs | Seules : assets d'avatar Roblox 203785492 et 81504106 (absents du dépôt), étrangères au projet |
+
+### Restant avant clôture de T3
+
+| Vérification | Raison |
+|---|---|
+| Copie locale `GrabAndGrow.rbxl` avec la station | Non rafraîchie : le fichier date toujours du 2026-11-11 18:59 (sans `SellZones`, 29 scripts dont 11 différents du dépôt et 6 absents). Deux téléchargements annoncés le 2026-11-12, aucun fichier écrit trouvé. Non versionnée (D-013) : à refaire par le propriétaire (Fichier > Télécharger une copie) |
+| Clôture de T3 | Décision du propriétaire |
+
+### Sauvegarde du place et commit (2026-11-12, autorisés par le propriétaire)
+
+| Contrôle | Résultat |
+|---|---|
+| Synchronisation Rojo, avant sauvegarde | Mode Edit ; 35 / 35 scripts du place identiques au dépôt (empreinte, fins de ligne normalisées), aucun script en trop ou manquant ; `DataConfig` `useMemoryStore = true` |
+| Station dans le place | `Workspace.SellZones.GreenValley` : `SellZonePad` (`GreenValley_Main`), comptoir, poteaux, toit, pièce ; 36 points de spawn ; pas de `ResourceNodes` (nœuds d'exécution absents) |
+| `save_place` | **Version 24** sur Roblox (Team Create), non publiée |
+| Profil DataStore de test | Non touché (11 Coins, 2 feuilles) |
+
 ## Anomalies
 
 ### Résolues
@@ -305,8 +464,12 @@ toucher (D-012).
 | A-19 | Première amélioration (100 Coins) atteinte à la 2e vente avec 3 ressources (sac ≈ 89 Coins) ; revenu théorique maximal ≈ 142 Coins/min pour une cible de 120–250 | À mesurer en T7 |
 | A-23 | `rojo serve` lancé avant T2 ne prenait pas en compte les nouvelles entrées de `default.project.json` (`ServerStorage`, `StarterPlayer`) | **Levée** le 2026-11-11 : `rojo serve` relancé, plugin reconnecté par le propriétaire ; dans Studio, 29 scripts identiques au dépôt (empreinte comparée), aucun doublon |
 | A-24 | La carte de test n'existait que dans le place ouvert, non enregistré | **Levée** le 2026-11-11 : carte reconstruite par script, place de test sauvegardé en version 15 (non publié), copie locale `GrabAndGrow.rbxl` contenant la carte vérifiée (18:59 UTC). Non versionnée dans Git (D-013) : sauvegarde de travail locale |
-| A-25 | Ressources inconnues de `ResourceConfig` conservées par D-008 | **Décidée** (propriétaire, 2026-11-11, D-012) : conservées, et comptées dans l'occupation du sac pour empêcher tout dépassement de capacité. Comportement actuel, documenté dans `COLLECTION.md`. Leur sort à la vente reste à traiter en T3 |
-| A-26 | Position du personnage simulée par le client : le contrôle de trajet ne bloque que la téléportation entre deux collectes | **Ouverte, à traiter en T6** (D-012) : contrôle actuel conservé comme protection provisoire ; validation renforcée des déplacements côté serveur en T6 |
+| A-25 | Ressources inconnues de `ResourceConfig` conservées par D-008 | **Décidée** (propriétaire, 2026-11-11, D-012) : conservées, et comptées dans l'occupation du sac pour empêcher tout dépassement de capacité. Comportement actuel, documenté dans `COLLECTION.md`. Vente (T3, D-014) : jamais vendues ni supprimées ; `NOTHING_TO_SELL` si elles sont seules |
+| A-31 | `EconomyService` de l'architecture (5.4, 9.3) non créé : le crédit de la vente vit dans la transaction de `SellService` | **Décidée** (D-014, propriétaire, 2026-11-11) : extraction autorisée en T4, avec le premier débit |
+| A-32 | Distance de vente (10 studs), marge (4) et limite (rafale 3, 1/s) absentes de la Bible | **Validées provisoirement** (propriétaire, 2026-11-11, D-014) : configurables, à réévaluer en T6 |
+| A-33 | Pas de son ni d'effet de pièces à la vente (GDD 13.4) | Phase UX, avec A-29 |
+| A-34 | Près de la station, l'étiquette « Vente » (BillboardGui, décalage 9) apparaît derrière le panneau du sac en haut de l'écran : lisibilité réduite | **Corrigé en T3** (décision du propriétaire, 2026-11-12) : `SellController` masque l'étiquette tant que le prompt de vente est affiché (`PromptShown` / `PromptHidden`, sans boucle). Vérifié dans Studio : masquée à 6,2 studs, visible à 12,3 et 15,4 studs sans chevauchement du HUD ; vente F toujours OK (`NOTHING_TO_SELL`, sac vide). **Validé** par le propriétaire (2026-11-12) |
+| A-26 | Position du personnage simulée par le client : le contrôle de trajet ne bloque que la téléportation entre deux collectes | **Ouverte, à traiter en T6** (D-012) : contrôle actuel conservé comme protection provisoire ; validation renforcée des déplacements côté serveur en T6. Concerne aussi la vente depuis T3 (D-014) : position falsifiée = vente à distance, sans gain de Coins |
 | A-27 | Marges de sécurité de la collecte (4 studs, 0,1 s, 5 demandes/s) jamais mesurées avec une latence mobile réelle | **Ouverte, à traiter en T6** (D-012) : marges conservées comme hypothèses jusqu'aux tests sur mobile avec latence réelle |
 | A-28 | Collecte par toucher et collecte en maintien implémentées toutes les deux (GDD 5.1) | **Levée** le 2026-11-11 (propriétaire, D-012) : les deux modes sont conservés. Maintien mesuré sur émulateur (39 collectes en 60 s) ; toucher non mesuré |
 | A-29 | Aucun son ni animation de personnage à la collecte ; modèles de ressources provisoires | **Décidée** (D-012) : reportée à une phase dédiée à l'expérience utilisateur |
@@ -355,8 +518,11 @@ Non vérifié sur DataStore réel :
 ## Décisions en attente
 
 1. Push GitHub des commits T1 et T2 (non autorisé à ce jour).
+2. Push du commit local T3 (non autorisé à ce jour).
+3. Clôture formelle de T3.
 
 ## Prochaine étape
 
-1. Propriétaire : validation du commit T2 et instructions pour la phase
-   suivante. T3 non commencé.
+1. Propriétaire : rafraîchir la copie locale `GrabAndGrow.rbxl` (station),
+   puis contrôle par Claude.
+2. Propriétaire : clôture de T3. Aucun push, T4 non commencé.

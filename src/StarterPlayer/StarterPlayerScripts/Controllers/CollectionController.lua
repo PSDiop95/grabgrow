@@ -211,7 +211,8 @@ local function onActionResult(result: any)
 	elseif code == Remotes.ResultCode.InventoryFull then
 		-- Inutile d'enchaîner : le joueur doit vider son sac.
 		holding = false
-		InventoryController.showMessage("hud.bag_full")
+		-- T3 : invite à vendre.
+		InventoryController.showMessage("sell.go_sell")
 	elseif code == Remotes.ResultCode.TooFar then
 		InventoryController.showMessage("collect.too_far")
 	end

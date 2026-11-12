@@ -1,6 +1,6 @@
 --!strict
 -- Point d'entrée du serveur : construit les services et les démarre.
--- T1 : profils joueurs. T2 : collecte et inventaire.
+-- T1 : profils joueurs. T2 : collecte et inventaire. T3 : vente et Coins.
 
 local DataStoreService = game:GetService("DataStoreService")
 local HttpService = game:GetService("HttpService")
@@ -12,14 +12,17 @@ local ServerStorage = game:GetService("ServerStorage")
 local DataConfig = require(ReplicatedStorage.Shared.Config.DataConfig)
 local Remotes = require(ReplicatedStorage.Shared.Remotes.Remotes)
 local CollectionSecurityConfig = require(ServerStorage.ServerOnlyConfig.CollectionSecurityConfig)
+local SellSecurityConfig = require(ServerStorage.ServerOnlyConfig.SellSecurityConfig)
 local CollectionService = require(script.Parent.Services.CollectionService)
 local InventoryService = require(script.Parent.Services.InventoryService)
 local PlayerDataService = require(script.Parent.Services.PlayerDataService)
 local RateLimitService = require(script.Parent.Services.RateLimitService)
+local SellService = require(script.Parent.Services.SellService)
 local MemoryDataStore = require(script.Parent.Systems.MemoryDataStore)
 local PlayerSession = require(script.Parent.Systems.PlayerSession)
 local ResourceNodes = require(script.Parent.Systems.ResourceNodes)
 local ResourceSpawner = require(script.Parent.Systems.ResourceSpawner)
+local SellZones = require(script.Parent.Systems.SellZones)
 
 -- Choix du magasin. Le magasin en mémoire exige Studio ET le réglage
 -- explicite : il ne peut pas s'activer sur un serveur publié.
@@ -108,6 +111,21 @@ local collectionService = CollectionService.new({
 	getCharacterPosition = getCharacterPosition,
 })
 
+-- Vente (T3) ---------------------------------------------------------------
+
+local getSellZone, sellZoneCount = SellZones.start()
+local sellService = SellService.new({
+	playerData = playerDataService,
+	rateLimit = RateLimitService.new({
+		clock = os.clock,
+		limits = SellSecurityConfig.RateLimits,
+		logEveryRejections = SellSecurityConfig.RateLimitFeedback.logEveryRejections,
+	}),
+	getSellZone = getSellZone,
+	getCharacterPosition = getCharacterPosition,
+	clock = os.clock,
+})
+
 local function sendState(player: Player)
 	local state = collectionService.GetClientState(player.UserId)
 	if state then
@@ -135,6 +153,26 @@ remotes[Remotes.Name.RequestCollect].OnServerEvent:Connect(function(player: Play
 	end
 end)
 
+-- Seul le premier argument est lu ; montant et quantités sont calculés par
+-- SellService à partir du profil serveur.
+remotes[Remotes.Name.RequestSell].OnServerEvent:Connect(function(player: Player, payload: any)
+	local result = sellService.HandleRequest(player.UserId, payload)
+	if result.silent then
+		return
+	end
+	actionResult:FireClient(player, {
+		action = Remotes.Action.Sell,
+		ok = result.ok,
+		code = result.code,
+		sellZoneId = result.sellZoneId,
+		coinsEarned = result.coinsEarned,
+		quantitySold = result.quantitySold,
+	})
+	if result.ok then
+		sendState(player)
+	end
+end)
+
 local function onPlayerAdded(player: Player)
 	-- Réapparition : le personnage change de place légitimement.
 	player.CharacterAdded:Connect(function()
@@ -150,6 +188,7 @@ PlayerSession.start(playerDataService, {
 	onProfileLoaded = sendState,
 	onPlayerRemoving = function(player: Player)
 		collectionService.RemovePlayer(player.UserId)
+		sellService.RemovePlayer(player.UserId)
 	end,
 })
-print(`[Bootstrap] PlayerDataService démarré ; collecte : {nodeCount} ressource(s)`)
+print(`[Bootstrap] PlayerDataService démarré ; collecte : {nodeCount} ressource(s) ; vente : {sellZoneCount} zone(s)`)

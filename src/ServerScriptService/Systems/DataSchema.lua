@@ -30,6 +30,7 @@ DataSchema.ErrorCode = table.freeze({
 
 -- Au-delà, un nombre flottant ne représente plus tous les entiers.
 local MAX_SAFE_INTEGER = 9_007_199_254_740_991
+DataSchema.MAX_SAFE_INTEGER = MAX_SAFE_INTEGER
 
 type LevelBounds = { min: number, max: number }
 

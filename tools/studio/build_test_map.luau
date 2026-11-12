@@ -12,6 +12,9 @@
 --   Workspace.Map.GreenValley.Ground
 --   Workspace.SpawnLocations.GreenValleySpawn
 --   Workspace.ResourceSpawnPoints.GreenValley.<Spawn_type_nn>
+--   Workspace.SellZones.GreenValley (T3) : station de vente provisoire,
+--     zone `SellZonePad` avec l'attribut `SellZoneId`, lue par
+--     Systems/SellZones (serveur) et SellController (client)
 -- Chaque point de spawn porte l'attribut `ResourceType`, lu par
 -- Systems/ResourceNodes. Le nombre de points par ressource suit
 -- ResourceConfig.spawnWeight.
@@ -138,5 +141,51 @@ for _, resourceType in ipairs(resourceTypes) do
 	table.insert(summary, `{resourceType} x{count}`)
 end
 pointFolder.Parent = spawnPoints
+
+-- Station de vente (T3). Primitives provisoires, sans texte ni logo :
+-- l'étiquette « Sell / Vente » est affichée par le client (localisée).
+-- Emplacement choisi hors des points de spawn (point le plus proche :
+-- Spawn_green_leaf_03, environ 15 studs).
+local SELL_ZONE_ID = "GreenValley_Main"
+local SELL_POSITION = Vector3.new(-12, 0, -16)
+local sellZones = getFolder(Workspace, "SellZones")
+replace(sellZones, WORLD_ID)
+local station = Instance.new("Model")
+station.Name = WORLD_ID
+
+local function stationPart(name: string, size: Vector3, offset: Vector3, color: Color3, shape: Enum.PartType?): Part
+	local part = Instance.new("Part")
+	part.Name = name
+	part.Shape = shape or Enum.PartType.Block
+	part.Size = size
+	part.Position = SELL_POSITION + offset
+	part.Anchored = true
+	part.Material = Enum.Material.SmoothPlastic
+	part.Color = color
+	part.TopSurface = Enum.SurfaceType.Smooth
+	part.BottomSurface = Enum.SurfaceType.Smooth
+	part.CanQuery = false
+	part.Parent = station
+	return part
+end
+
+local pad = stationPart("SellZonePad", Vector3.new(10, 0.4, 10), Vector3.new(0, 0.2, 0), Color3.fromRGB(255, 214, 92))
+pad:SetAttribute("SellZoneId", SELL_ZONE_ID)
+local wood = Color3.fromRGB(150, 98, 56)
+stationPart("Counter", Vector3.new(6, 3, 2), Vector3.new(0, 1.9, -3.5), wood)
+stationPart("PostLeft", Vector3.new(0.8, 7, 0.8), Vector3.new(-2.8, 3.9, -4.2), wood)
+stationPart("PostRight", Vector3.new(0.8, 7, 0.8), Vector3.new(2.8, 3.9, -4.2), wood)
+stationPart("Roof", Vector3.new(7.4, 0.8, 3.6), Vector3.new(0, 7.6, -3.8), Color3.fromRGB(230, 80, 70))
+local coin = stationPart("Coin", Vector3.new(0.6, 2.6, 2.6), Vector3.new(0, 4.6, -3.5), Color3.fromRGB(255, 196, 40), Enum.PartType.Cylinder)
+coin.Orientation = Vector3.new(0, 90, 0)
+coin.Material = Enum.Material.Neon
+station.PrimaryPart = pad
+station.Parent = sellZones
+
+local nearest = math.huge
+for _, point in ipairs(placed) do
+	nearest = math.min(nearest, (point - SELL_POSITION).Magnitude)
+end
+table.insert(summary, `vente {SELL_ZONE_ID} (point de spawn le plus proche : {string.format("%.1f", nearest)} studs)`)
 
 return `Carte de test {WORLD_ID} : {table.concat(summary, ", ")}`

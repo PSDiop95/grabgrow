@@ -13,7 +13,11 @@ Remotes.FOLDER_NAME = "Remotes"
 Remotes.Name = table.freeze({
 	-- Client -> Serveur. Payload : { resourceId = "green_leaf_001" }.
 	RequestCollect = "RequestCollect",
-	-- Serveur -> Client. Payload : { action, ok, code, resourceId?, resourceType?, amount? }.
+	-- Client -> Serveur. Payload : { sellZoneId = "GreenValley_Main" } (T3).
+	RequestSell = "RequestSell",
+	-- Serveur -> Client. Payload : { action, ok, code, ... }.
+	--   Collect : resourceId?, resourceType?, amount?
+	--   Sell    : sellZoneId?, coinsEarned, quantitySold
 	ActionResult = "ActionResult",
 	-- Serveur -> Client. Payload : état public du joueur (voir
 	-- CollectionService.GetClientState).
@@ -22,6 +26,7 @@ Remotes.Name = table.freeze({
 
 Remotes.Action = table.freeze({
 	Collect = "Collect",
+	Sell = "Sell",
 })
 
 Remotes.ResultCode = table.freeze({
@@ -33,6 +38,7 @@ Remotes.ResultCode = table.freeze({
 	ResourceUnavailable = "RESOURCE_UNAVAILABLE", -- déjà collectée, en réapparition
 	ProfileNotLoaded = "PROFILE_NOT_LOADED",
 	NoCharacter = "NO_CHARACTER", -- personnage absent ou mort
+	NothingToSell = "NOTHING_TO_SELL", -- sac vide ou sans ressource vendable (T3)
 	RateLimited = "RATE_LIMITED",
 	InternalError = "INTERNAL_ERROR",
 })

@@ -16,6 +16,8 @@ export type Configs = {
 	WorldConfig: any,
 	-- T2 : paramètres de sécurité de la collecte et textes d'interface.
 	CollectionSecurityConfig: any,
+	-- T3 : paramètres de sécurité de la vente.
+	SellSecurityConfig: any,
 	Localization: any,
 }
 
@@ -207,6 +209,32 @@ function ConfigTests.run(configs: Configs): { string }
 	check(isPositiveInteger(security.RateLimitFeedback.logEveryRejections), "logEveryRejections doit être un entier > 0")
 	check(isPositiveInteger(security.Payload.maxResourceIdLength), "maxResourceIdLength doit être un entier > 0")
 
+	-- Vente (T3) : distance nominale et marges serveur, hypothèses de départ.
+	check(
+		type(gameConfig.Selling) == "table" and isPositiveInteger(gameConfig.Selling.interactRangeStuds),
+		"GameConfig.Selling.interactRangeStuds doit être un entier > 0"
+	)
+	local sellSecurity = configs.SellSecurityConfig
+	check(sellSecurity ~= nil, "SellSecurityConfig manquant")
+	if sellSecurity ~= nil and type(gameConfig.Selling) == "table" then
+		check(
+			sellSecurity.Distance.toleranceStuds >= 0
+				and sellSecurity.Distance.toleranceStuds < gameConfig.Selling.interactRangeStuds,
+			"SellSecurityConfig.Distance.toleranceStuds doit être >= 0 et inférieur à la distance nominale"
+		)
+		local sellLimit = sellSecurity.RateLimits.Sell
+		check(
+			sellLimit ~= nil and isPositiveInteger(sellLimit.burst) and sellLimit.refillPerSecond > 0,
+			"SellSecurityConfig.RateLimits.Sell invalide"
+		)
+		check(isPositiveInteger(sellSecurity.RateLimitFeedback.logEveryRejections), "Sell logEveryRejections doit être un entier > 0")
+		check(isPositiveInteger(sellSecurity.Payload.maxSellZoneIdLength), "maxSellZoneIdLength doit être un entier > 0")
+	end
+	-- Toute ressource configurée doit être vendable (prix entier >= 1).
+	for resourceId, resource in pairs(resources) do
+		check(isPositiveInteger(resource.sellValue), `{resourceId}.sellValue doit être un entier >= 1`)
+	end
+
 	-- Localization : chaque nom de ressource existe dans chaque langue.
 	local localization = configs.Localization
 	for _, language in ipairs(localization.languages()) do
@@ -215,6 +243,18 @@ function ConfigTests.run(configs: Configs): { string }
 				localization.has(resource.displayNameKey, language),
 				`texte manquant ({language}) pour la ressource {resourceId}`
 			)
+		end
+	end
+
+	-- Textes d'interface utilisés par les contrôleurs, dans chaque langue.
+	local uiKeys = {
+		"hud.bag", "hud.bag_full", "collect.action", "collect.too_far",
+		"hud.coins", "hud.sell_value", "sell.action", "sell.station", "sell.estimate",
+		"sell.gain", "sell.empty", "sell.nothing", "sell.too_far", "sell.failed", "sell.go_sell",
+	}
+	for _, language in ipairs(localization.languages()) do
+		for _, key in ipairs(uiKeys) do
+			check(localization.has(key, language), `texte manquant ({language}) : {key}`)
 		end
 	end
 

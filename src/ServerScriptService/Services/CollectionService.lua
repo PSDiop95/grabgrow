@@ -54,6 +54,8 @@ export type Result = {
 -- n'y figurent pas.
 export type ClientState = {
 	inventory: InventoryService.State,
+	-- Solde affiché par le HUD (T3). Miroir : jamais une source d'autorité.
+	coins: number,
 	collectIntervalSeconds: number,
 	collectRangeStuds: number,
 }
@@ -269,6 +271,7 @@ function CollectionService.new(dependencies: Dependencies)
 		end
 		return {
 			inventory = inventoryState,
+			coins = profile.currencies.coins,
 			collectIntervalSeconds = grabber.value,
 			collectRangeStuds = GameConfig.Collection.baseRangeStuds,
 		}

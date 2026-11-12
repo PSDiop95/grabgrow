@@ -116,12 +116,12 @@ Aucun bannissement : les demandes anormales sont refusées et journalisées.
   inconnues de `ResourceConfig` conservées par D-008 (décision A-25,
   D-012) : elles ne sont jamais supprimées, mais occupent de la place, si
   bien que le sac ne peut jamais dépasser sa capacité. `AddResource`
-  refuse d'en ajouter (`InvalidResource`). Leur traitement à la vente est
-  à définir en T3.
+  refuse d'en ajouter (`InvalidResource`). À la vente, elles ne sont ni
+  vendues ni supprimées (T3, D-014, `SELLING.md`).
 - `AddResource` alimente `stats.totalResourcesCollected`.
 - Aucune écriture DataStore par collecte : sauvegarde périodique et de
   sortie de T1, inchangées.
-- Pas de retrait : prévu avec la vente (T3).
+- Retrait : uniquement par la vente, dans la transaction de `SellService` (T3, `SELLING.md`).
 
 ## Client
 

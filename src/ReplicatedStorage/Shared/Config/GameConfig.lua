@@ -25,6 +25,14 @@ local GameConfig = {
 		baseRangeStuds = 12,
 	},
 
+	Selling = {
+		-- Distance d'interaction avec une station de vente (studs), mesurée
+		-- du personnage au centre de la zone. HYPOTHÈSE DE DÉPART (T3),
+		-- absente de la Bible : à ajuster en T7. Aucune valeur économique :
+		-- les prix restent dans ResourceConfig.
+		interactRangeStuds = 10,
+	},
+
 	Movement = {
 		-- Vitesse de référence (studs/s). Correspond aux Boots niveau 1 ;
 		-- l'amélioration Boots est hors MVP.

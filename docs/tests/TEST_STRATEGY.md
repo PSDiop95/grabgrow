@@ -11,8 +11,8 @@ lot distingue tests automatisés, tests manuels et vérifications non faites.
 |---|---|---|---|
 | 1. Analyse statique | Syntaxe, types `--!strict` | `luau-lsp analyze` en terminal ; Script Analysis de Studio | Oui |
 | 2. Configurations | Cohérence structurelle et références croisées | `Tests/ConfigTests.lua` | Oui |
-| 3. Logique serveur | Règles des services (collecte, vente, achat, migration) | Modules de test en Luau pur, dépendances simulées | Oui pour T1 (`DataSchemaTests`, `PlayerDataServiceTests`) et T2 (`InventoryServiceTests`, `ResourceSpawnerTests`, `CollectionServiceTests`) |
-| 4. Intégration | Remotes, validation, rate limit | Play dans Studio piloté par MCP : demandes envoyées depuis le client, réponses lues sur `ActionResult` | Oui (T2, un joueur) |
+| 3. Logique serveur | Règles des services (collecte, vente, achat, migration) | Modules de test en Luau pur, dépendances simulées | Oui pour T1 (`DataSchemaTests`, `PlayerDataServiceTests`) T2 (`InventoryServiceTests`, `ResourceSpawnerTests`, `CollectionServiceTests`) et T3 (`SellServiceTests`) |
+| 4. Intégration | Remotes, validation, rate limit | Play dans Studio piloté par MCP : demandes envoyées depuis le client, réponses lues sur `ActionResult` | Oui (T2 et T3, un joueur) |
 | 5. Multijoueur | Isolation des données, double collecte | Simulation : deux `UserId` sur le même service (Lune). Réel : Studio, Test > Local Server, 2 joueurs ou plus | Simulé : oui. Réel : oui pour T2 (2 joueurs, propriétaire) |
 | 6. Sauvegarde | Nouveau profil, reconnexion, échecs, migration | `MemoryDataStore` injecté dans `PlayerDataService` ; puis expérience de test avec accès API, pilotée par le serveur MCP Roblox Studio | Simulé : oui. DataStore réel : V-01, V-02, V-03, V-05 faits ; V-04 partiel (`PROJECT_STATUS.md`) |
 | 7. Appareils | Lisibilité, tactile, performances | Émulateur d'appareils de Studio, puis téléphone réel | À partir de T5 |
@@ -50,17 +50,20 @@ aucun échec. Résultat attendu :
 [Tests] InventoryServiceTests : OK (14 cas)
 [Tests] ResourceSpawnerTests : OK (9 cas)
 [Tests] CollectionServiceTests : OK (22 cas)
+[Tests] SellServiceTests : OK (25 cas)
 [Tests] TOUS LES TESTS : OK
 ```
 
 Non couvert par ce lanceur : `Bootstrap.server.lua`,
-`Systems/PlayerSession.lua`, `Systems/ResourceNodes.lua` (événements et
+`Systems/PlayerSession.lua`, `Systems/ResourceNodes.lua`, `Systems/SellZones.lua` (événements et
 instances Roblox) et les contrôleurs client, à vérifier dans Studio.
 
 ## Carte de test (Studio)
 
 `tools/studio/build_test_map.luau` crée le sol, le point d'apparition et
-36 points de spawn (`Workspace.ResourceSpawnPoints`). À exécuter en mode
+36 points de spawn (`Workspace.ResourceSpawnPoints`) et, depuis T3, la
+station de vente provisoire (`Workspace.SellZones.GreenValley`, zone
+`GreenValley_Main`). À exécuter en mode
 Edit (barre de commande ou serveur MCP). Rejouable, résultat identique à
 chaque exécution. Sans points de spawn, le serveur démarre sans ressource
 et l'écrit dans Output.
@@ -131,6 +134,24 @@ Exécutée le 2026-11-11 avec l'accord du propriétaire (`PROJECT_STATUS.md`,
 comparer le sac, puis remettre `true` et vérifier le place avant toute
 sauvegarde.
 
+## Tests manuels T3 (à faire par le propriétaire)
+
+Préparation : place de test ouvert, `rojo serve` actif et plugin connecté,
+carte reconstruite par `tools/studio/build_test_map.luau` (station de
+vente présente), `useMemoryStore = true` sauf en E.
+
+| # | Protocole | Action | Attendu |
+|---|---|---|---|
+| E1 | Vente partielle (Play) | Collecter 5 à 10 ressources, aller sur la dalle jaune, touche F | Prompt « Vendre / ~N Coins » à portée ; toast `+N Coins` ; Coins = N ; sac à 0 ; prompt « Sac vide » |
+| E2 | Sac plein | Remplir à 50, vendre | Message « Sac plein ! Vendez au stand » à la 51e collecte ; vente du sac entier ; collecte de nouveau possible |
+| E3 | Sac vide | Vendre sans ressource | « Rien à vendre », Coins inchangés |
+| E4 | Distance | Activer le prompt puis s'éloigner vite, ou rester à 15 studs | Pas de prompt hors portée ; aucun crédit |
+| E5 | Double vente | Appuyer F plusieurs fois très vite | Un seul crédit ; Output serveur : une seule ligne `[Sell] ... +N Coins` |
+| E6 | Deux joueurs (Local Server, 2 joueurs) | A et B vendent en même temps, puis A vend un sac vide | Soldes indépendants ; aucun effet de A sur B |
+| E7 | Mobile (émulateur, portrait puis paysage) | Vendre en touchant le prompt | Prompt touchable, ne recouvre ni stick ni saut ; ligne « Coins / Valeur » lisible |
+| E8 | Manette (si disponible) | Bouton Y à portée | Vente ; X reste la collecte |
+| E9 | Reconnexion sur DataStore de test (accord préalable requis) | `useMemoryStore = false`, collecter, vendre, collecter 2, Stop, Play | Coins, statistiques et sac restaurés ; remettre `true` et vérifier avant toute sauvegarde du place |
+
 ## Lancer les tests automatisés (Studio)
 
 1. Ouvrir `GrabAndGrow.rbxl`.
@@ -168,7 +189,7 @@ de relire le résultat depuis le terminal après exécution.
 |---|---|
 | T1 | Nouveau profil ; profil existant ; échec de chargement sans écrasement ; échec de sauvegarde ; reconnexion ; migration ; sauvegardes concurrentes ; verrou actif, expiré, renouvelé, libéré ; données corrompues ; version future ; fermeture serveur |
 | T2 | Collecte valide ; ressource inexistante ; ressource inactive ; trop loin ; trop rapide ; sac plein ; sac presque plein ; profil non chargé ; personnage absent ; payload invalide ou falsifié ; rejeu ; trajet implausible ; deux joueurs sur la même ressource ; inventaires indépendants ; réapparition ; quantité invalide ou négative ; persistance après reconnexion |
-| T3 | Vente normale ; inventaire vide ; hors zone ; inventaire intact si le crédit échoue |
+| T3 | Vente d'une et de plusieurs ressources ; calcul exact ; sac vide ; quantités à zéro ; inconnues seules ; sac mixte ; statistiques (`totalCoinsEarned`, `totalSales`, `totalCoinsSpent` intact) ; payload invalide ou falsifié ; zone inconnue ; trop loin ; personnage absent ; profil non chargé, en chargement, libéré ; limite de fréquence ; ventes concurrentes ; vente pendant une sauvegarde ; échec et erreur de mutation sans perte ; dépassements numériques ; état client après vente ; vente puis collecte ; deux joueurs ; persistance après rechargement |
 | T4 | Solde suffisant ; solde insuffisant ; niveau maximum ; identifiant inconnu |
 | T6 | Remote à cadence excessive ; arguments de type invalide ; valeurs falsifiées ; isolation entre joueurs |
 

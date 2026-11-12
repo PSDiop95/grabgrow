@@ -4,6 +4,8 @@
 --
 -- Interface minimale de T2, construite par code ; le HUD complet est prévu
 -- en T5. Placée en haut au centre : hors des zones du stick et du saut.
+-- T3 : solde de Coins, valeur vendable estimée (SaleValue, affichage
+-- seulement) et confirmation du montant crédité par le serveur.
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -13,6 +15,7 @@ local Shared = ReplicatedStorage:WaitForChild("Shared")
 local ResourceConfig = require(Shared:WaitForChild("Config"):WaitForChild("ResourceConfig"))
 local Remotes = require(Shared:WaitForChild("Remotes"):WaitForChild("Remotes"))
 local Localization = require(Shared:WaitForChild("Util"):WaitForChild("Localization"))
+local SaleValue = require(Shared:WaitForChild("Util"):WaitForChild("SaleValue"))
 
 local InventoryController = {}
 
@@ -23,6 +26,7 @@ export type State = {
 		capacity: number,
 		free: number,
 	},
+	coins: number,
 	collectIntervalSeconds: number,
 	collectRangeStuds: number,
 }
@@ -33,6 +37,8 @@ local COLOR_BAR = Color3.fromRGB(96, 204, 78)
 local COLOR_BAR_FULL = Color3.fromRGB(230, 80, 70)
 local COLOR_GAIN = Color3.fromRGB(190, 255, 170)
 local COLOR_WARNING = Color3.fromRGB(255, 200, 90)
+local COLOR_COINS = Color3.fromRGB(255, 214, 92)
+local COIN_COUNT_SECONDS = 0.5
 local TOAST_HOLD_SECONDS = 0.7
 local TOAST_FADE_SECONDS = 0.4
 
@@ -42,6 +48,11 @@ local started = false
 
 local titleLabel: TextLabel
 local detailLabel: TextLabel
+local coinsLabel: TextLabel
+local displayedCoins = 0
+local coinTween: Tween? = nil
+local coinValue: NumberValue
+local listeners: { (state: State) -> () } = {}
 local barFill: Frame
 local panelScale: UIScale
 local toastLabel: TextLabel
@@ -89,15 +100,15 @@ local function buildInterface()
 	panel.Name = "BagPanel"
 	panel.AnchorPoint = Vector2.new(0.5, 0)
 	panel.Position = UDim2.new(0.5, 0, 0, 8)
-	panel.Size = UDim2.new(0.6, 0, 0, 62)
+	panel.Size = UDim2.new(0.6, 0, 0, 82)
 	panel.BackgroundColor3 = COLOR_PANEL
 	panel.BackgroundTransparency = 0.25
 	panel.BorderSizePixel = 0
 	panel.Parent = screenGui
 
 	local sizeLimit = Instance.new("UISizeConstraint")
-	sizeLimit.MinSize = Vector2.new(200, 62)
-	sizeLimit.MaxSize = Vector2.new(320, 62)
+	sizeLimit.MinSize = Vector2.new(200, 82)
+	sizeLimit.MaxSize = Vector2.new(320, 82)
 	sizeLimit.Parent = panel
 
 	local corner = Instance.new("UICorner")
@@ -135,7 +146,16 @@ local function buildInterface()
 	detailLabel.Name = "Detail"
 	detailLabel.Font = Enum.Font.GothamMedium
 
-	toastLabel = newLabel(screenGui, UDim2.new(1, 0, 0, 30), UDim2.new(0, 0, 0, 76), 22)
+	coinsLabel = newLabel(panel, UDim2.new(1, -20, 0, 18), UDim2.new(0, 10, 0, 60), 15)
+	coinsLabel.Name = "Coins"
+	coinsLabel.TextColor3 = COLOR_COINS
+
+	-- Compteur animé du solde affiché (purement visuel).
+	coinValue = Instance.new("NumberValue")
+	coinValue.Name = "DisplayedCoins"
+	coinValue.Parent = screenGui
+
+	toastLabel = newLabel(screenGui, UDim2.new(1, 0, 0, 30), UDim2.new(0, 0, 0, 96), 22)
 	toastLabel.Name = "Toast"
 	toastLabel.TextTransparency = 1
 	toastLabel.TextStrokeTransparency = 1
@@ -144,11 +164,28 @@ local function buildInterface()
 	screenGui.Parent = localPlayer:WaitForChild("PlayerGui")
 end
 
+local function renderCoins()
+	local current = state
+	if current == nil then
+		coinsLabel.Text = ""
+		return
+	end
+	local estimate = SaleValue.quote(current.inventory.resources).total
+	coinsLabel.Text = string.format(
+		"%s %d   |   %s ~%d",
+		translate("hud.coins"),
+		displayedCoins,
+		translate("hud.sell_value"),
+		estimate
+	)
+end
+
 local function render()
 	local current = state
 	if current == nil then
 		titleLabel.Text = translate("hud.bag")
 		detailLabel.Text = ""
+		renderCoins()
 		return
 	end
 	local inventory = current.inventory
@@ -170,6 +207,25 @@ local function render()
 		table.insert(parts, `{translate(ResourceConfig[resourceId].displayNameKey)} {quantity}`)
 	end
 	detailLabel.Text = table.concat(parts, "   ")
+	renderCoins()
+end
+
+-- Fait défiler le solde affiché jusqu'à `target` (à la hausse seulement).
+local function setDisplayedCoins(target: number)
+	if coinTween then
+		coinTween:Cancel()
+		coinTween = nil
+	end
+	if target <= displayedCoins then
+		displayedCoins = target
+		coinValue.Value = target
+		renderCoins()
+		return
+	end
+	coinValue.Value = displayedCoins
+	local tween = TweenService:Create(coinValue, TweenInfo.new(COIN_COUNT_SECONDS), { Value = target })
+	coinTween = tween
+	tween:Play()
 end
 
 local function showToast(text: string, color: Color3)
@@ -210,6 +266,7 @@ local function isValidState(value: any): boolean
 	return type(inventory.resources) == "table"
 		and type(inventory.used) == "number"
 		and type(inventory.capacity) == "number"
+		and type(value.coins) == "number"
 		and type(value.collectIntervalSeconds) == "number"
 		and type(value.collectRangeStuds) == "number"
 end
@@ -236,17 +293,45 @@ function InventoryController.showMessage(key: string)
 	showToast(translate(key), COLOR_WARNING)
 end
 
+-- Retour visuel d'une vente confirmée par le serveur : seul `coinsEarned`
+-- reçu du serveur est affiché, jamais l'estimation locale.
+function InventoryController.showSale(coinsEarned: number)
+	showToast(Localization.format("sell.gain", localPlayer.LocaleId, coinsEarned), COLOR_COINS)
+	pulsePanel()
+end
+
+-- Appelé à chaque nouvel état reçu du serveur.
+function InventoryController.onStateChanged(callback: (state: State) -> ())
+	table.insert(listeners, callback)
+end
+
 function InventoryController.start()
 	assert(not started, "InventoryController.start appelé deux fois")
 	started = true
 	buildInterface()
+	coinValue.Changed:Connect(function(value: number)
+		displayedCoins = math.floor(value + 0.5)
+		renderCoins()
+	end)
 	render()
 	Remotes.waitFor(Remotes.Name.StateUpdated).OnClientEvent:Connect(function(newState: any)
 		if not isValidState(newState) then
 			return
 		end
+		local first = state == nil
 		state = newState
 		render()
+		if first then
+			-- Arrivée : solde affiché tel quel, sans défilement.
+			displayedCoins = newState.coins
+			coinValue.Value = newState.coins
+			renderCoins()
+		else
+			setDisplayedCoins(newState.coins)
+		end
+		for _, callback in ipairs(listeners) do
+			task.spawn(callback, newState)
+		end
 	end)
 end
 

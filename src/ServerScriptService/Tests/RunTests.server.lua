@@ -20,6 +20,7 @@ local PlayerDataServiceTests = require(script.Parent.PlayerDataServiceTests)
 local InventoryServiceTests = require(script.Parent.InventoryServiceTests)
 local ResourceSpawnerTests = require(script.Parent.ResourceSpawnerTests)
 local CollectionServiceTests = require(script.Parent.CollectionServiceTests)
+local SellServiceTests = require(script.Parent.SellServiceTests)
 
 local GameConfig = require(Config.GameConfig)
 local ResourceConfig = require(Config.ResourceConfig)
@@ -32,10 +33,13 @@ local PlayerDataService = require(ServerScriptService.Services.PlayerDataService
 local InventoryService = require(ServerScriptService.Services.InventoryService)
 local RateLimitService = require(ServerScriptService.Services.RateLimitService)
 local CollectionService = require(ServerScriptService.Services.CollectionService)
+local SellService = require(ServerScriptService.Services.SellService)
 local ResourceSpawner = require(ServerScriptService.Systems.ResourceSpawner)
 local Remotes = require(ReplicatedStorage.Shared.Remotes.Remotes)
 local Localization = require(ReplicatedStorage.Shared.Util.Localization)
+local SaleValue = require(ReplicatedStorage.Shared.Util.SaleValue)
 local CollectionSecurityConfig = require(ServerStorage:WaitForChild("ServerOnlyConfig").CollectionSecurityConfig)
+local SellSecurityConfig = require(ServerStorage:WaitForChild("ServerOnlyConfig").SellSecurityConfig)
 
 local totalFailures = 0
 
@@ -60,6 +64,7 @@ report(
 		UpgradeConfig = UpgradeConfig,
 		WorldConfig = WorldConfig,
 		CollectionSecurityConfig = CollectionSecurityConfig,
+		SellSecurityConfig = SellSecurityConfig,
 		Localization = Localization,
 	})
 )
@@ -120,6 +125,27 @@ report(
 		ResourceConfig = ResourceConfig,
 		UpgradeConfig = UpgradeConfig,
 		CollectionSecurityConfig = CollectionSecurityConfig,
+		Remotes = Remotes,
+	})
+)
+
+report(
+	"SellServiceTests",
+	SellServiceTests.run({
+		SellService = SellService,
+		SaleValue = SaleValue,
+		CollectionService = CollectionService,
+		InventoryService = InventoryService,
+		PlayerDataService = PlayerDataService,
+		RateLimitService = RateLimitService,
+		ResourceSpawner = ResourceSpawner,
+		MemoryDataStore = MemoryDataStore,
+		DataSchema = DataSchema,
+		GameConfig = GameConfig,
+		ResourceConfig = ResourceConfig,
+		UpgradeConfig = UpgradeConfig,
+		CollectionSecurityConfig = CollectionSecurityConfig,
+		SellSecurityConfig = SellSecurityConfig,
 		Remotes = Remotes,
 	})
 )

@@ -64,6 +64,8 @@ end)
 - `Update` ne déclenche aucune écriture DataStore.
 - Coût : une copie et un contrôle du profil par appel. À mesurer en T6.
 - Premier utilisateur : `InventoryService.AddResource` (T2, `COLLECTION.md`).
+- Vente : `SellService` (T3, `SELLING.md`) retire, crédite et met à jour
+  les statistiques dans un seul appel. Aucun changement de schéma en T3.
 
 ## Chargement
 
