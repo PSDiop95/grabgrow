@@ -25,6 +25,7 @@ local EconomyServiceTests = require(script.Parent.EconomyServiceTests)
 local UpgradeServiceTests = require(script.Parent.UpgradeServiceTests)
 local HudTests = require(script.Parent.HudTests)
 local FeedbackTests = require(script.Parent.FeedbackTests)
+local OnboardingTests = require(script.Parent.OnboardingTests)
 
 local GameConfig = require(Config.GameConfig)
 local ResourceConfig = require(Config.ResourceConfig)
@@ -49,6 +50,8 @@ local SaleValue = require(ReplicatedStorage.Shared.Util.SaleValue)
 local UpgradeMath = require(ReplicatedStorage.Shared.Util.UpgradeMath)
 local BagDisplay = require(ReplicatedStorage.Shared.Util.BagDisplay)
 local FeedbackRules = require(ReplicatedStorage.Shared.Util.FeedbackRules)
+local OnboardingRules = require(ReplicatedStorage.Shared.Util.OnboardingRules)
+local OnboardingConfig = require(Config.OnboardingConfig)
 local FeedbackConfig = require(Config.FeedbackConfig)
 local CollectionSecurityConfig = require(ServerStorage:WaitForChild("ServerOnlyConfig").CollectionSecurityConfig)
 local SellSecurityConfig = require(ServerStorage:WaitForChild("ServerOnlyConfig").SellSecurityConfig)
@@ -219,6 +222,27 @@ report(
 		Remotes = Remotes,
 		Localization = Localization,
 		BagDisplay = BagDisplay,
+	})
+)
+
+report(
+	"OnboardingTests",
+	OnboardingTests.run({
+		OnboardingRules = OnboardingRules,
+		OnboardingConfig = OnboardingConfig,
+		Localization = Localization,
+		UpgradeMath = UpgradeMath,
+		UpgradeConfig = UpgradeConfig,
+		DataSchema = DataSchema,
+		PlayerDataService = PlayerDataService,
+		InventoryService = InventoryService,
+		CollectionService = CollectionService,
+		SellService = SellService,
+		UpgradeService = UpgradeService,
+		WorldUnlockService = WorldUnlockService,
+		ResourceSpawner = ResourceSpawner,
+		MemoryDataStore = MemoryDataStore,
+		Remotes = Remotes,
 	})
 )
 

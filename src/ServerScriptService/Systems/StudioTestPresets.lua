@@ -1,5 +1,5 @@
 --!strict
--- Préréglages de profil pour les tests manuels T4 (U1 à U10).
+-- Préréglages de profil pour les tests manuels T4 (U1 à U10) et T5.3 (O_*).
 -- OUTIL DE TEST, STUDIO UNIQUEMENT : Bootstrap ne le branche que si
 -- RunService:IsStudio() est vrai, via une BindableFunction placée dans
 -- ServerStorage (jamais répliquée, inaccessible au client). Aucun effet sur
@@ -29,6 +29,8 @@ export type Preset = {
 	worlds: { string }?,
 	-- Contenu du sac ; absent = sac vide.
 	resources: { [string]: number }?,
+	-- T5.3 : statistiques (clés de profile.stats) ; absentes = 0.
+	stats: { [string]: number }?,
 }
 
 -- Chaque préréglage remet d'abord le profil à l'état d'un nouveau joueur
@@ -69,6 +71,29 @@ StudioTestPresets.Presets = table.freeze({
 		coins = 500,
 		upgrades = { Backpack = 3, Grabber = 10 },
 	},
+	-- T5.3 : parcours B du guidage (joueurs déjà avancés).
+	O_collected = {
+		description = "Guidage : collecte déjà faite (étape Vendre)",
+		coins = 0,
+		resources = { green_leaf = 6, wood = 4 },
+		stats = { totalResourcesCollected = 10 },
+	},
+	O_sold = {
+		description = "Guidage : vente déjà faite, 60 Coins (étape Améliorer)",
+		coins = 60,
+		stats = { totalResourcesCollected = 30, totalSales = 1, totalCoinsEarned = 60 },
+	},
+	O_sold_rich = {
+		description = "Guidage : vente faite, 120 Coins (Backpack payable)",
+		coins = 120,
+		stats = { totalResourcesCollected = 60, totalSales = 2, totalCoinsEarned = 120 },
+	},
+	O_upgraded = {
+		description = "Guidage : amélioration déjà achetée (terminé)",
+		coins = 20,
+		upgrades = { Backpack = 2 },
+		stats = { totalResourcesCollected = 60, totalSales = 2, totalCoinsEarned = 120, totalCoinsSpent = 100 },
+	},
 })
 
 -- Applique le préréglage `name` au profil chargé de `userId`.
@@ -102,6 +127,12 @@ function StudioTestPresets.apply(
 		end
 		for resourceId, quantity in pairs(preset.resources or {}) do
 			draft.inventory.resources[resourceId] = quantity
+		end
+		for statId, value in pairs(preset.stats or {}) do
+			if draft.stats[statId] == nil then
+				return false
+			end
+			draft.stats[statId] = value
 		end
 		return nil
 	end)

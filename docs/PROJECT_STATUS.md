@@ -1,6 +1,6 @@
 # GRAB & GROW — État du projet
 
-Dernière mise à jour : 2026-11-12 (T5.2 feedback clôturé)
+Dernière mise à jour : 2026-11-13 (T5.3 guidage clôturé, D-017)
 
 ## Résumé
 
@@ -90,6 +90,8 @@ src/
     Util/BagDisplay.lua              États d'affichage du sac (T5.1)
     Util/FeedbackRules.lua           Règles des retours audio/visuels (T5.2)
     Config/FeedbackConfig.lua        Sons, volumes, budgets d'effets (T5.2)
+    Util/OnboardingRules.lua         Étapes du guidage de première session (T5.3)
+    Config/OnboardingConfig.lua      Seuil et durées du guidage (T5.3)
     Remotes/Remotes.lua              RemoteEvents et codes de résultat (T2)
   ServerStorage/ServerOnlyConfig/
     CollectionSecurityConfig.lua     Marges de sécurité de la collecte, non répliquées (T2)
@@ -102,6 +104,7 @@ src/
     Controllers/SellController.lua   Prompt de vente, étiquette, retours (T3)
     Controllers/UpgradeController.lua Boutique et mondes (T4)
     Controllers/FeedbackController.lua Sons, effets, préférences (T5.2)
+    Controllers/OnboardingController.lua Guidage de première session (T5.3)
   ServerScriptService/
     Bootstrap.server.lua             Point d'entrée serveur, magasin, branchement de la collecte
     Services/PlayerDataService.lua   Chargement, Update, sauvegarde, verrou de session
@@ -130,6 +133,7 @@ src/
     Tests/UpgradeServiceTests.lua    Achats, effets, concurrence, mondes, persistance, préréglages (23 cas, T4)
     Tests/HudTests.lua               États du sac, textes EN/FR (10 cas, T5.1)
     Tests/FeedbackTests.lua          Retours audio/visuels (14 cas, T5.2)
+    Tests/OnboardingTests.lua        Guidage, parcours, reconnexion (21 cas, T5.3)
     Tests/RunTests.server.lua        Lanceur, Studio uniquement
 tools/run_tests.luau                 Lanceur des tests en terminal (Lune)
 tools/studio/build_test_map.luau     Carte de test Green Valley (sol, spawn, 36 points, station de vente)
@@ -671,6 +675,96 @@ non synchronisable par l'outil).
 | FPS sur appareil modeste | Non mesuré ; budget : ≤ 6 éclats (3 instances chacun), 1 volée de pièces à la fois, aucune boucle par frame ajoutée |
 | Deux joueurs | Effets locaux (chaque client ne réagit qu'à ses propres `ActionResult`) ; non testé en Local Server |
 
+## Vérifications T5.3 — Première session et guidage (2026-11-13, PARTIEL)
+
+Implémenté ; validé par le propriétaire sur l'émulateur (2026-11-13).
+D-10 acceptée (D-017). Commit local autorisé. Parcours nouveau joueur sur
+téléphone réel non refait (compte de production déjà avancé).
+Détail : `ONBOARDING.md`. Aucune valeur économique, règle de collecte, de
+vente ou d'achat, ni schéma de profil modifiés ; aucun RemoteEvent ajouté.
+Un changement serveur (D-10, acceptée : D-017) : `progress` dans l'état client.
+
+### Automatisées
+
+| Vérification | Résultat |
+|---|---|
+| Lune, 12 suites (`OnboardingTests` : 21 cas nouveaux ; `UpgradeServiceTests` adapté aux préréglages `O_*`) | Exécuté — `TOUS LES TESTS : OK` |
+| Contrôle négatif : réponse sans `SUCCESS` acceptée + événement signalé sans changement d'étape | Exécuté — 6 échecs détectés, code restauré |
+| `luau-lsp analyze` (strict) | Exécuté — 0 erreur, code de sortie 0 (après chaque correction) |
+| `rojo build` (fichier temporaire) | Exécuté — OK |
+| Suites dans Studio (Play) | Exécuté — `TOUS LES TESTS : OK` |
+| Synchronisation Rojo | Exécuté — 3 fichiers nouveaux et contrôleur corrigé identiques au dépôt (taille sans fins de ligne) |
+
+Cas couverts par `OnboardingTests` (services réels, magasin en mémoire) :
+nouveau joueur, première collecte, demande sans confirmation, première
+vente (avant le seuil), premier achat, plusieurs achats possibles, étape
+déjà faite, déjà vendu, déjà acheté (dépense ou niveau), déblocage de
+monde, déconnexion pendant collecte / vente / amélioration (ReleasePlayer
+puis rechargement), reconnexion après la fin et non-régression, double
+confirmation, refus réels (`NOTHING_TO_SELL`, `INSUFFICIENT_FUNDS`,
+`TOO_FAR`) et réponses falsifiées, progression illisible, masquage,
+textes EN/FR (présence, longueur, motifs), appareils.
+
+### Dans Studio, un joueur (Play, magasin en mémoire, RemoteEvents réels, locale fr)
+
+| Parcours | Résultat |
+|---|---|
+| A — Nouveau joueur | OK — accueil 👋 (≈ 5 s, visible pendant le chargement), « Étape 1/3 » + « Maintiens E ou clique sur une ressource », ▼ sur la ressource ; 1re collecte `SUCCESS` → 2/3 « Continue de remplir » ; à 10 → « Vends tes ressources ! », ▼ sur `SellZonePad`, flèche de bord ; près du stand : repères effacés ; vente `SUCCESS` +15 → « Belle vente ! +15 Coins » puis 3/3 « encore 85 Coins » ; (préréglage `O_sold_rich`) « Utilise tes Coins… » + ▶ sur Boutique ; boutique ouverte : carte masquée, ▶ sur Backpack seul (seul payable) ; achat `SUCCESS` niveau 2 → « Sac à dos niveau 2 ! … », flèches retirées, plus rien après 6 s |
+| B — Joueurs avancés | OK — `O_sold` → directement 3/3 ; `O_upgraded` → aucun guidage ; `O_collected` ensuite → aucun retour en arrière |
+| C — Déconnexion | **Automatisé seulement** (Lune, services réels). Studio : profils en mémoire perdus à l'arrêt, une seule session par place ; non rejoué sur DataStore de test |
+| D — Liberté | OK — × (clic souris réel) : carte et repères masqués, « ? Guide » affiché ; collecte par la touche E réelle (4 ressources) ; carte revenue à l'étape suivante ; « ? Guide » la réaffiche |
+| Réapparition du personnage | OK — une seule instance de `OnboardingUI` et `OnboardingMarker` |
+| Erreurs | Aucune ; seule : asset d'avatar 203785492 (étrangère) |
+
+### Corrections pendant les tests Studio
+
+- L'accueil se terminait pendant le chargement (`task.delay` de 5 s écoulé
+  avant l'affichage du monde) : décompte lancé après `game.Loaded` et
+  l'apparition du personnage.
+- Position de la carte : `GetGuiInset` vaut 0 au démarrage ;
+  `TopbarInset` suivi en plus (carte sous la barre Roblox).
+- Glyphes ✕, ➤, ✔ affichés en carré ou gris : remplacés par ×, →, 💰, 🎉
+  (test de rendu de 15 glyphes).
+
+### Captures (dossier de session, non versionnées)
+
+Accueil (pendant le chargement), étape 1/3, étape 2/3 avec flèche de bord
+(avant correction des glyphes), boutique ouverte avec ▶ sur Backpack.
+Dossier : `~/.claude/projects/D--Projet-grabgrow/<session>/tool-results/`.
+Les dernières captures Studio montraient un monde noir (fenêtre sans
+focus) : caméra et personnage vérifiés normaux.
+
+### Test mobile du propriétaire (2026-11-13)
+
+- Retour : « je ne vois pas le tuto sur mobile ». Causes possibles : place
+  publié sans T5.3, ou profil de production déjà avancé (étape
+  `COMPLETED`, guidage masqué par conception). Lecture du profil de
+  production refusée par le garde-fou de Claude : non vérifié.
+- Ajout d'une ligne de diagnostic client, une fois par session :
+  `[Onboarding] étape de départ : … (collectes, ventes, Coins dépensés)`
+  (console développeur, `/console`).
+- Publication autorisée par le propriétaire : synchronisation Rojo
+  contrôlée (55 / 55 scripts identiques), place sauvegardé en version 53.
+  La publication elle-même est à faire par le propriétaire (l'outil ne
+  publie pas).
+- Publié par le propriétaire. Console du téléphone : étape de départ
+  `COMPLETED` → profil de production déjà avancé ; guidage masqué comme
+  prévu (cause confirmée). Parcours « nouveau joueur » sur téléphone réel
+  encore à faire (autre compte ou réinitialisation autorisée).
+- **Parcours nouveau joueur validé sur l'émulateur d'appareils de Studio**
+  (propriétaire, 2026-11-13).
+
+### Non exécutées
+
+| Vérification | Raison |
+|---|---|
+| Téléphone réel, paysage | À faire par le propriétaire (`tests/TEST_STRATEGY.md`, « Tests manuels T5.3 ») |
+| Tablette, téléphone (émulateur) | Émulateur non pilotable par MCP (constaté en T5.1) |
+| Manette | Aucune manette (comme E8, U10) |
+| Reconnexion réelle (DataStore de test) | Non demandée ; couverte par simulation |
+| Deux joueurs | Guidage local à chaque client ; non testé en Local Server |
+| Chevauchement avec la fenêtre du chat Roblox ouverte | Non vérifié ; le chat s'ouvre en haut à gauche, comme la carte |
+
 ## Anomalies
 
 ### Résolues
@@ -769,7 +863,7 @@ Non vérifié sur DataStore réel :
 
 ## Prochaine étape
 
-1. T5.3 — Première session (guidage contextuel non bloquant) : à
+1. T5.4 — Textes (A-22, relecture EN/FR, harmonisation tu / vous) : à
    démarrer sur autorisation du propriétaire. Aucun push.
 2. Décisions D-8 (persistance des préférences) et D-9 (emplacement) à
    confirmer ; recommandations appliquées en attendant.

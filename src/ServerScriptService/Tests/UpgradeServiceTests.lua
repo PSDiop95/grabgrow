@@ -686,7 +686,11 @@ function UpgradeServiceTests.run(modules: Modules): ({ string }, number)
 			local preset = Presets.Presets[name]
 			local profile = env.profile(USER_A)
 			check(profile.currencies.coins == preset.coins, `{name} : solde incorrect`)
-			check(profile.stats.totalCoinsEarned == 0 and profile.stats.totalCoinsSpent == 0, `{name} : statistiques non remises à zéro`)
+			-- Statistiques remises à zéro, sauf celles fixées par le préréglage (T5.3).
+			for statId, value in pairs(profile.stats) do
+				local expected = if preset.stats then preset.stats[statId] or 0 else 0
+				check(value == expected, `{name} : statistique {statId} = {tostring(value)} au lieu de {expected}`)
+			end
 			if preset.resources == nil then
 				check(next(profile.inventory.resources) == nil, `{name} : sac non vidé`)
 			end

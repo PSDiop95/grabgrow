@@ -1,7 +1,7 @@
 # T5 — HUD et feedback mobile : préflight
 
 Date : 2026-11-12. Statut : **préflight validé** (décisions D-1 à D-7 :
-recommandations acceptées, D-016) ; T5.1 terminé (section 9) ; T5.2 terminé (section 10) ; T5.3 non commencé.
+recommandations acceptées, D-016) ; T5.1 terminé (section 9) ; T5.2 terminé (section 10) ; T5.3 terminé (section 11) ; T5.4 non commencé.
 
 Critère de la phase (architecture 20, ROADMAP) : **boucle complète
 utilisable sur téléphone.**
@@ -262,3 +262,33 @@ Aucun RemoteEvent ajouté, aucun service serveur modifié.
 ### Tests
 
 Voir `docs/PROJECT_STATUS.md`, « Vérifications T5.2 ».
+
+## 11. Lot T5.3 — Première session (2026-11-13, TERMINÉ)
+
+Détail : `docs/ONBOARDING.md` ; tests : `PROJECT_STATUS.md`,
+« Vérifications T5.3 ».
+
+### Audit de départ
+
+| Élément | Constat |
+|---|---|
+| Statistiques du profil (`DataSchema`) | `totalResourcesCollected` (InventoryService), `totalSales` (SellService), `totalCoinsSpent` (EconomyService), `totalCoinsEarned` ; sauvegardées |
+| État client (`GetClientState`) | Inventaire, Coins, niveaux, mondes ; **aucune statistique** |
+| Confirmations serveur | `ActionResult` : Collect (`amount`), Sell (`coinsEarned`), Upgrade (`upgradeId`, `level`), UnlockWorld (`worldId`) |
+| Contrôles | Collecte E / clic / X / « Prendre » ; vente F / Y / prompt ; boutique B / croix haut / bouton |
+
+### Réalisé
+
+- États `INTRO`, `COLLECT`, `SELL`, `UPGRADE`, `COMPLETED`, déduits des
+  statistiques existantes (D-2 = b) : aucun champ ni migration.
+- Changement serveur minimal (D-10, à valider) : `progress` dans l'état
+  client. Aucun RemoteEvent ajouté.
+- Carte non bloquante, repère ▼, flèche de bord, flèches ▶ sur la Boutique
+  et les cartes payables ; masquage × et « ? Guide ».
+- Seuil de vente : 10 unités (`OnboardingConfig`, hypothèse d'interface).
+
+### Décision (acceptée, D-017)
+
+| # | Question | Options | Recommandation |
+|---|---|---|---|
+| D-10 | Source des statistiques côté client | a) `progress` dans `StateUpdated` (actuel) ; b) déduction depuis inventaire, Coins et niveaux, sans changement serveur | a) : fiable, lecture seule, aucun RemoteEvent |

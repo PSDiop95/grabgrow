@@ -271,6 +271,23 @@ téléphone réel. Préréglages, côté serveur :
 
 Les préférences sont mémorisées pour la session seulement (D-8).
 
+## Tests manuels T5.3 (à faire par le propriétaire)
+
+Téléphone réel en paysage d'abord, puis PC. Nouveau joueur : en Studio,
+Play (profils en mémoire) ; préréglages côté serveur :
+`game.ServerStorage.StudioTestHooks.ApplyPreset:Invoke("O_sold")`.
+
+| # | Action | Attendu |
+|---|---|---|
+| G1 | Lancer en nouveau joueur | Accueil court (≈ 5 s) en haut à gauche, puis « Étape 1/3 — Collecte tes premières ressources ! » ; flèche ▼ sur une ressource ; rien ne bloque les déplacements |
+| G2 | Collecter 1 ressource | Étape 2/3 « Continue de remplir ton sac » ; à 10 : « Vends tes ressources ! », ▼ sur le stand, flèche → au bord si le stand est hors champ |
+| G3 | Vendre | « Belle vente ! +N Coins » (N = toast de vente), puis étape 3/3 avec les Coins manquants |
+| G4 | `O_sold_rich`, ouvrir la Boutique | ▶ à côté du bouton Boutique, puis ▶ sur Sac à dos seulement ; carte masquée boutique ouverte |
+| G5 | Acheter | « Sac à dos niveau 2 ! … » puis plus aucun guidage |
+| G6 | × puis jouer | Carte et repères disparaissent ; tout fonctionne ; « ? Guide » réaffiche ; la carte revient à l'étape suivante |
+| G7 | Lisibilité téléphone paysage | Aucun chevauchement avec sac, Boutique, Prendre, saut, stick, prompt de vente ; texte lisible |
+| G8 | `O_upgraded`, nouvelle session | Aucun guidage |
+
 ## Lancer les tests automatisés (Studio)
 
 1. Ouvrir `GrabAndGrow.rbxl`.

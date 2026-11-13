@@ -541,3 +541,26 @@ propriétaire), ACCEPTÉE, REMPLACÉE.
   ouvertes ; manifeste d'assets à créer avant le premier son.
 - **Affecte :** contrôleurs client, `Localization`, `docs/assets/`,
   `phases/T5_PREFLIGHT.md`, architecture 13.1 (écart).
+
+## D-017 — T5.3 : statistiques de progression dans l'état client (D-10)
+
+- **Date :** 2026-11-13
+- **Statut :** ACCEPTÉE (propriétaire, 2026-11-13)
+- **Contexte :** le guidage de première session (T5.3) doit savoir si le
+  joueur a déjà collecté, vendu ou acheté, y compris après une
+  reconnexion. Ces statistiques sont sauvegardées (`profile.stats`) mais
+  n'étaient pas envoyées au client. D-016 prévoyait un T5 sans changement
+  serveur ; D-2 = b interdit un nouveau champ de profil.
+- **Décision :** `CollectionService.GetClientState` ajoute `progress` =
+  `{ resourcesCollected, sales, coinsSpent }`, copie en lecture seule de
+  `totalResourcesCollected`, `totalSales`, `totalCoinsSpent`, envoyée par
+  le `StateUpdated` existant. Le serveur ne la relit jamais ; aucun
+  RemoteEvent ajouté, aucun schéma modifié.
+- **Justification :** déduction fiable et persistante des étapes ; une
+  déduction par l'inventaire, le solde et les niveaux confondrait un joueur
+  ayant tout dépensé avec un nouveau joueur.
+- **Conséquences :** écart limité à D-016 (« T5 client seulement ») ;
+  le client connaît trois compteurs de son propre profil (aucune donnée
+  sensible). Un joueur avancé ne voit jamais le guidage.
+- **Affecte :** `CollectionService`, `InventoryController` (type d'état),
+  `OnboardingRules`, `OnboardingController`, `docs/ONBOARDING.md`.

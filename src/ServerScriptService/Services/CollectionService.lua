@@ -36,6 +36,13 @@ local CollectionService = {}
 
 local ResultCode = Remotes.ResultCode
 
+-- Statistique entière du profil (DataSchema garantit son type) ; 0 sinon.
+local function statOf(profile: any, statId: string): number
+	local stats = profile.stats
+	local value = if type(stats) == "table" then stats[statId] else nil
+	return if type(value) == "number" then value else 0
+end
+
 -- Nom de la limite dans CollectionSecurityConfig.RateLimits.
 CollectionService.RATE_LIMIT_ACTION = "Collect"
 
@@ -67,6 +74,16 @@ export type ClientState = {
 	worlds: { [string]: boolean },
 	sellMultiplier: number,
 	walkSpeed: number,
+	-- T5.3 : statistiques persistantes utiles au guidage de première
+	-- session (copie en lecture seule de profile.stats). Affichage seulement :
+	-- le client ne les renvoie jamais et rien ne les lit côté serveur.
+	progress: Progress,
+}
+
+export type Progress = {
+	resourcesCollected: number,
+	sales: number,
+	coinsSpent: number,
 }
 
 export type Dependencies = {
@@ -307,6 +324,11 @@ function CollectionService.new(dependencies: Dependencies)
 			worlds = worlds,
 			sellMultiplier = multiplier,
 			walkSpeed = walkSpeed,
+			progress = {
+				resourcesCollected = statOf(profile, "totalResourcesCollected"),
+				sales = statOf(profile, "totalSales"),
+				coinsSpent = statOf(profile, "totalCoinsSpent"),
+			},
 		}
 	end
 

@@ -40,6 +40,9 @@ export type State = {
 	worlds: { [string]: boolean },
 	sellMultiplier: number,
 	walkSpeed: number,
+	-- T5.3 : statistiques persistantes pour le guidage (lecture seule).
+	-- Facultatif : absent, le guidage reste masqué.
+	progress: { resourcesCollected: number, sales: number, coinsSpent: number }?,
 }
 
 local COLOR_PANEL = Color3.fromRGB(24, 28, 36)
