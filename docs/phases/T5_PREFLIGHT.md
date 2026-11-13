@@ -1,7 +1,8 @@
 # T5 — HUD et feedback mobile : préflight
 
-Date : 2026-11-12. Statut : **préflight validé** (décisions D-1 à D-7 :
-recommandations acceptées, D-016) ; T5.1 terminé (section 9) ; T5.2 terminé (section 10) ; T5.3 terminé (section 11) ; T5.4 terminé (section 12) ; T5.5 non commencé.
+Date : 2026-11-12. **Phase T5 clôturée le 2026-11-13 (D-018), avec
+réserves.** Statut du préflight : **validé** (décisions D-1 à D-7 :
+recommandations acceptées, D-016) ; T5.1 terminé (section 9) ; T5.2 terminé (section 10) ; T5.3 terminé (section 11) ; T5.4 terminé (section 12) ; T5.5 terminé avec réserves (section 13).
 
 Critère de la phase (architecture 20, ROADMAP) : **boucle complète
 utilisable sur téléphone.**
@@ -318,3 +319,24 @@ Détail : `docs/LOCALIZATION.md` ; tests : `PROJECT_STATUS.md`,
 - Espace insécable avant `! ? : ;` en français, appliquée au chargement.
 - `Localization.keys`, `Localization.NBSP` ; suite `LocalizationTests`.
 - Aucune mécanique, valeur économique ni règle serveur modifiée.
+
+## 13. Lot T5.5 — Validation multiplateforme (2026-11-13, TERMINÉ avec réserves)
+
+Mise à jour : checklist téléphone réel R1–R10 et PC P1 déclarée validée
+par le propriétaire (« test validé », 2026-11-13 ; détail non communiqué).
+Les mentions « à faire » ci-dessous sont couvertes par cette déclaration,
+sauf R10 si le compte n'était pas en anglais.
+
+Rapport : `docs/tests/T5_MULTIPLATFORM_REPORT.md` ; matrice :
+`docs/tests/T5_DEVICE_MATRIX.md` ; anomalies : `docs/tests/T5_ISSUES.md`.
+
+| Critère d'acceptation (section 6) | État |
+|---|---|
+| 1. Nouveau joueur sur téléphone réel, sans aide | Émulateur OK (parcours complet sans préréglage) ; **téléphone réel à faire** (R1–R5) |
+| 2. Retour visuel et sonore pour chaque action | OK (compteurs Studio ; téléphone réel en T5.2) |
+| 3. Aucun chevauchement, 4 ratios | Émulateur téléphone OK ; tablette et PC OK en T5.1 ; téléphone réel en T5.1/T4 ; à reconfirmer (R6) |
+| 4. EN et FR complets | Tests automatisés OK ; FR relu en jeu ; EN en jeu à faire (R10) ; T55-01 (P3) corrigée |
+| 5. Performance, instances stables | Studio : stable, aucune accumulation ; téléphone 15 min à faire (R9) |
+| 6. Aucun changement serveur, économique ou de schéma | Respecté (seul changement de code : 2 chaînes de `Localization`, T55-01) |
+
+Manette : reportée faute de matériel (liaisons relues dans le code).

@@ -1,6 +1,6 @@
 # GRAB & GROW — État du projet
 
-Dernière mise à jour : 2026-11-13 (T5.4 textes EN/FR validé et clôturé)
+Dernière mise à jour : 2026-11-13 (T5 clôturée, D-018)
 
 ## Résumé
 
@@ -45,6 +45,12 @@ strict des mondes). Tests automatisés (Lune et Studio) et parcours Studio à
 un joueur OK. Tests manuels U1 à U9b validés (Studio, émulateur, téléphone
 réel) ; U10 manette reporté. A-39, A-40, A-41 corrigés et validés. Commits
 locaux 69fb421 et e63039d, aucun push. Détail : `UPGRADES.md`, `PROGRESSION.md`, « Vérifications T4 ».
+
+**T5 est TERMINÉ** (clôturé par le propriétaire le 2026-11-13, D-018) :
+HUD (T5.1), feedback audio et visuel (T5.2), première session (T5.3),
+textes EN/FR (T5.4), validation multiplateforme (T5.5, téléphone réel et
+PC déclarés validés). Réserves : manette, tablette réelle, performance non
+chiffrée. Place de test version 56. Commit T5.5 non créé, aucun push.
 
 ### Réserves de T1
 
@@ -676,9 +682,10 @@ non synchronisable par l'outil).
 | FPS sur appareil modeste | Non mesuré ; budget : ≤ 6 éclats (3 instances chacun), 1 volée de pièces à la fois, aucune boucle par frame ajoutée |
 | Deux joueurs | Effets locaux (chaque client ne réagit qu'à ses propres `ActionResult`) ; non testé en Local Server |
 
-## Vérifications T5.3 — Première session et guidage (2026-11-13, PARTIEL)
+## Vérifications T5.3 — Première session et guidage (2026-11-13, TERMINÉ)
 
-Implémenté ; validé par le propriétaire sur l'émulateur (2026-11-13).
+Implémenté ; validé et clôturé par le propriétaire sur l'émulateur (2026-11-13).
+Réserve reprise en T5.5 : parcours nouveau joueur sur téléphone réel.
 D-10 acceptée (D-017). Commit local autorisé. Parcours nouveau joueur sur
 téléphone réel non refait (compte de production déjà avancé).
 Détail : `ONBOARDING.md`. Aucune valeur économique, règle de collecte, de
@@ -881,13 +888,46 @@ Détail : `docs/LOCALIZATION.md`.
 | Expulsions `load_failed` et `session_locked` en jeu | Exigent une panne DataStore ou un verrou réel ; textes couverts par les tests |
 | Téléphone réel, autres appareils | À faire par le propriétaire (`tests/TEST_STRATEGY.md`, « Tests manuels T5.4 ») |
 
+## Vérifications T5.5 — Validation multiplateforme (2026-11-13, TERMINÉ avec réserves)
+
+Détail : `tests/T5_MULTIPLATFORM_REPORT.md`, `tests/T5_DEVICE_MATRIX.md`,
+`tests/T5_ISSUES.md`. Aucun commit.
+
+| Vérification | Type | Résultat |
+|---|---|---|
+| Lune, 13 suites | Automatisé | Exécuté — `TOUS LES TESTS : OK`, code 0 |
+| `luau-lsp analyze` strict | Automatisé | Exécuté — 0 erreur |
+| `rojo build` | Automatisé | Exécuté — OK |
+| Synchronisation Rojo | Studio | Exécuté — 56 / 56 scripts identiques |
+| Suites dans Studio | Studio | Exécuté — `TOUS LES TESTS : OK` |
+| Parcours nouveau joueur complet, sans préréglage (collecte, plein, vente ×2, boutique, achat, effet, reprise) | Studio, émulateur téléphone paysage, RemoteEvents réels, touches F et B réelles | Exécuté — OK |
+| Retours audio/visuels (compteurs) | Studio | Exécuté — 1 retour par confirmation, aucune accumulation |
+| Réapparition | Studio | Exécuté — aucune GUI dupliquée |
+| Téléphone réel (R1–R10) et PC hors Studio (P1) | Manuel, propriétaire | **Validé** — validé par le propriétaire (déclaration « test validé », 2026-11-13 ; appareil, version Android, détail ligne par ligne et version du place testée non communiqués) |
+| Tablette réelle | — | Non testée (non mentionnée) |
+| Manette | — | **Reporté** (aucun matériel) |
+| Session 15 min sur téléphone (R9) | Propriétaire | Comprise dans la déclaration ; aucune mesure chiffrée transmise |
+
+Anomalies : aucune P0/P1 ; T55-01 (P3, ponctuation) corrigée avec accord
+(`Localization`, texte seul ; tests relancés OK, vérifiée dans Studio) ;
+T55-02 (statut T5.3) corrigée dans ce document. Seul fichier de code
+modifié en T5.5 : `Localization.lua` (2 chaînes).
+
+Sauvegarde du place de test (accord du propriétaire, 2026-11-13) :
+**version 56** (Team Create), non publiée. Avant sauvegarde : 56 / 56
+scripts identiques au dépôt (correction T55-01 incluse),
+`useMemoryStore = true`, station présente, aucun résidu de Play. La
+publication reste à faire par le propriétaire.
+
 ## Décisions en attente
 
-1. Push GitHub des commits T1, T2 et T3 (non autorisé à ce jour).
+1. Push GitHub des commits T1 à T5 (non autorisé à ce jour).
+2. D-8 (persistance des préférences) et D-9 (emplacement) : recommandations
+   appliquées, sans décision consignée.
 
 ## Prochaine étape
 
-1. T5.5 — à démarrer sur autorisation du propriétaire. Tests manuels
-   T5.4 (L1–L5) sur téléphone réel recommandés. Aucun push.
-2. Décisions D-8 (persistance des préférences) et D-9 (emplacement) à
-   confirmer ; recommandations appliquées en attendant.
+1. Commit local de T5.5 (correction T55-01 et documents) : à autoriser.
+   Aucun push.
+2. T6 — Tests multijoueurs et anti-exploit : préflight sur demande du
+   propriétaire (A-26, A-27, A-37 ; R-02 ; D-8 à trancher).

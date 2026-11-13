@@ -1,6 +1,6 @@
 # GRAB & GROW — Roadmap
 
-Dernière mise à jour : 2026-11-12
+Dernière mise à jour : 2026-11-13
 
 Phasage du MVP repris de l'architecture technique (section 20, T0 à T8).
 Le calendrier 10 semaines du GDD (section 20) reste la cible commerciale,
@@ -19,12 +19,12 @@ réellement exécuté. État détaillé : `PROJECT_STATUS.md`.
 | T2 | Collecte et inventaire | Collecte validée serveur, sac limité | **Validé et clôturé** le 2026-11-11 — tests automatisés, Studio à 1 et 2 joueurs, émulateur mobile, reconnexion sur DataStore de test ; commit local. Risques ouverts pour T6 : A-26, A-27 (`PROJECT_STATUS.md`) |
 | T3 | Vente et Coins | Transaction fiable, inventaire vidé correctement | **Terminé** (clôturé le 2026-11-12) — E1–E7, E9 et rendu 3D validés, E8 partiel accepté (manette physique reportée) ; A-34 et A-35 corrigés ; place version 25 ; commits locaux, non poussés |
 | T4 | Améliorations (5) et progression des mondes | Achats validés côté serveur | **Terminé** (clôturé le 2026-11-12) — U1–U9b validés (Studio, émulateur, téléphone réel), U10 manette reporté ; A-39, A-40, A-41 corrigés ; commits locaux 69fb421 et e63039d, non poussés. Ouvertes : A-36 (T7), A-37 (T6), A-38 (T5) |
-| T5 | HUD et feedback mobile | Boucle complète utilisable sur téléphone | **En cours** — T5.1 HUD **terminé** (clôturé le 2026-11-12 : tests automatisés, Studio, téléphone réel OK ; commit local 5d4f339) ; T5.2 feedback **terminé** (clôturé le 2026-11-12 : tests automatisés, Studio, téléphone réel OK) ; T5.3 première session **terminé** (2026-11-13 : tests automatisés, Studio et émulateur OK ; D-017 acceptée ; commit local) ; T5.4 textes EN/FR **terminé** (2026-11-13 : validé ; commit local) ; T5.5 à faire |
+| T5 | HUD et feedback mobile | Boucle complète utilisable sur téléphone | **Terminé** (clôturé le 2026-11-13, D-018, avec réserves : manette, tablette réelle, performance non chiffrée) — T5.1 HUD **terminé** (clôturé le 2026-11-12 : tests automatisés, Studio, téléphone réel OK ; commit local 5d4f339) ; T5.2 feedback **terminé** (clôturé le 2026-11-12 : tests automatisés, Studio, téléphone réel OK) ; T5.3 première session **terminé** (2026-11-13 : tests automatisés, Studio et émulateur OK ; D-017 acceptée ; commit local) ; T5.4 textes EN/FR **terminé** (2026-11-13 : validé ; commit local) ; T5.5 validation **terminée avec réserves** (2026-11-13 : technique, émulateur, téléphone réel et PC validés par le propriétaire ; manette reportée, tablette réelle non testée)  |
 | T6 | Tests multijoueurs et anti-exploit | Aucun exploit simple, aucune fuite de données | À faire |
 | T7 | Équilibrage MVP | Première session compréhensible et satisfaisante | À faire |
 | T8 | Préparation publication | Tests privés concluants | À faire |
 
-## Phases terminées : T2, T3, T4
+## Phases terminées : T2, T3, T4, T5
 
 T2 — Collecte et inventaire (`COLLECTION.md`), clôturée le 2026-11-11.
 
@@ -39,7 +39,7 @@ D-015) : `EconomyService`, `UpgradeService` (cinq améliorations, achat x1),
 visuel des achats (A-40). Clôturée le 2026-11-12 ; réserve : U10 sur
 manette reporté.
 
-## Phase en cours : T5
+## T5 — HUD et feedback mobile (clôturée le 2026-11-13, D-018)
 
 HUD et feedback mobile : périmètre et décisions validés (D-016,
 `phases/T5_PREFLIGHT.md`). Lot T5.1 (HUD) implémenté : sac en pastille
@@ -52,7 +52,11 @@ implémenté le 2026-11-13 : guidage Collecter → Vendre → Améliorer, étape
 déduites des statistiques persistantes (`ONBOARDING.md`) ; validé sur
 émulateur, D-017 acceptée, clôturé. Lot T5.4 (textes) implémenté le
 2026-11-13 : vouvoiement, A-22, unités localisées, tests de couverture
-EN/FR (`LOCALIZATION.md`) ; validé, clôturé. T5.5 non commencé.
+EN/FR (`LOCALIZATION.md`) ; validé, clôturé. Lot T5.5 (validation) : terminé avec
+réserves le 2026-11-13 (`tests/T5_MULTIPLATFORM_REPORT.md`) ; aucune
+P0/P1 ; T55-01 corrigée ; place version 56. T5 clôturée (D-018).
+
+Prochaine phase : T6, non commencée (sur demande du propriétaire).
 
 ## Après le MVP (ne pas commencer avant validation de T0 à T8)
 

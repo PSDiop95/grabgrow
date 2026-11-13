@@ -33,7 +33,7 @@ local STRINGS: { [string]: { [string]: string } } = {
 		["sell.nothing"] = "Nothing to sell",
 		["sell.too_far"] = "Get closer to the stand",
 		["sell.failed"] = "Sale failed. Nothing was lost.",
-		["sell.go_sell"] = "Bag full! Sell at the stand",
+		["sell.go_sell"] = "Bag full! Sell at the stand!",
 		-- T4 : améliorations, boutique, mondes.
 		["upgrade.backpack"] = "Backpack",
 		["upgrade.grabber"] = "Grabber",
@@ -133,7 +133,7 @@ local STRINGS: { [string]: { [string]: string } } = {
 		["sell.nothing"] = "Rien à vendre",
 		["sell.too_far"] = "Approchez-vous du stand",
 		["sell.failed"] = "Vente impossible. Rien n'est perdu.",
-		["sell.go_sell"] = "Sac plein ! Vendez au stand",
+		["sell.go_sell"] = "Sac plein ! Vendez au stand !",
 		-- T4 : améliorations, boutique, mondes.
 		["upgrade.backpack"] = "Sac à dos",
 		["upgrade.grabber"] = "Pince",

@@ -564,3 +564,21 @@ propriétaire), ACCEPTÉE, REMPLACÉE.
   sensible). Un joueur avancé ne voit jamais le guidage.
 - **Affecte :** `CollectionService`, `InventoryController` (type d'état),
   `OnboardingRules`, `OnboardingController`, `docs/ONBOARDING.md`.
+
+## D-018 — Clôture de T5 (HUD et feedback mobile)
+
+- **Date :** 2026-11-13
+- **Statut :** ACCEPTÉE (propriétaire, 2026-11-13 : « Oui, clôturer T5 »)
+- **Contexte :** T5.1 à T5.4 clôturés ; T5.5 : tests techniques et
+  parcours complet sur émulateur exécutés par Claude, checklist téléphone
+  réel (R1–R10) et PC (P1) déclarée validée par le propriétaire, sans
+  détail transmis. Aucune anomalie P0/P1 ; T55-01 (P3) corrigée.
+- **Décision :** T5 est clôturée avec réserves.
+- **Réserves acceptées :** manette physique jamais testée (E8, U10, T5.5) ;
+  tablette réelle non testée ; aucune mesure chiffrée de performance sur
+  téléphone ; préférences audio en session seulement (D-8, D-9 sans
+  décision consignée) ; A-38 et reste d'A-41 (P3) ouverts.
+- **Conséquences :** T6 (multijoueur et anti-exploit) peut être préparé
+  sur demande du propriétaire ; A-26, A-27, A-37 y sont attendus.
+- **Affecte :** `ROADMAP.md`, `PROJECT_STATUS.md`,
+  `phases/T5_PREFLIGHT.md`, `tests/T5_*.md`.
