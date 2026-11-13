@@ -20,7 +20,7 @@ réellement exécuté. État détaillé : `PROJECT_STATUS.md`.
 | T3 | Vente et Coins | Transaction fiable, inventaire vidé correctement | **Terminé** (clôturé le 2026-11-12) — E1–E7, E9 et rendu 3D validés, E8 partiel accepté (manette physique reportée) ; A-34 et A-35 corrigés ; place version 25 ; commits locaux, non poussés |
 | T4 | Améliorations (5) et progression des mondes | Achats validés côté serveur | **Terminé** (clôturé le 2026-11-12) — U1–U9b validés (Studio, émulateur, téléphone réel), U10 manette reporté ; A-39, A-40, A-41 corrigés ; commits locaux 69fb421 et e63039d, non poussés. Ouvertes : A-36 (T7), A-37 (T6), A-38 (T5) |
 | T5 | HUD et feedback mobile | Boucle complète utilisable sur téléphone | **Terminé** (clôturé le 2026-11-13, D-018, avec réserves : manette, tablette réelle, performance non chiffrée) — T5.1 HUD **terminé** (clôturé le 2026-11-12 : tests automatisés, Studio, téléphone réel OK ; commit local 5d4f339) ; T5.2 feedback **terminé** (clôturé le 2026-11-12 : tests automatisés, Studio, téléphone réel OK) ; T5.3 première session **terminé** (2026-11-13 : tests automatisés, Studio et émulateur OK ; D-017 acceptée ; commit local) ; T5.4 textes EN/FR **terminé** (2026-11-13 : validé ; commit local) ; T5.5 validation **terminée avec réserves** (2026-11-13 : technique, émulateur, téléphone réel et PC validés par le propriétaire ; manette reportée, tablette réelle non testée)  |
-| T6 | Tests multijoueurs et anti-exploit | Aucun exploit simple, aucune fuite de données | À faire |
+| T6 | Tests multijoueurs et anti-exploit | Aucun exploit simple, aucune fuite de données | **En cours** — implémentation faite le 2026-11-13 (D-019, `phases/T6_SECURITY_REPORT.md`) ; Local Server multi-joueurs OK (propriétaire) ; commit local ; validation formelle en attente |
 | T7 | Équilibrage MVP | Première session compréhensible et satisfaisante | À faire |
 | T8 | Préparation publication | Tests privés concluants | À faire |
 
@@ -56,7 +56,9 @@ EN/FR (`LOCALIZATION.md`) ; validé, clôturé. Lot T5.5 (validation) : terminé
 réserves le 2026-11-13 (`tests/T5_MULTIPLATFORM_REPORT.md`) ; aucune
 P0/P1 ; T55-01 corrigée ; place version 56. T5 clôturée (D-018).
 
-Prochaine phase : T6, non commencée (sur demande du propriétaire).
+Phase en cours : T6, implémentée le 2026-11-13, en attente de validation
+(rapports `phases/T6_SECURITY_REPORT.md` et
+`phases/T6_MULTIPLAYER_TEST_REPORT.md`). T7 non commencée.
 
 ## Après le MVP (ne pas commencer avant validation de T0 à T8)
 

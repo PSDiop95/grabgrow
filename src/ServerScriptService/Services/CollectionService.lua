@@ -11,8 +11,10 @@
 --
 -- Ordre des contrôles (le moins coûteux d'abord) :
 --   limite de fréquence -> profil chargé -> payload -> nœud connu -> nœud
---   actif -> personnage -> distance -> déplacement plausible -> cadence ->
---   capacité et ajout (InventoryService) -> consommation du nœud.
+--   actif -> personnage (position finie) -> distance -> déplacements
+--   (MovementValidator, T6) -> trajet depuis la dernière collecte -> cadence
+--   -> capacité et ajout (InventoryService) -> consommation du nœud.
+-- T6 : les refus sont journalisés par SecurityLog (limité par joueur).
 -- Entre le contrôle « nœud actif » et sa consommation, rien ne suspend le
 -- fil : deux joueurs ne peuvent pas recevoir la même ressource.
 --
@@ -31,6 +33,9 @@ local UpgradeMath = require(ReplicatedStorage.Shared.Util.UpgradeMath)
 local SecurityConfig = require(ServerStorage.ServerOnlyConfig.CollectionSecurityConfig)
 local InventoryService = require(script.Parent.InventoryService)
 local ResourceSpawner = require(script.Parent.Parent.Systems.ResourceSpawner)
+local MovementValidator = require(script.Parent.Parent.Systems.MovementValidator)
+local PayloadValidator = require(script.Parent.Parent.Systems.PayloadValidator)
+local SecurityLog = require(script.Parent.SecurityLog)
 
 local CollectionService = {}
 
@@ -101,6 +106,9 @@ export type Dependencies = {
 	-- Position du personnage VUE PAR LE SERVEUR, ou nil s'il est absent ou
 	-- mort. Jamais une position envoyée par le client.
 	getCharacterPosition: (userId: number) -> Position?,
+	-- T6 (facultatifs) : contrôle des déplacements et journal de sécurité.
+	movement: { CanAct: (userId: number, position: any, now: number) -> (boolean, string?) }?,
+	security: SecurityLog.Recorder?,
 	log: ((level: string, message: string) -> ())?,
 }
 
@@ -124,21 +132,9 @@ local function distanceBetween(a: Position, b: Position): number
 end
 
 -- Seule forme acceptée : une table avec l'unique champ `resourceId`, texte
--- non vide de longueur bornée.
-local function readNodeId(payload: any): string?
-	if type(payload) ~= "table" then
-		return nil
-	end
-	local nodeId = payload.resourceId
-	if type(nodeId) ~= "string" or nodeId == "" or #nodeId > SecurityConfig.Payload.maxResourceIdLength then
-		return nil
-	end
-	for key in pairs(payload) do
-		if key ~= "resourceId" then
-			return nil
-		end
-	end
-	return nodeId
+-- non vide de longueur bornée, sans argument supplémentaire (PayloadValidator).
+local function readNodeId(payload: any, extraArgumentCount: number?): (string?, string?)
+	return PayloadValidator.readId(payload, "resourceId", SecurityConfig.Payload.maxResourceIdLength, extraArgumentCount)
 end
 
 function CollectionService.new(dependencies: Dependencies)
@@ -148,7 +144,11 @@ function CollectionService.new(dependencies: Dependencies)
 	local rateLimit = dependencies.rateLimit
 	local clock = dependencies.clock
 	local getCharacterPosition = dependencies.getCharacterPosition
+	local movement = dependencies.movement
+	local security: SecurityLog.Recorder = dependencies.security or SecurityLog.none()
 	local log = dependencies.log or defaultLog
+	local Event = SecurityLog.Type
+	local ACTION = "Collect"
 
 	local players: { [number]: PlayerState } = {}
 
@@ -195,7 +195,8 @@ function CollectionService.new(dependencies: Dependencies)
 	end
 
 	-- Traite une demande de collecte. `payload` vient du client : non fiable.
-	function service.HandleRequest(userId: number, payload: any): Result
+	-- `extraArgumentCount` : arguments reçus après le payload (0 attendu).
+	function service.HandleRequest(userId: number, payload: any, extraArgumentCount: number?): Result
 		local now = clock()
 		local state = getPlayerState(userId)
 
@@ -204,20 +205,24 @@ function CollectionService.new(dependencies: Dependencies)
 			if not noticed then
 				state.lastRateNoticeAt = now
 			end
+			security.Record(userId, Event.RateLimited, { action = ACTION })
 			return reject(ResultCode.RateLimited, nil, noticed)
 		end
 
 		local profile = playerData.GetData(userId)
 		if profile == nil then
+			security.Record(userId, Event.ProfileNotLoaded, { action = ACTION })
 			return reject(ResultCode.ProfileNotLoaded)
 		end
 
-		local nodeId = readNodeId(payload)
+		local nodeId, payloadReason = readNodeId(payload, extraArgumentCount)
 		if nodeId == nil then
+			security.Record(userId, Event.InvalidPayload, { action = ACTION, reason = payloadReason })
 			return reject(ResultCode.InvalidTarget)
 		end
 		local node = spawner.GetNode(nodeId)
 		if node == nil then
+			security.Record(userId, Event.UnknownId, { action = ACTION, id = nodeId })
 			return reject(ResultCode.InvalidTarget, nodeId)
 		end
 		if node.state ~= ResourceSpawner.State.Active then
@@ -228,6 +233,11 @@ function CollectionService.new(dependencies: Dependencies)
 		if position == nil then
 			return reject(ResultCode.NoCharacter, nodeId)
 		end
+		-- NaN ou infini : toute comparaison serait fausse et laisserait passer.
+		if not MovementValidator.isFinitePosition(position) then
+			security.Record(userId, Event.MovementRefused, { action = ACTION, reason = "invalid_position" })
+			return reject(ResultCode.TooFar, nodeId)
+		end
 		-- Portée nominale du Magnet (profil serveur) + marge de sécurité.
 		local range = UpgradeMath.valueFor(profile, "Magnet")
 		local walkSpeed = UpgradeMath.valueFor(profile, "Boots")
@@ -236,10 +246,20 @@ function CollectionService.new(dependencies: Dependencies)
 			return reject(ResultCode.InternalError, nodeId)
 		end
 		local maxDistance = range + SecurityConfig.Distance.toleranceStuds
-		if distanceBetween(position, node.position) > maxDistance then
+		if not (distanceBetween(position, node.position) <= maxDistance) then
+			security.Record(userId, Event.ActionRefused, { action = ACTION, code = ResultCode.TooFar })
 			return reject(ResultCode.TooFar, nodeId)
 		end
+		-- T6 : déplacements récents jugés par MovementValidator (R2 : TOO_FAR).
+		if movement ~= nil then
+			local allowed, reason = movement.CanAct(userId, position, now)
+			if not allowed then
+				security.Record(userId, Event.MovementRefused, { action = ACTION, reason = reason })
+				return reject(ResultCode.TooFar, nodeId)
+			end
+		end
 		if not isTravelPlausible(state, position, now, walkSpeed) then
+			security.Record(userId, Event.MovementRefused, { action = ACTION, reason = "travel" })
 			if now - state.lastSuspiciousLogAt >= SecurityConfig.Logging.suspiciousIntervalSeconds then
 				state.lastSuspiciousLogAt = now
 				log("warn", `joueur {userId} : déplacement implausible entre deux collectes ({nodeId})`)
@@ -332,9 +352,18 @@ function CollectionService.new(dependencies: Dependencies)
 		}
 	end
 
-	-- Déplacement légitime et brutal (réapparition du personnage) : oublie
-	-- le lieu de la dernière collecte.
-	function service.ResetTravelReference(userId: number)
+	-- Déplacement légitime et brutal (réapparition du personnage).
+	-- T6 : avec `position` (connue du SERVEUR, ex. point d'apparition), la
+	-- référence devient cette position à l'instant présent : un « Reset »
+	-- volontaire ne permet plus une collecte n'importe où. Sans position
+	-- (ou position non finie), la référence est oubliée (comportement T2).
+	function service.ResetTravelReference(userId: number, position: Position?)
+		if position ~= nil and MovementValidator.isFinitePosition(position) then
+			local state = getPlayerState(userId)
+			state.lastPosition = { X = position.X, Y = position.Y, Z = position.Z }
+			state.lastCollectAt = clock()
+			return
+		end
 		local state = players[userId]
 		if state then
 			state.lastPosition = nil

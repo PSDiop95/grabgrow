@@ -582,3 +582,55 @@ propriétaire), ACCEPTÉE, REMPLACÉE.
   sur demande du propriétaire ; A-26, A-27, A-37 y sont attendus.
 - **Affecte :** `ROADMAP.md`, `PROJECT_STATUS.md`,
   `phases/T5_PREFLIGHT.md`, `tests/T5_*.md`.
+
+## D-019 — T6 : validation des déplacements, payloads communs, journal de sécurité
+
+- **Date :** 2026-11-13
+- **Statut :** ACCEPTÉE pour l'implémentation (propriétaire, 2026-11-13 :
+  R1, R2, R3 validés ; R4 validé sous réserve). T6 non clôturée.
+- **Contexte :** audit T6 (A-26, A-27, A-37) : position simulée par le
+  client, vente sans contrôle de déplacement, « Reset » qui efface la
+  référence de trajet, `WalkSpeed` local invisible, NaN, arguments
+  supplémentaires ignorés, journalisation incomplète.
+- **Décision :**
+  - `Systems/MovementValidator` (logique pure) échantillonné à 4 Hz par une
+    boucle unique de `Bootstrap` ; paramètres dans
+    `ServerOnlyConfig/MovementSecurityConfig` (hypothèses R4, à calibrer).
+    Horizontal et vertical séparés, descente jamais limitée ; seuil de
+    téléportation (un échantillon) distinct du seuil de vitesse (fenêtre
+    glissante 1 s) ; gel réseau absorbé avec un crédit borné.
+  - **R1** : anomalie isolée = journal + refus temporaire de collecte et
+    de vente ; anomalie persistante (3 s) ou répétée (3 en 10 s) = retour
+    à la dernière position validée + suspension 5 s. Grâce de 1 s et 5 s
+    minimum entre deux corrections (pas de boucle). Aucune expulsion ni
+    bannissement.
+  - **R2** : refus renvoyés au client avec `TOO_FAR` ; aucun changement
+    client.
+  - **R3** : D-8 (préférences persistantes) hors T6.
+  - Référence de trajet à la réapparition = point d'apparition lu par le
+    serveur (`ResetTravelReference(userId, position)`) ; sans position,
+    comportement T2 conservé.
+  - Gardes NaN / infini dans la collecte et la vente.
+  - `Systems/PayloadValidator` commun aux quatre remotes : contrats
+    inchangés, arguments supplémentaires et caractères hors `[%w_-]`
+    refusés (`INVALID_TARGET`).
+  - `Services/SecurityLog` : lignes structurées, limitées par joueur et
+    par type et globalement, valeurs assainies, appel protégé.
+  - `Systems/ProfileAudit` au chargement : journal seulement, aucune
+    correction.
+  - Dépendances `movement` et `security` facultatives dans les services
+    (tests existants inchangés) ; branchées dans `Bootstrap`.
+- **Justification :** la position ne peut pas être rendue autoritaire sans
+  propriété réseau serveur, inacceptable sur mobile (latence d'entrée) ;
+  observer, refuser l'action économique et corriger graduellement est le
+  meilleur compromis entre sécurité et faux positifs.
+- **Conséquences :** aucun changement de schéma, de prix, de revenus, de
+  capacités ni d'effets. Un tricheur reste toléré jusqu'à environ 2 × la
+  vitesse de référence ; une projection physique forte en courant peut
+  provoquer une correction (A-42). Préréglages Studio : constats d'audit
+  attendus (A-43). Coût mesuré (Lune) : 0,77 ms/s pour 50 joueurs.
+- **Affecte :** `Bootstrap`, `CollectionService`, `SellService`,
+  `UpgradeService`, `WorldUnlockService`, nouveaux `MovementValidator`,
+  `PayloadValidator`, `ProfileAudit`, `SecurityLog`,
+  `MovementSecurityConfig`, `SecurityLogConfig`, tests,
+  `phases/T6_SECURITY_REPORT.md`, `phases/T6_MULTIPLAYER_TEST_REPORT.md`.

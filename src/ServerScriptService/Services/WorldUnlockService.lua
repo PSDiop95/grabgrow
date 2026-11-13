@@ -23,6 +23,8 @@ local UpgradeMath = require(ReplicatedStorage.Shared.Util.UpgradeMath)
 local SecurityConfig = require(ServerStorage.ServerOnlyConfig.EconomySecurityConfig)
 local EconomyService = require(script.Parent.EconomyService)
 local PlayerDataService = require(script.Parent.PlayerDataService)
+local SecurityLog = require(script.Parent.SecurityLog)
+local PayloadValidator = require(script.Parent.Parent.Systems.PayloadValidator)
 
 local WorldUnlockService = {}
 
@@ -45,6 +47,8 @@ export type Dependencies = {
 	},
 	rateLimit: { Allow: (userId: number, action: string) -> boolean, Clear: (userId: number) -> () },
 	clock: () -> number,
+	-- T6 (facultatif) : journal de sécurité.
+	security: SecurityLog.Recorder?,
 	log: ((level: string, message: string) -> ())?,
 }
 
@@ -66,20 +70,10 @@ local function worldIdAtOrder(order: number): string?
 	return nil
 end
 
-local function readWorldId(payload: any): string?
-	if type(payload) ~= "table" then
-		return nil
-	end
-	local worldId = payload.worldId
-	if type(worldId) ~= "string" or worldId == "" or #worldId > SecurityConfig.Payload.maxIdLength then
-		return nil
-	end
-	for key in pairs(payload) do
-		if key ~= "worldId" then
-			return nil
-		end
-	end
-	return worldId
+-- Seule forme acceptée : une table avec l'unique champ `worldId`, sans
+-- argument supplémentaire (PayloadValidator).
+local function readWorldId(payload: any, extraArgumentCount: number?): (string?, string?)
+	return PayloadValidator.readId(payload, "worldId", SecurityConfig.Payload.maxIdLength, extraArgumentCount)
 end
 
 -- Le profil remplit-il les conditions de déblocage (hors solde) ?
@@ -113,7 +107,10 @@ function WorldUnlockService.new(dependencies: Dependencies)
 	local playerData = dependencies.playerData
 	local rateLimit = dependencies.rateLimit
 	local clock = dependencies.clock
+	local security: SecurityLog.Recorder = dependencies.security or SecurityLog.none()
 	local log = dependencies.log or defaultLog
+	local Event = SecurityLog.Type
+	local ACTION = "UnlockWorld"
 
 	local lastRateNoticeAt: { [number]: number } = {}
 	local operationCount = 0
@@ -177,7 +174,8 @@ function WorldUnlockService.new(dependencies: Dependencies)
 	end
 
 	-- Traite une demande de déblocage. `payload` vient du client : non fiable.
-	function service.HandleRequest(userId: number, payload: any): Result
+	-- `extraArgumentCount` : arguments reçus après le payload (0 attendu).
+	function service.HandleRequest(userId: number, payload: any, extraArgumentCount: number?): Result
 		if not rateLimit.Allow(userId, WorldUnlockService.RATE_LIMIT_ACTION) then
 			local now = clock()
 			local last = lastRateNoticeAt[userId] or -math.huge
@@ -185,16 +183,27 @@ function WorldUnlockService.new(dependencies: Dependencies)
 			if not noticed then
 				lastRateNoticeAt[userId] = now
 			end
+			security.Record(userId, Event.RateLimited, { action = ACTION })
 			return reject(ResultCode.RateLimited, nil, noticed)
 		end
 		if playerData.GetData(userId) == nil then
+			security.Record(userId, Event.ProfileNotLoaded, { action = ACTION })
 			return reject(ResultCode.ProfileNotLoaded)
 		end
-		local worldId = readWorldId(payload)
-		if worldId == nil or WorldConfig[worldId] == nil then
+		local worldId, payloadReason = readWorldId(payload, extraArgumentCount)
+		if worldId == nil then
+			security.Record(userId, Event.InvalidPayload, { action = ACTION, reason = payloadReason })
 			return reject(ResultCode.InvalidTarget)
 		end
-		return service.Unlock(userId, worldId)
+		if WorldConfig[worldId] == nil then
+			security.Record(userId, Event.UnknownId, { action = ACTION, id = worldId })
+			return reject(ResultCode.InvalidTarget)
+		end
+		local result = service.Unlock(userId, worldId)
+		if not result.ok then
+			security.Record(userId, Event.EconomyRefused, { action = ACTION, id = worldId, code = result.code })
+		end
+		return result
 	end
 
 	function service.RemovePlayer(userId: number)

@@ -29,6 +29,8 @@ local UpgradeMath = require(ReplicatedStorage.Shared.Util.UpgradeMath)
 local SecurityConfig = require(ServerStorage.ServerOnlyConfig.EconomySecurityConfig)
 local EconomyService = require(script.Parent.EconomyService)
 local PlayerDataService = require(script.Parent.PlayerDataService)
+local SecurityLog = require(script.Parent.SecurityLog)
+local PayloadValidator = require(script.Parent.Parent.Systems.PayloadValidator)
 
 local UpgradeService = {}
 
@@ -59,6 +61,8 @@ export type Dependencies = {
 	clock: () -> number,
 	-- Appelé après chaque achat réussi (effets hors profil, ex. WalkSpeed).
 	onUpgraded: ((userId: number, upgradeId: string, level: number) -> ())?,
+	-- T6 (facultatif) : journal de sécurité.
+	security: SecurityLog.Recorder?,
 	log: ((level: string, message: string) -> ())?,
 }
 
@@ -71,21 +75,10 @@ local function defaultLog(level: string, message: string)
 end
 
 -- Seule forme acceptée : une table avec l'unique champ `upgradeId`, texte
--- non vide de longueur bornée. Aucun prix, niveau ni effet.
-local function readUpgradeId(payload: any): string?
-	if type(payload) ~= "table" then
-		return nil
-	end
-	local upgradeId = payload.upgradeId
-	if type(upgradeId) ~= "string" or upgradeId == "" or #upgradeId > SecurityConfig.Payload.maxIdLength then
-		return nil
-	end
-	for key in pairs(payload) do
-		if key ~= "upgradeId" then
-			return nil
-		end
-	end
-	return upgradeId
+-- non vide de longueur bornée, sans argument supplémentaire. Aucun prix,
+-- niveau ni effet.
+local function readUpgradeId(payload: any, extraArgumentCount: number?): (string?, string?)
+	return PayloadValidator.readId(payload, "upgradeId", SecurityConfig.Payload.maxIdLength, extraArgumentCount)
 end
 
 function UpgradeService.new(dependencies: Dependencies)
@@ -93,7 +86,10 @@ function UpgradeService.new(dependencies: Dependencies)
 	local rateLimit = dependencies.rateLimit
 	local clock = dependencies.clock
 	local onUpgraded = dependencies.onUpgraded
+	local security: SecurityLog.Recorder = dependencies.security or SecurityLog.none()
 	local log = dependencies.log or defaultLog
+	local Event = SecurityLog.Type
+	local ACTION = "Upgrade"
 
 	local lastRateNoticeAt: { [number]: number } = {}
 	local operationCount = 0
@@ -181,7 +177,8 @@ function UpgradeService.new(dependencies: Dependencies)
 	end
 
 	-- Traite une demande d'achat. `payload` vient du client : non fiable.
-	function service.HandleRequest(userId: number, payload: any): Result
+	-- `extraArgumentCount` : arguments reçus après le payload (0 attendu).
+	function service.HandleRequest(userId: number, payload: any, extraArgumentCount: number?): Result
 		if not rateLimit.Allow(userId, UpgradeService.RATE_LIMIT_ACTION) then
 			local now = clock()
 			local last = lastRateNoticeAt[userId] or -math.huge
@@ -189,19 +186,30 @@ function UpgradeService.new(dependencies: Dependencies)
 			if not noticed then
 				lastRateNoticeAt[userId] = now
 			end
+			security.Record(userId, Event.RateLimited, { action = ACTION })
 			return reject(ResultCode.RateLimited, nil, nil, noticed)
 		end
 
 		-- GetData est nil pendant le chargement et après la libération.
 		if playerData.GetData(userId) == nil then
+			security.Record(userId, Event.ProfileNotLoaded, { action = ACTION })
 			return reject(ResultCode.ProfileNotLoaded)
 		end
 
-		local upgradeId = readUpgradeId(payload)
-		if upgradeId == nil or UpgradeConfig[upgradeId] == nil then
+		local upgradeId, payloadReason = readUpgradeId(payload, extraArgumentCount)
+		if upgradeId == nil then
+			security.Record(userId, Event.InvalidPayload, { action = ACTION, reason = payloadReason })
 			return reject(ResultCode.InvalidTarget)
 		end
-		return service.Purchase(userId, upgradeId)
+		if UpgradeConfig[upgradeId] == nil then
+			security.Record(userId, Event.UnknownId, { action = ACTION, id = upgradeId })
+			return reject(ResultCode.InvalidTarget)
+		end
+		local result = service.Purchase(userId, upgradeId)
+		if not result.ok then
+			security.Record(userId, Event.EconomyRefused, { action = ACTION, id = upgradeId, code = result.code })
+		end
+		return result
 	end
 
 	-- Vitesse de déplacement des Boots du joueur, ou nil si non chargé.

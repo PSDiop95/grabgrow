@@ -27,6 +27,8 @@ local HudTests = require(script.Parent.HudTests)
 local FeedbackTests = require(script.Parent.FeedbackTests)
 local OnboardingTests = require(script.Parent.OnboardingTests)
 local LocalizationTests = require(script.Parent.LocalizationTests)
+local MovementValidatorTests = require(script.Parent.MovementValidatorTests)
+local SecurityTests = require(script.Parent.SecurityTests)
 
 local GameConfig = require(Config.GameConfig)
 local ResourceConfig = require(Config.ResourceConfig)
@@ -45,6 +47,10 @@ local UpgradeService = require(ServerScriptService.Services.UpgradeService)
 local WorldUnlockService = require(ServerScriptService.Services.WorldUnlockService)
 local ResourceSpawner = require(ServerScriptService.Systems.ResourceSpawner)
 local StudioTestPresets = require(ServerScriptService.Systems.StudioTestPresets)
+local MovementValidator = require(ServerScriptService.Systems.MovementValidator)
+local PayloadValidator = require(ServerScriptService.Systems.PayloadValidator)
+local ProfileAudit = require(ServerScriptService.Systems.ProfileAudit)
+local SecurityLog = require(ServerScriptService.Services.SecurityLog)
 local Remotes = require(ReplicatedStorage.Shared.Remotes.Remotes)
 local Localization = require(ReplicatedStorage.Shared.Util.Localization)
 local SaleValue = require(ReplicatedStorage.Shared.Util.SaleValue)
@@ -57,6 +63,8 @@ local FeedbackConfig = require(Config.FeedbackConfig)
 local CollectionSecurityConfig = require(ServerStorage:WaitForChild("ServerOnlyConfig").CollectionSecurityConfig)
 local SellSecurityConfig = require(ServerStorage:WaitForChild("ServerOnlyConfig").SellSecurityConfig)
 local EconomySecurityConfig = require(ServerStorage:WaitForChild("ServerOnlyConfig").EconomySecurityConfig)
+local MovementSecurityConfig = require(ServerStorage:WaitForChild("ServerOnlyConfig").MovementSecurityConfig)
+local SecurityLogConfig = require(ServerStorage:WaitForChild("ServerOnlyConfig").SecurityLogConfig)
 
 local totalFailures = 0
 
@@ -255,6 +263,42 @@ report(
 		ResourceConfig = ResourceConfig,
 		WorldConfig = WorldConfig,
 		OnboardingRules = OnboardingRules,
+	})
+)
+
+report(
+	"MovementValidatorTests",
+	MovementValidatorTests.run({
+		MovementValidator = MovementValidator,
+		MovementSecurityConfig = MovementSecurityConfig,
+	})
+)
+
+report(
+	"SecurityTests",
+	SecurityTests.run({
+		CollectionService = CollectionService,
+		InventoryService = InventoryService,
+		SellService = SellService,
+		UpgradeService = UpgradeService,
+		WorldUnlockService = WorldUnlockService,
+		PlayerDataService = PlayerDataService,
+		RateLimitService = RateLimitService,
+		ResourceSpawner = ResourceSpawner,
+		MemoryDataStore = MemoryDataStore,
+		DataSchema = DataSchema,
+		SaleValue = SaleValue,
+		UpgradeMath = UpgradeMath,
+		MovementValidator = MovementValidator,
+		PayloadValidator = PayloadValidator,
+		SecurityLog = SecurityLog,
+		ProfileAudit = ProfileAudit,
+		CollectionSecurityConfig = CollectionSecurityConfig,
+		SellSecurityConfig = SellSecurityConfig,
+		EconomySecurityConfig = EconomySecurityConfig,
+		MovementSecurityConfig = MovementSecurityConfig,
+		SecurityLogConfig = SecurityLogConfig,
+		Remotes = Remotes,
 	})
 )
 

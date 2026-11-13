@@ -2,6 +2,8 @@
 -- Point d'entrée du serveur : construit les services et les démarre.
 -- T1 : profils joueurs. T2 : collecte et inventaire. T3 : vente et Coins.
 -- T4 : améliorations et déblocage des mondes.
+-- T6 : validation des déplacements, payloads communs, journal de sécurité,
+-- contrôle de cohérence au chargement (D-019).
 
 local DataStoreService = game:GetService("DataStoreService")
 local HttpService = game:GetService("HttpService")
@@ -15,14 +17,19 @@ local Remotes = require(ReplicatedStorage.Shared.Remotes.Remotes)
 local CollectionSecurityConfig = require(ServerStorage.ServerOnlyConfig.CollectionSecurityConfig)
 local SellSecurityConfig = require(ServerStorage.ServerOnlyConfig.SellSecurityConfig)
 local EconomySecurityConfig = require(ServerStorage.ServerOnlyConfig.EconomySecurityConfig)
+local MovementSecurityConfig = require(ServerStorage.ServerOnlyConfig.MovementSecurityConfig)
+local SecurityLogConfig = require(ServerStorage.ServerOnlyConfig.SecurityLogConfig)
 local CollectionService = require(script.Parent.Services.CollectionService)
 local InventoryService = require(script.Parent.Services.InventoryService)
 local PlayerDataService = require(script.Parent.Services.PlayerDataService)
 local RateLimitService = require(script.Parent.Services.RateLimitService)
+local SecurityLog = require(script.Parent.Services.SecurityLog)
 local SellService = require(script.Parent.Services.SellService)
 local UpgradeService = require(script.Parent.Services.UpgradeService)
 local WorldUnlockService = require(script.Parent.Services.WorldUnlockService)
 local MemoryDataStore = require(script.Parent.Systems.MemoryDataStore)
+local MovementValidator = require(script.Parent.Systems.MovementValidator)
+local ProfileAudit = require(script.Parent.Systems.ProfileAudit)
 local PlayerSession = require(script.Parent.Systems.PlayerSession)
 local ResourceNodes = require(script.Parent.Systems.ResourceNodes)
 local ResourceSpawner = require(script.Parent.Systems.ResourceSpawner)
@@ -73,6 +80,11 @@ local playerDataService = PlayerDataService.new({
 	onSessionLost = PlayerSession.kickSessionLost,
 })
 
+-- Sécurité (T6) -------------------------------------------------------------
+
+local securityLog = SecurityLog.new({ clock = os.clock, config = SecurityLogConfig })
+local movementValidator = MovementValidator.new(MovementSecurityConfig)
+
 -- Collecte et inventaire (T2) ---------------------------------------------
 
 local remotes = Remotes.createAll()
@@ -88,6 +100,8 @@ local spawner = ResourceSpawner.new({
 local nodeCount = ResourceNodes.start(spawner)
 
 -- Position répliquée au serveur ; nil si le personnage est absent ou mort.
+-- Les valeurs NaN ou infinies sont transmises telles quelles : services et
+-- MovementValidator les refusent explicitement (T6).
 local function getCharacterPosition(userId: number): CollectionService.Position?
 	local player = Players:GetPlayerByUserId(userId)
 	local character = if player then player.Character else nil
@@ -114,6 +128,8 @@ local collectionService = CollectionService.new({
 	}),
 	clock = os.clock,
 	getCharacterPosition = getCharacterPosition,
+	movement = movementValidator,
+	security = securityLog,
 })
 
 -- Vente (T3) ---------------------------------------------------------------
@@ -129,6 +145,8 @@ local sellService = SellService.new({
 	getSellZone = getSellZone,
 	getCharacterPosition = getCharacterPosition,
 	clock = os.clock,
+	movement = movementValidator,
+	security = securityLog,
 })
 
 -- Améliorations et mondes (T4) -------------------------------------------
@@ -146,6 +164,8 @@ local upgradeService: any
 -- après un achat de Boots.
 local function applyWalkSpeed(player: Player)
 	local speed = upgradeService.GetWalkSpeed(player.UserId)
+	-- Référence du contrôle des déplacements : profil serveur (A-37).
+	movementValidator.SetSpeed(player.UserId, speed)
 	local character = player.Character
 	local humanoid = if character then character:FindFirstChildOfClass("Humanoid") else nil
 	if speed ~= nil and humanoid ~= nil then
@@ -157,6 +177,7 @@ upgradeService = UpgradeService.new({
 	playerData = playerDataService,
 	rateLimit = economyRateLimit,
 	clock = os.clock,
+	security = securityLog,
 	onUpgraded = function(userId: number, upgradeId: string)
 		if upgradeId == "Boots" then
 			local player = Players:GetPlayerByUserId(userId)
@@ -171,6 +192,7 @@ local worldUnlockService = WorldUnlockService.new({
 	playerData = playerDataService,
 	rateLimit = economyRateLimit,
 	clock = os.clock,
+	security = securityLog,
 })
 
 local function sendState(player: Player)
@@ -180,10 +202,11 @@ local function sendState(player: Player)
 	end
 end
 
--- Seul le premier argument est lu ; tout ce qui vient du client est validé
+-- Un seul argument attendu (le payload) ; les arguments supplémentaires
+-- font refuser la demande (T6). Tout ce qui vient du client est validé
 -- par CollectionService.
-remotes[Remotes.Name.RequestCollect].OnServerEvent:Connect(function(player: Player, payload: any)
-	local result = collectionService.HandleRequest(player.UserId, payload)
+remotes[Remotes.Name.RequestCollect].OnServerEvent:Connect(function(player: Player, payload: any, ...: any)
+	local result = collectionService.HandleRequest(player.UserId, payload, select("#", ...))
 	if result.silent then
 		return
 	end
@@ -202,8 +225,8 @@ end)
 
 -- Seul le premier argument est lu ; montant et quantités sont calculés par
 -- SellService à partir du profil serveur.
-remotes[Remotes.Name.RequestSell].OnServerEvent:Connect(function(player: Player, payload: any)
-	local result = sellService.HandleRequest(player.UserId, payload)
+remotes[Remotes.Name.RequestSell].OnServerEvent:Connect(function(player: Player, payload: any, ...: any)
+	local result = sellService.HandleRequest(player.UserId, payload, select("#", ...))
 	if result.silent then
 		return
 	end
@@ -222,8 +245,8 @@ end)
 
 -- Seul le premier argument est lu ; prix, niveau et effet sont calculés
 -- par UpgradeService à partir du profil serveur et d'UpgradeConfig.
-remotes[Remotes.Name.RequestUpgrade].OnServerEvent:Connect(function(player: Player, payload: any)
-	local result = upgradeService.HandleRequest(player.UserId, payload)
+remotes[Remotes.Name.RequestUpgrade].OnServerEvent:Connect(function(player: Player, payload: any, ...: any)
+	local result = upgradeService.HandleRequest(player.UserId, payload, select("#", ...))
 	if result.silent then
 		return
 	end
@@ -241,8 +264,8 @@ remotes[Remotes.Name.RequestUpgrade].OnServerEvent:Connect(function(player: Play
 end)
 
 -- Seul le premier argument est lu ; conditions et coût viennent de WorldConfig.
-remotes[Remotes.Name.RequestUnlockWorld].OnServerEvent:Connect(function(player: Player, payload: any)
-	local result = worldUnlockService.HandleRequest(player.UserId, payload)
+remotes[Remotes.Name.RequestUnlockWorld].OnServerEvent:Connect(function(player: Player, payload: any, ...: any)
+	local result = worldUnlockService.HandleRequest(player.UserId, payload, select("#", ...))
 	if result.silent then
 		return
 	end
@@ -261,8 +284,18 @@ end)
 local function onPlayerAdded(player: Player)
 	-- Réapparition : le personnage change de place légitimement, et sa
 	-- vitesse repart de la valeur par défaut de Roblox.
+	-- T6 : la nouvelle référence est le point d'apparition, placé par le
+	-- SERVEUR, lu dès l'arrivée du personnage (avant que le client ne le
+	-- déplace). Un « Reset » volontaire ne donne plus de collecte libre.
 	player.CharacterAdded:Connect(function(character: Model)
-		collectionService.ResetTravelReference(player.UserId)
+		local root = character:FindFirstChild("HumanoidRootPart") or character:WaitForChild("HumanoidRootPart", 10)
+		local spawnPosition: CollectionService.Position? = nil
+		if root ~= nil and root:IsA("BasePart") then
+			local position = root.Position
+			spawnPosition = { X = position.X, Y = position.Y, Z = position.Z }
+		end
+		collectionService.ResetTravelReference(player.UserId, spawnPosition)
+		movementValidator.Reset(player.UserId, spawnPosition, os.clock())
 		character:WaitForChild("Humanoid", 10)
 		applyWalkSpeed(player)
 	end)
@@ -305,16 +338,81 @@ if RunService:IsStudio() then
 	print(`[StudioTest] préréglages disponibles : {table.concat(StudioTestPresets.names(), ", ")}`)
 end
 
+-- Échantillonnage des déplacements (T6) -----------------------------------
+-- Une seule boucle pour tous les joueurs, à MovementSecurityConfig.Sampling
+-- (4 Hz) : une lecture de position et quelques opérations par joueur.
+
+-- Remet le personnage à une position validée par le serveur (R1). La
+-- rotation est conservée, la vitesse annulée.
+local function correctPosition(player: Player, target: MovementValidator.Position)
+	local character = player.Character
+	local root = if character then character:FindFirstChild("HumanoidRootPart") else nil
+	if root == nil or not root:IsA("BasePart") then
+		return
+	end
+	root.AssemblyLinearVelocity = Vector3.zero
+	root.CFrame = CFrame.new(target.X, target.Y, target.Z) * root.CFrame.Rotation
+	collectionService.ResetTravelReference(player.UserId, target)
+end
+
+local function sampleMovement(player: Player, now: number)
+	local position = getCharacterPosition(player.UserId)
+	if position == nil then
+		return
+	end
+	local verdict = movementValidator.Observe(player.UserId, position, now)
+	if verdict.status == "anomaly" and verdict.newEpisode then
+		securityLog.Record(player.UserId, SecurityLog.Type.MovementAnomaly, {
+			kind = verdict.kind,
+			excess = verdict.excess,
+			episodes = verdict.recentEpisodes,
+		})
+	elseif verdict.status == "correct" and verdict.correctionPosition ~= nil then
+		correctPosition(player, verdict.correctionPosition)
+		securityLog.Record(player.UserId, SecurityLog.Type.MovementCorrection, {
+			kind = verdict.kind,
+			excess = verdict.excess,
+			suspension = MovementSecurityConfig.Escalation.suspensionSeconds,
+		})
+	end
+end
+
+task.spawn(function()
+	while true do
+		task.wait(MovementSecurityConfig.Sampling.intervalSeconds)
+		local now = os.clock()
+		for _, player in ipairs(Players:GetPlayers()) do
+			local ok, err = pcall(function()
+				sampleMovement(player, now)
+			end)
+			if not ok then
+				warn(`[Movement] échantillon du joueur {player.UserId} : {tostring(err)}`)
+			end
+		end
+	end
+end)
+
 PlayerSession.start(playerDataService, {
 	onProfileLoaded = function(player: Player)
 		applyWalkSpeed(player)
 		sendState(player)
+		-- T6 : contrôle de cohérence, journal seulement (aucune correction).
+		local ok, issues = pcall(ProfileAudit.run, playerDataService.GetData(player.UserId))
+		if ok then
+			for _, issue in ipairs(issues) do
+				securityLog.Record(player.UserId, SecurityLog.Type.DataInconsistency, issue)
+			end
+		else
+			warn(`[Security] audit du profil {player.UserId} impossible : {tostring(issues)}`)
+		end
 	end,
 	onPlayerRemoving = function(player: Player)
 		collectionService.RemovePlayer(player.UserId)
 		sellService.RemovePlayer(player.UserId)
 		upgradeService.RemovePlayer(player.UserId)
 		worldUnlockService.RemovePlayer(player.UserId)
+		movementValidator.Remove(player.UserId)
+		securityLog.Remove(player.UserId)
 	end,
 })
 print(`[Bootstrap] PlayerDataService démarré ; collecte : {nodeCount} ressource(s) ; vente : {sellZoneCount} zone(s)`)

@@ -341,7 +341,28 @@ de relire le résultat depuis le terminal après exécution.
 | T3 | Vente d'une et de plusieurs ressources ; calcul exact ; sac vide ; quantités à zéro ; inconnues seules ; sac mixte ; statistiques (`totalCoinsEarned`, `totalSales`, `totalCoinsSpent` intact) ; payload invalide ou falsifié ; zone inconnue ; trop loin ; personnage absent ; profil non chargé, en chargement, libéré ; limite de fréquence ; ventes concurrentes ; vente pendant une sauvegarde ; échec et erreur de mutation sans perte ; dépassements numériques ; état client après vente ; vente puis collecte ; deux joueurs ; persistance après rechargement |
 | T4 | Achat de chaque amélioration ; débit exact ; fonds insuffisants ; niveau maximum ; effets réels (capacité, cadence, portée, vitesse et contrôle de trajet, Multiplier) ; état client ; achats répétés et coût cumulé ; achats concurrents ; deux joueurs ; statistiques avec ventes ; persistance et reconnexion ; payloads falsifiés ; profil en chargement, libéré, en fermeture ; limite de fréquence ; déblocage autorisé, refusé (niveau, fonds, ordre, déjà débloqué, inconnu) ; crédit et débit invalides ou en dépassement ; arrondi du Multiplier |
 | T5.4 | Mêmes clés EN/FR ; mêmes motifs ; textes traduits ; vouvoiement ; accents ; espace insécable FR ; apostrophes ; longueurs par usage ; clés construites par le code ; expulsions ; replis de langue |
-| T6 | Remote à cadence excessive ; arguments de type invalide ; valeurs falsifiées ; isolation entre joueurs |
+| T6 | Remote à cadence excessive ; arguments de type invalide ; valeurs falsifiées ; arguments et champs supplémentaires ; isolation entre joueurs ; marche, sauts, chute, pente, gel réseau sans faux positif ; téléportation, speed hack, montée anormale détectés ; correction graduelle sans boucle ; réapparition ; NaN / infini ; double vente, double achat ; journal limité et protégé ; audit au chargement en lecture seule |
+
+## Sécurité multijoueur (T6, D-019)
+
+Suites : `MovementValidatorTests` (25 cas, logique pure, horloge et
+positions simulées) et `SecurityTests` (42 cas : quatre remotes, gate de
+déplacement, économie concurrente, journal, audit). Rapport :
+`phases/T6_MULTIPLAYER_TEST_REPORT.md`.
+
+- Contrôle négatif : 16 défauts introduits tour à tour (gates, gardes NaN,
+  arguments, téléportation, escalade, grâce, réapparition, montée, journal,
+  audit) ; chaque défaut doit faire échouer au moins une suite, ou être
+  couvert par une garde redondante documentée.
+- Studio (Play, un joueur) : marche et sauts sans ligne `[Security]` ;
+  téléportation isolée puis répétée ; `WalkSpeed` local élevé ; remotes
+  falsifiés et spam ; réapparition suivie d'une téléportation.
+- Latence : `Studio Settings > Network > Incoming Replication Lag`
+  (0,3–0,4 s). **Toujours remettre la valeur à 0** après le test.
+- Local Server à 2 joueurs : protocole du propriétaire, section 8 du
+  rapport T6 (bousculade, collecte et vente simultanées, latence).
+- Les seuils de `MovementSecurityConfig` sont des hypothèses (R4) : toute
+  modification relance les deux suites et le protocole Studio.
 
 ## Limites de l'environnement
 

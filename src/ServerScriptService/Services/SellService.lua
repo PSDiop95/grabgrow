@@ -8,7 +8,9 @@
 --
 -- Ordre des contrôles (le moins coûteux d'abord) :
 --   limite de fréquence -> profil chargé -> payload -> zone connue ->
---   personnage -> distance -> transaction (un seul PlayerDataService.Update).
+--   personnage (position finie) -> distance -> déplacements
+--   (MovementValidator, T6) -> transaction (un seul PlayerDataService.Update).
+-- T6 : les refus sont journalisés par SecurityLog (limité par joueur).
 --
 -- Transaction atomique : dans la même mutation, lecture de l'inventaire,
 -- calcul, retrait des ressources vendues, crédit des Coins et mise à jour
@@ -34,6 +36,9 @@ local UpgradeMath = require(ReplicatedStorage.Shared.Util.UpgradeMath)
 local SecurityConfig = require(ServerStorage.ServerOnlyConfig.SellSecurityConfig)
 local EconomyService = require(script.Parent.EconomyService)
 local PlayerDataService = require(script.Parent.PlayerDataService)
+local SecurityLog = require(script.Parent.SecurityLog)
+local MovementValidator = require(script.Parent.Parent.Systems.MovementValidator)
+local PayloadValidator = require(script.Parent.Parent.Systems.PayloadValidator)
 
 local SellService = {}
 
@@ -82,6 +87,9 @@ export type Dependencies = {
 	getCharacterPosition: (userId: number) -> Position?,
 	-- Horloge monotone en secondes (os.clock en production).
 	clock: () -> number,
+	-- T6 (facultatifs) : contrôle des déplacements et journal de sécurité.
+	movement: { CanAct: (userId: number, position: any, now: number) -> (boolean, string?) }?,
+	security: SecurityLog.Recorder?,
 	log: ((level: string, message: string) -> ())?,
 }
 
@@ -99,21 +107,10 @@ local function distanceBetween(a: Position, b: Position): number
 end
 
 -- Seule forme acceptée : une table avec l'unique champ `sellZoneId`, texte
--- non vide de longueur bornée. Aucune quantité, aucun montant.
-local function readZoneId(payload: any): string?
-	if type(payload) ~= "table" then
-		return nil
-	end
-	local zoneId = payload.sellZoneId
-	if type(zoneId) ~= "string" or zoneId == "" or #zoneId > SecurityConfig.Payload.maxSellZoneIdLength then
-		return nil
-	end
-	for key in pairs(payload) do
-		if key ~= "sellZoneId" then
-			return nil
-		end
-	end
-	return zoneId
+-- non vide de longueur bornée, sans argument supplémentaire. Aucune
+-- quantité, aucun montant.
+local function readZoneId(payload: any, extraArgumentCount: number?): (string?, string?)
+	return PayloadValidator.readId(payload, "sellZoneId", SecurityConfig.Payload.maxSellZoneIdLength, extraArgumentCount)
 end
 
 local function describeItems(items: { [string]: number }): string
@@ -131,7 +128,11 @@ function SellService.new(dependencies: Dependencies)
 	local getSellZone = dependencies.getSellZone
 	local getCharacterPosition = dependencies.getCharacterPosition
 	local clock = dependencies.clock
+	local movement = dependencies.movement
+	local security: SecurityLog.Recorder = dependencies.security or SecurityLog.none()
 	local log = dependencies.log or defaultLog
+	local Event = SecurityLog.Type
+	local ACTION = "Sell"
 
 	-- Dernière réponse RATE_LIMITED envoyée, par joueur.
 	local lastRateNoticeAt: { [number]: number } = {}
@@ -245,7 +246,8 @@ function SellService.new(dependencies: Dependencies)
 	end
 
 	-- Traite une demande de vente. `payload` vient du client : non fiable.
-	function service.HandleRequest(userId: number, payload: any): Result
+	-- `extraArgumentCount` : arguments reçus après le payload (0 attendu).
+	function service.HandleRequest(userId: number, payload: any, extraArgumentCount: number?): Result
 		if not rateLimit.Allow(userId, SellService.RATE_LIMIT_ACTION) then
 			local now = clock()
 			local last = lastRateNoticeAt[userId] or -math.huge
@@ -253,20 +255,24 @@ function SellService.new(dependencies: Dependencies)
 			if not noticed then
 				lastRateNoticeAt[userId] = now
 			end
+			security.Record(userId, Event.RateLimited, { action = ACTION })
 			return reject(ResultCode.RateLimited, nil, noticed)
 		end
 
 		-- GetData est nil pendant le chargement et après la libération.
 		if playerData.GetData(userId) == nil then
+			security.Record(userId, Event.ProfileNotLoaded, { action = ACTION })
 			return reject(ResultCode.ProfileNotLoaded)
 		end
 
-		local zoneId = readZoneId(payload)
+		local zoneId, payloadReason = readZoneId(payload, extraArgumentCount)
 		if zoneId == nil then
+			security.Record(userId, Event.InvalidPayload, { action = ACTION, reason = payloadReason })
 			return reject(ResultCode.InvalidTarget)
 		end
 		local zone = getSellZone(zoneId)
 		if zone == nil then
+			security.Record(userId, Event.UnknownId, { action = ACTION, id = zoneId })
 			return reject(ResultCode.InvalidTarget, zoneId)
 		end
 
@@ -274,9 +280,23 @@ function SellService.new(dependencies: Dependencies)
 		if position == nil then
 			return reject(ResultCode.NoCharacter, zoneId)
 		end
-		local maxDistance = GameConfig.Selling.interactRangeStuds + SecurityConfig.Distance.toleranceStuds
-		if distanceBetween(position, zone.position) > maxDistance then
+		-- NaN ou infini : toute comparaison serait fausse et laisserait passer.
+		if not MovementValidator.isFinitePosition(position) then
+			security.Record(userId, Event.MovementRefused, { action = ACTION, reason = "invalid_position" })
 			return reject(ResultCode.TooFar, zoneId)
+		end
+		local maxDistance = GameConfig.Selling.interactRangeStuds + SecurityConfig.Distance.toleranceStuds
+		if not (distanceBetween(position, zone.position) <= maxDistance) then
+			security.Record(userId, Event.ActionRefused, { action = ACTION, code = ResultCode.TooFar })
+			return reject(ResultCode.TooFar, zoneId)
+		end
+		-- T6 : déplacements récents jugés par MovementValidator (R2 : TOO_FAR).
+		if movement ~= nil then
+			local allowed, reason = movement.CanAct(userId, position, clock())
+			if not allowed then
+				security.Record(userId, Event.MovementRefused, { action = ACTION, reason = reason })
+				return reject(ResultCode.TooFar, zoneId)
+			end
 		end
 
 		return sellInventory(userId, zoneId)
