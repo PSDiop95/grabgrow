@@ -279,14 +279,27 @@ Play (profils en mémoire) ; préréglages côté serveur :
 
 | # | Action | Attendu |
 |---|---|---|
-| G1 | Lancer en nouveau joueur | Accueil court (≈ 5 s) en haut à gauche, puis « Étape 1/3 — Collecte tes premières ressources ! » ; flèche ▼ sur une ressource ; rien ne bloque les déplacements |
-| G2 | Collecter 1 ressource | Étape 2/3 « Continue de remplir ton sac » ; à 10 : « Vends tes ressources ! », ▼ sur le stand, flèche → au bord si le stand est hors champ |
+| G1 | Lancer en nouveau joueur | Accueil court (≈ 5 s) en haut à gauche, puis « Étape 1/3 — Collectez vos premières ressources ! » ; flèche ▼ sur une ressource ; rien ne bloque les déplacements |
+| G2 | Collecter 1 ressource | Étape 2/3 « Continuez de remplir votre sac » ; à 10 : « Vendez vos ressources ! », ▼ sur le stand, flèche → au bord si le stand est hors champ |
 | G3 | Vendre | « Belle vente ! +N Coins » (N = toast de vente), puis étape 3/3 avec les Coins manquants |
 | G4 | `O_sold_rich`, ouvrir la Boutique | ▶ à côté du bouton Boutique, puis ▶ sur Sac à dos seulement ; carte masquée boutique ouverte |
 | G5 | Acheter | « Sac à dos niveau 2 ! … » puis plus aucun guidage |
 | G6 | × puis jouer | Carte et repères disparaissent ; tout fonctionne ; « ? Guide » réaffiche ; la carte revient à l'étape suivante |
 | G7 | Lisibilité téléphone paysage | Aucun chevauchement avec sac, Boutique, Prendre, saut, stick, prompt de vente ; texte lisible |
 | G8 | `O_upgraded`, nouvelle session | Aucun guidage |
+
+## Tests manuels T5.4 (à faire par le propriétaire)
+
+Téléphone réel en paysage, langue du compte en français, puis en anglais
+si possible (paramètres du compte Roblox).
+
+| # | Action | Attendu |
+|---|---|---|
+| L1 | Nouveau joueur (Studio, Play) : parcours du guidage | Tous les textes au vouvoiement ; aucun « ! » ou « ? » seul en début de ligne |
+| L2 | Ouvrir la Boutique | Unités « s », « studs », « studs/s », « x » ; virgule décimale en français ; aucun texte coupé |
+| L3 | Acheter une amélioration | Message « Portée 12 → 14 studs » (ou équivalent) lisible |
+| L4 | Sac plein, vente, monde verrouillé | Messages traduits, sans débordement |
+| L5 | Compte en anglais | Interface entièrement en anglais |
 
 ## Lancer les tests automatisés (Studio)
 
@@ -327,6 +340,7 @@ de relire le résultat depuis le terminal après exécution.
 | T2 | Collecte valide ; ressource inexistante ; ressource inactive ; trop loin ; trop rapide ; sac plein ; sac presque plein ; profil non chargé ; personnage absent ; payload invalide ou falsifié ; rejeu ; trajet implausible ; deux joueurs sur la même ressource ; inventaires indépendants ; réapparition ; quantité invalide ou négative ; persistance après reconnexion |
 | T3 | Vente d'une et de plusieurs ressources ; calcul exact ; sac vide ; quantités à zéro ; inconnues seules ; sac mixte ; statistiques (`totalCoinsEarned`, `totalSales`, `totalCoinsSpent` intact) ; payload invalide ou falsifié ; zone inconnue ; trop loin ; personnage absent ; profil non chargé, en chargement, libéré ; limite de fréquence ; ventes concurrentes ; vente pendant une sauvegarde ; échec et erreur de mutation sans perte ; dépassements numériques ; état client après vente ; vente puis collecte ; deux joueurs ; persistance après rechargement |
 | T4 | Achat de chaque amélioration ; débit exact ; fonds insuffisants ; niveau maximum ; effets réels (capacité, cadence, portée, vitesse et contrôle de trajet, Multiplier) ; état client ; achats répétés et coût cumulé ; achats concurrents ; deux joueurs ; statistiques avec ventes ; persistance et reconnexion ; payloads falsifiés ; profil en chargement, libéré, en fermeture ; limite de fréquence ; déblocage autorisé, refusé (niveau, fonds, ordre, déjà débloqué, inconnu) ; crédit et débit invalides ou en dépassement ; arrondi du Multiplier |
+| T5.4 | Mêmes clés EN/FR ; mêmes motifs ; textes traduits ; vouvoiement ; accents ; espace insécable FR ; apostrophes ; longueurs par usage ; clés construites par le code ; expulsions ; replis de langue |
 | T6 | Remote à cadence excessive ; arguments de type invalide ; valeurs falsifiées ; isolation entre joueurs |
 
 ## Limites de l'environnement

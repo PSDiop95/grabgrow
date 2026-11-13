@@ -137,23 +137,25 @@ local function formatNumber(value: number): string
 	return text
 end
 
+-- Unité affichée par statistique (clés de localisation).
+local UNIT_KEYS: { [string]: string } = {
+	collectIntervalSeconds = "unit.seconds",
+	collectRangeStuds = "unit.studs",
+	walkSpeed = "unit.speed",
+	sellMultiplier = "unit.multiplier",
+}
+
 -- Effet affiché d'un niveau, avec son unité.
 local function formatEffect(upgradeId: string, level: number): string
 	local value = UpgradeMath.valueAt(upgradeId, level)
 	if value == nil then
 		return "-"
 	end
-	local stat = UpgradeConfig[upgradeId].stat
-	if stat == "collectIntervalSeconds" then
-		return `{formatNumber(value)} s`
-	elseif stat == "collectRangeStuds" then
-		return `{formatNumber(value)} studs`
-	elseif stat == "walkSpeed" then
-		return `{formatNumber(value)} studs/s`
-	elseif stat == "sellMultiplier" then
-		return `x{formatNumber(value)}`
+	local unitKey = UNIT_KEYS[UpgradeConfig[upgradeId].stat]
+	if unitKey == nil then
+		return formatNumber(value)
 	end
-	return formatNumber(value)
+	return Localization.fill(unitKey, localPlayer.LocaleId, { value = formatNumber(value) })
 end
 
 -- Message d'achat « valeur avant → valeur après » (A-40), unité à la fin :
@@ -165,7 +167,9 @@ local function gainText(upgradeId: string, level: number): string?
 	if definition == nil or before == nil or UpgradeMath.valueAt(upgradeId, level) == nil then
 		return nil
 	end
-	local from = if definition.stat == "sellMultiplier" then `x{formatNumber(before)}` else formatNumber(before)
+	local from = if definition.stat == "sellMultiplier"
+		then Localization.fill("unit.multiplier", localPlayer.LocaleId, { value = formatNumber(before) })
+		else formatNumber(before)
 	return Localization.fill(`{definition.displayNameKey}.gain`, localPlayer.LocaleId, {
 		from = from,
 		to = formatEffect(upgradeId, level),

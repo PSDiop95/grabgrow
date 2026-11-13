@@ -1,6 +1,6 @@
 # GRAB & GROW — État du projet
 
-Dernière mise à jour : 2026-11-13 (T5.3 guidage clôturé, D-017)
+Dernière mise à jour : 2026-11-13 (T5.4 textes EN/FR validé et clôturé)
 
 ## Résumé
 
@@ -134,6 +134,7 @@ src/
     Tests/HudTests.lua               États du sac, textes EN/FR (10 cas, T5.1)
     Tests/FeedbackTests.lua          Retours audio/visuels (14 cas, T5.2)
     Tests/OnboardingTests.lua        Guidage, parcours, reconnexion (21 cas, T5.3)
+    Tests/LocalizationTests.lua      Couverture et typographie EN/FR (15 cas, T5.4)
     Tests/RunTests.server.lua        Lanceur, Studio uniquement
 tools/run_tests.luau                 Lanceur des tests en terminal (Lune)
 tools/studio/build_test_map.luau     Carte de test Green Valley (sol, spawn, 36 points, station de vente)
@@ -799,7 +800,7 @@ focus) : caméra et personnage vérifiés normaux.
 | A-18 | GDD 15.5 et 20 non alignés sur D-004 et D-006 ; l'exemple de l'architecture 8.1 indique encore Stone « Uncommon » | Prochaine révision des documents |
 | A-20 | Le prompt T1 cite `docs/GRAB_AND_GROW_ECONOMY_v1.0.1.md` ; le fichier réel est `..._v1.0.md` (contenu 1.0.1, en-tête encore « Version : 1.0 ») | Sans effet technique |
 | A-21 | `stats.playTimeSeconds` existe dans le schéma mais aucun système ne l'alimente | À décider avant T5 |
-| A-22 | Messages d'expulsion (`PlayerSession`) en anglais brut, non localisés | T5 |
+| A-22 | Messages d'expulsion (`PlayerSession`) en anglais brut, non localisés | **Corrigé en T5.4, validé** (propriétaire, 2026-11-13) : clés `system.kick.*` EN/FR, traduites avec `Player.LocaleId` ; règles d'expulsion inchangées. Vérifié dans Studio (fr-fr) : `Server Kick Message: Votre session a été ouverte sur un autre serveur.` |
 | A-19 | Première amélioration (100 Coins) atteinte à la 2e vente avec 3 ressources (sac ≈ 89 Coins) ; revenu théorique maximal ≈ 142 Coins/min pour une cible de 120–250 | À mesurer en T7 |
 | A-23 | `rojo serve` lancé avant T2 ne prenait pas en compte les nouvelles entrées de `default.project.json` (`ServerStorage`, `StarterPlayer`) | **Levée** le 2026-11-11 : `rojo serve` relancé, plugin reconnecté par le propriétaire ; dans Studio, 29 scripts identiques au dépôt (empreinte comparée), aucun doublon |
 | A-24 | La carte de test n'existait que dans le place ouvert, non enregistré | **Levée** le 2026-11-11 : carte reconstruite par script, place de test sauvegardé en version 15 (non publié), copie locale `GrabAndGrow.rbxl` contenant la carte vérifiée (18:59 UTC). Non versionnée dans Git (D-013) : sauvegarde de travail locale |
@@ -857,13 +858,36 @@ Non vérifié sur DataStore réel :
 - `ListKeysAsync` depuis MCP retourne une liste vide alors que la clé
   existe : non utilisé comme preuve.
 
+## Vérifications T5.4 — Textes et localisation EN/FR (2026-11-13, TERMINÉ)
+
+Validé par le propriétaire (2026-11-13). Commit local autorisé.
+
+Détail : `docs/LOCALIZATION.md`.
+
+| Vérification | Type | Résultat |
+|---|---|---|
+| Lune (`lune run tools/run_tests.luau`) | Automatisé | 13 suites OK, dont `LocalizationTests` (15 cas) ; code de sortie 0 |
+| Sensibilité des nouveaux tests | Automatisé (mutations temporaires, annulées) | Tutoiement, accent manquant, motif `%d` en trop, apostrophe typographique, texte non traduit, espace simple avant « ! » : tous détectés |
+| luau-lsp strict | Automatisé | 0 erreur |
+| `rojo build` | Automatisé | OK |
+| Play Studio (fr-fr, émulation tactile) | MCP | `TOUS LES TESTS : OK` ; carte du guidage « Collectez vos premières ressources ! » (« ! » reste sur la ligne de son mot) ; Boutique « 0,75 s → 0,7 s », « 12 studs → 14 studs » ; expulsion `kickSessionLost` : message en français dans le journal serveur |
+
+### Non exécutées
+
+| Vérification | Raison |
+|---|---|
+| Interface en anglais dans Studio | Studio en fr-fr ; textes EN couverts par les tests automatisés seulement |
+| Fenêtre d'expulsion affichée | En Play Studio la fenêtre ne s'affiche pas ; message vérifié dans le journal |
+| Expulsions `load_failed` et `session_locked` en jeu | Exigent une panne DataStore ou un verrou réel ; textes couverts par les tests |
+| Téléphone réel, autres appareils | À faire par le propriétaire (`tests/TEST_STRATEGY.md`, « Tests manuels T5.4 ») |
+
 ## Décisions en attente
 
 1. Push GitHub des commits T1, T2 et T3 (non autorisé à ce jour).
 
 ## Prochaine étape
 
-1. T5.4 — Textes (A-22, relecture EN/FR, harmonisation tu / vous) : à
-   démarrer sur autorisation du propriétaire. Aucun push.
+1. T5.5 — à démarrer sur autorisation du propriétaire. Tests manuels
+   T5.4 (L1–L5) sur téléphone réel recommandés. Aucun push.
 2. Décisions D-8 (persistance des préférences) et D-9 (emplacement) à
    confirmer ; recommandations appliquées en attendant.

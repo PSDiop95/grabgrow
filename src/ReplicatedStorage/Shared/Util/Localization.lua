@@ -102,6 +102,16 @@ local STRINGS: { [string]: { [string]: string } } = {
 		["onboarding.ctrl.shop.touch"] = "Tap Shop",
 		["onboarding.ctrl.shop.keyboard"] = "Press B or click Shop",
 		["onboarding.ctrl.shop.gamepad"] = "Press D-pad up",
+		-- T5.4 : unités des effets d'amélioration ({value} déjà mis en forme).
+		["unit.seconds"] = "{value} s",
+		["unit.studs"] = "{value} studs",
+		["unit.speed"] = "{value} studs/s",
+		["unit.multiplier"] = "x{value}",
+		-- T5.4 : messages d'expulsion (A-22), lus côté serveur avec la langue
+		-- du joueur.
+		["system.kick.load_failed"] = "Your data could not be loaded. Nothing was lost. Please rejoin in a few minutes.",
+		["system.kick.session_locked"] = "Your data is still in use by another server. Please rejoin in a few minutes.",
+		["system.kick.session_lost"] = "Your session was opened on another server.",
 	},
 	fr = {
 		["resource.green_leaf"] = "Feuille",
@@ -169,28 +179,43 @@ local STRINGS: { [string]: { [string]: string } } = {
 		["settings.on"] = "Activé",
 		["settings.off"] = "Désactivé",
 		["onboarding.welcome_title"] = "Bienvenue dans Grab & Grow !",
-		["onboarding.welcome_body"] = "Collecte des ressources, vends-les et améliore ton équipement.",
+		["onboarding.welcome_body"] = "Collectez des ressources, vendez-les et améliorez votre équipement.",
 		["onboarding.step"] = "Étape %d/3",
-		["onboarding.collect"] = "Collecte tes premières ressources !",
-		["onboarding.keep_collecting"] = "Bien joué ! Continue de remplir ton sac.",
-		["onboarding.sell"] = "Ton sac se remplit. Vends tes ressources !",
+		["onboarding.collect"] = "Collectez vos premières ressources !",
+		["onboarding.keep_collecting"] = "Bien joué ! Continuez de remplir votre sac.",
+		["onboarding.sell"] = "Votre sac se remplit. Vendez vos ressources !",
 		["onboarding.sold"] = "Belle vente ! +%d Coins",
-		["onboarding.upgrade"] = "Utilise tes Coins pour améliorer ton équipement !",
-		["onboarding.upgrade_pick"] = "Choisis une amélioration au prix vert.",
-		["onboarding.earn_more"] = "Collecte et vends : encore %d Coins pour ta première amélioration.",
-		["onboarding.done"] = "{name} niveau {level} ! À toi de jouer : prends, vends, améliore.",
+		["onboarding.upgrade"] = "Utilisez vos Coins pour améliorer votre équipement !",
+		["onboarding.upgrade_pick"] = "Choisissez une amélioration au prix vert.",
+		["onboarding.earn_more"] = "Collectez et vendez : encore %d Coins pour votre première amélioration.",
+		["onboarding.done"] = "{name} niveau {level} ! À vous de jouer : prenez, vendez, améliorez.",
 		["onboarding.show"] = "Guide",
-		["onboarding.ctrl.collect.touch"] = "Touche une ressource ou maintiens Prendre",
-		["onboarding.ctrl.collect.keyboard"] = "Maintiens E ou clique sur une ressource",
-		["onboarding.ctrl.collect.gamepad"] = "Maintiens X près d'une ressource",
-		["onboarding.ctrl.sell.touch"] = "Va au stand et touche Vendre",
-		["onboarding.ctrl.sell.keyboard"] = "Va au stand et appuie sur F",
-		["onboarding.ctrl.sell.gamepad"] = "Va au stand et appuie sur Y",
-		["onboarding.ctrl.shop.touch"] = "Touche Boutique",
-		["onboarding.ctrl.shop.keyboard"] = "Appuie sur B ou clique sur Boutique",
-		["onboarding.ctrl.shop.gamepad"] = "Appuie sur la croix haut",
+		["onboarding.ctrl.collect.touch"] = "Touchez une ressource ou maintenez Prendre",
+		["onboarding.ctrl.collect.keyboard"] = "Maintenez E ou cliquez sur une ressource",
+		["onboarding.ctrl.collect.gamepad"] = "Maintenez X près d'une ressource",
+		["onboarding.ctrl.sell.touch"] = "Allez au stand et touchez Vendre",
+		["onboarding.ctrl.sell.keyboard"] = "Allez au stand et appuyez sur F",
+		["onboarding.ctrl.sell.gamepad"] = "Allez au stand et appuyez sur Y",
+		["onboarding.ctrl.shop.touch"] = "Touchez Boutique",
+		["onboarding.ctrl.shop.keyboard"] = "Appuyez sur B ou cliquez sur Boutique",
+		["onboarding.ctrl.shop.gamepad"] = "Appuyez sur la flèche haut de la croix",
+		["unit.seconds"] = "{value} s",
+		["unit.studs"] = "{value} studs",
+		["unit.speed"] = "{value} studs/s",
+		["unit.multiplier"] = "x{value}",
+		["system.kick.load_failed"] = "Vos données n'ont pas pu être chargées. Rien n'est perdu. Veuillez revenir dans quelques minutes.",
+		["system.kick.session_locked"] = "Vos données sont encore utilisées par un autre serveur. Veuillez revenir dans quelques minutes.",
+		["system.kick.session_lost"] = "Votre session a été ouverte sur un autre serveur.",
 	},
 }
+
+-- Typographie française : espace insécable avant « ! ? : ; » pour qu'un
+-- retour à la ligne ne laisse jamais la ponctuation seule en début de ligne.
+-- Appliquée une fois au chargement : les tables restent lisibles.
+Localization.NBSP = utf8.char(0x00A0)
+for key, text in pairs(STRINGS.fr) do
+	STRINGS.fr[key] = (string.gsub(text, " ([!?:;])", Localization.NBSP .. "%1"))
+end
 
 -- "fr-fr" -> "fr". Langue inconnue -> langue par défaut.
 function Localization.languageOf(localeId: string?): string
@@ -226,6 +251,16 @@ end
 function Localization.has(key: string, language: string): boolean
 	local strings = STRINGS[language]
 	return strings ~= nil and strings[key] ~= nil
+end
+
+-- Clés définies pour `language`, triées (tests de couverture).
+function Localization.keys(language: string): { string }
+	local list = {}
+	for key in pairs(STRINGS[language] or {}) do
+		table.insert(list, key)
+	end
+	table.sort(list)
+	return list
 end
 
 function Localization.languages(): { string }

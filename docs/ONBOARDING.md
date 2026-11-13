@@ -11,11 +11,11 @@ pas le joueur et ne bloque aucune action.
 
 | État | Affichage | Repère | Passe à l'étape suivante quand |
 |---|---|---|---|
-| `INTRO` | 👋 « Bienvenue dans Grab & Grow ! » + « Collecte des ressources, vends-les et améliore ton équipement. » | — | 5 s après le chargement du jeu et l'apparition du personnage, ou appui sur × |
-| `COLLECT` (1/3) | « Collecte tes premières ressources ! » + contrôle de l'appareil | ▼ au-dessus de la ressource disponible la plus proche | `ActionResult` Collect `ok`, `SUCCESS`, `amount > 0` |
-| `SELL` (2/3) | Sous 10 unités : « Bien joué ! Continue de remplir ton sac. » ; à partir de 10 (ou sac plein si capacité < 10) : « Ton sac se remplit. Vends tes ressources ! » | Ressource, puis ▼ au-dessus du stand | `ActionResult` Sell `ok`, `SUCCESS`, `coinsEarned > 0` (vente avant le seuil reconnue) |
-| `UPGRADE` (3/3) | Après la vente : 💰 « Belle vente ! +N Coins » (3 s, N = `coinsEarned` du serveur). Puis, sans amélioration payable : « Collecte et vends : encore N Coins… » ; payable : « Utilise tes Coins pour améliorer ton équipement ! » | ▶ à côté du bouton Boutique ; boutique ouverte : ▶ sur **chaque** carte payable (aucune imposée), carte de guidage masquée | `ActionResult` Upgrade `ok`, `SUCCESS` (ou UnlockWorld) |
-| `COMPLETED` | 🎉 « Sac à dos niveau 2 ! À toi de jouer : prends, vends, améliore. » (6 s). Le gain (« Sac 50 → 75 ») est affiché par le toast existant de la Boutique | — | Fin : plus rien n'est affiché |
+| `INTRO` | 👋 « Bienvenue dans Grab & Grow ! » + « Collectez des ressources, vendez-les et améliorez votre équipement. » | — | 5 s après le chargement du jeu et l'apparition du personnage, ou appui sur × |
+| `COLLECT` (1/3) | « Collectez vos premières ressources ! » + contrôle de l'appareil | ▼ au-dessus de la ressource disponible la plus proche | `ActionResult` Collect `ok`, `SUCCESS`, `amount > 0` |
+| `SELL` (2/3) | Sous 10 unités : « Bien joué ! Continuez de remplir votre sac. » ; à partir de 10 (ou sac plein si capacité < 10) : « Votre sac se remplit. Vendez vos ressources ! » | Ressource, puis ▼ au-dessus du stand | `ActionResult` Sell `ok`, `SUCCESS`, `coinsEarned > 0` (vente avant le seuil reconnue) |
+| `UPGRADE` (3/3) | Après la vente : 💰 « Belle vente ! +N Coins » (3 s, N = `coinsEarned` du serveur). Puis, sans amélioration payable : « Collectez et vendez : encore N Coins… » ; payable : « Utilisez vos Coins pour améliorer votre équipement ! » | ▶ à côté du bouton Boutique ; boutique ouverte : ▶ sur **chaque** carte payable (aucune imposée), carte de guidage masquée | `ActionResult` Upgrade `ok`, `SUCCESS` (ou UnlockWorld) |
+| `COMPLETED` | 🎉 « Sac à dos niveau 2 ! À vous de jouer : prenez, vendez, améliorez. » (6 s). Le gain (« Sac 50 → 75 ») est affiché par le toast existant de la Boutique | — | Fin : plus rien n'est affiché |
 
 Hors champ, une flèche → au bord de l'écran pointe vers la cible. Le repère
 s'efface à portée (collecte : portée du Magnet ; vente : 10 studs) : la
@@ -76,9 +76,9 @@ envoyées au client. Écart avec D-016 (« T5 client seulement »).
 
 | Étape | Tactile | Clavier / souris | Manette |
 |---|---|---|---|
-| Collecte | Touche une ressource ou maintiens Prendre | Maintiens E ou clique sur une ressource | Maintiens X près d'une ressource |
-| Vente | Va au stand et touche Vendre | Va au stand et appuie sur F | Va au stand et appuie sur Y |
-| Boutique | Touche Boutique | Appuie sur B ou clique sur Boutique | Appuie sur la croix haut |
+| Collecte | Touchez une ressource ou maintenez Prendre | Maintenez E ou cliquez sur une ressource | Maintenez X près d'une ressource |
+| Vente | Allez au stand et touchez Vendre | Allez au stand et appuyez sur F | Allez au stand et appuyez sur Y |
+| Boutique | Touchez Boutique | Appuyez sur B ou cliquez sur Boutique | Appuyez sur la flèche haut de la croix |
 
 Appareil déduit du dernier type d'entrée (`LastInputTypeChanged`). Les
 noms X / Y suivent la disposition Xbox (sur PlayStation : carré /
@@ -98,5 +98,5 @@ triangle). Manette **non testée sur matériel**.
 
 ## Textes
 
-Tutoiement, comme demandé pour T5.3 ; le reste de l'interface FR vouvoie
-(« Vendez au stand ! ») : à harmoniser en T5.4.
+Vouvoiement depuis T5.4 (décision du propriétaire), comme le reste de
+l'interface FR. Règles communes : `docs/LOCALIZATION.md`.

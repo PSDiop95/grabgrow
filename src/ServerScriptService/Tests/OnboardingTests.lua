@@ -573,7 +573,10 @@ function OnboardingTests.run(modules: Modules): ({ string }, number)
 			local filled = Localization.fill("onboarding.done", localeId, { name = "Backpack", level = "2" })
 			check(string.find(filled, "{", 1, true) == nil, `{language} : motif non rempli`)
 		end
-		check(Localization.get("onboarding.collect", "fr-fr") == "Collecte tes premières ressources !", "texte FR de la collecte")
+		check(
+			Localization.get("onboarding.collect", "fr-fr") == `Collectez vos premières ressources{Localization.NBSP}!`,
+			"texte FR de la collecte (vouvoiement)"
+		)
 		check(Localization.get("onboarding.welcome_title", "en-us") == "Welcome to Grab & Grow!", "titre EN")
 		-- Chaque indication produite pointe vers une clé existante.
 		for _, step in ipairs({ Step.Intro, Step.Collect, Step.Sell, Step.Upgrade }) do

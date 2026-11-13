@@ -19,7 +19,7 @@ réellement exécuté. État détaillé : `PROJECT_STATUS.md`.
 | T2 | Collecte et inventaire | Collecte validée serveur, sac limité | **Validé et clôturé** le 2026-11-11 — tests automatisés, Studio à 1 et 2 joueurs, émulateur mobile, reconnexion sur DataStore de test ; commit local. Risques ouverts pour T6 : A-26, A-27 (`PROJECT_STATUS.md`) |
 | T3 | Vente et Coins | Transaction fiable, inventaire vidé correctement | **Terminé** (clôturé le 2026-11-12) — E1–E7, E9 et rendu 3D validés, E8 partiel accepté (manette physique reportée) ; A-34 et A-35 corrigés ; place version 25 ; commits locaux, non poussés |
 | T4 | Améliorations (5) et progression des mondes | Achats validés côté serveur | **Terminé** (clôturé le 2026-11-12) — U1–U9b validés (Studio, émulateur, téléphone réel), U10 manette reporté ; A-39, A-40, A-41 corrigés ; commits locaux 69fb421 et e63039d, non poussés. Ouvertes : A-36 (T7), A-37 (T6), A-38 (T5) |
-| T5 | HUD et feedback mobile | Boucle complète utilisable sur téléphone | **En cours** — T5.1 HUD **terminé** (clôturé le 2026-11-12 : tests automatisés, Studio, téléphone réel OK ; commit local 5d4f339) ; T5.2 feedback **terminé** (clôturé le 2026-11-12 : tests automatisés, Studio, téléphone réel OK) ; T5.3 première session **terminé** (2026-11-13 : tests automatisés, Studio et émulateur OK ; D-017 acceptée ; commit local) ; T5.4 et T5.5 à faire |
+| T5 | HUD et feedback mobile | Boucle complète utilisable sur téléphone | **En cours** — T5.1 HUD **terminé** (clôturé le 2026-11-12 : tests automatisés, Studio, téléphone réel OK ; commit local 5d4f339) ; T5.2 feedback **terminé** (clôturé le 2026-11-12 : tests automatisés, Studio, téléphone réel OK) ; T5.3 première session **terminé** (2026-11-13 : tests automatisés, Studio et émulateur OK ; D-017 acceptée ; commit local) ; T5.4 textes EN/FR **terminé** (2026-11-13 : validé ; commit local) ; T5.5 à faire |
 | T6 | Tests multijoueurs et anti-exploit | Aucun exploit simple, aucune fuite de données | À faire |
 | T7 | Équilibrage MVP | Première session compréhensible et satisfaisante | À faire |
 | T8 | Préparation publication | Tests privés concluants | À faire |
@@ -50,7 +50,9 @@ implémenté : `FeedbackController`, 8 sons du compte Roblox
 le 2026-11-12 (téléphone réel validé). Lot T5.3 (première session)
 implémenté le 2026-11-13 : guidage Collecter → Vendre → Améliorer, étapes
 déduites des statistiques persistantes (`ONBOARDING.md`) ; validé sur
-émulateur, D-017 acceptée, clôturé. T5.4 non commencé.
+émulateur, D-017 acceptée, clôturé. Lot T5.4 (textes) implémenté le
+2026-11-13 : vouvoiement, A-22, unités localisées, tests de couverture
+EN/FR (`LOCALIZATION.md`) ; validé, clôturé. T5.5 non commencé.
 
 ## Après le MVP (ne pas commencer avant validation de T0 à T8)
 

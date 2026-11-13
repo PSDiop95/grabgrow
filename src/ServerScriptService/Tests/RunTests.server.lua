@@ -26,6 +26,7 @@ local UpgradeServiceTests = require(script.Parent.UpgradeServiceTests)
 local HudTests = require(script.Parent.HudTests)
 local FeedbackTests = require(script.Parent.FeedbackTests)
 local OnboardingTests = require(script.Parent.OnboardingTests)
+local LocalizationTests = require(script.Parent.LocalizationTests)
 
 local GameConfig = require(Config.GameConfig)
 local ResourceConfig = require(Config.ResourceConfig)
@@ -243,6 +244,17 @@ report(
 		ResourceSpawner = ResourceSpawner,
 		MemoryDataStore = MemoryDataStore,
 		Remotes = Remotes,
+	})
+)
+
+report(
+	"LocalizationTests",
+	LocalizationTests.run({
+		Localization = Localization,
+		UpgradeConfig = UpgradeConfig,
+		ResourceConfig = ResourceConfig,
+		WorldConfig = WorldConfig,
+		OnboardingRules = OnboardingRules,
 	})
 )
 

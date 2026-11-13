@@ -271,7 +271,11 @@ function FeedbackTests.run(modules: Modules): ({ string }, number)
 				check(Localization.has(key, language), `{key} absent en {language}`)
 			end
 		end
-		check(Localization.fill("world.unlocked_named", "fr-fr", { world = "Golden Desert" }) == "Golden Desert débloqué !", "message FR")
+		check(
+			Localization.fill("world.unlocked_named", "fr-fr", { world = "Golden Desert" })
+				== `Golden Desert débloqué{Localization.NBSP}!`,
+			"message FR"
+		)
 		check(Localization.fill("world.unlocked_named", "en-us", { world = "Golden Desert" }) == "Golden Desert unlocked!", "message EN")
 	end)
 

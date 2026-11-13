@@ -1,7 +1,7 @@
 # T5 — HUD et feedback mobile : préflight
 
 Date : 2026-11-12. Statut : **préflight validé** (décisions D-1 à D-7 :
-recommandations acceptées, D-016) ; T5.1 terminé (section 9) ; T5.2 terminé (section 10) ; T5.3 terminé (section 11) ; T5.4 non commencé.
+recommandations acceptées, D-016) ; T5.1 terminé (section 9) ; T5.2 terminé (section 10) ; T5.3 terminé (section 11) ; T5.4 terminé (section 12) ; T5.5 non commencé.
 
 Critère de la phase (architecture 20, ROADMAP) : **boucle complète
 utilisable sur téléphone.**
@@ -292,3 +292,29 @@ Détail : `docs/ONBOARDING.md` ; tests : `PROJECT_STATUS.md`,
 | # | Question | Options | Recommandation |
 |---|---|---|---|
 | D-10 | Source des statistiques côté client | a) `progress` dans `StateUpdated` (actuel) ; b) déduction depuis inventaire, Coins et niveaux, sans changement serveur | a) : fiable, lecture seule, aucun RemoteEvent |
+
+## 12. Lot T5.4 — Textes et localisation EN/FR (2026-11-13, TERMINÉ)
+
+Détail : `docs/LOCALIZATION.md` ; tests : `PROJECT_STATUS.md`,
+« Vérifications T5.4 ».
+
+### Audit
+
+| Source | Constat |
+|---|---|
+| `Localization` (EN/FR) | 17 textes FR du guidage au tutoiement ; reste de l'interface au vouvoiement ; espaces simples avant « ! ? : » |
+| `PlayerSession` | 3 messages d'expulsion en anglais brut (A-22) |
+| `UpgradeController` | Unités « s », « studs », « studs/s », « x » en dur |
+| Contrôleurs | Autres textes en dur : symboles (× ▶ ▼ →, « X » de fermeture), touches `[E]` / `[B]` : conservés (non linguistiques) |
+| Carte Studio (Workspace, StarterGui) | Aucun texte posé |
+| Clés utilisées par le code | Toutes présentes en EN et FR |
+
+### Réalisé
+
+- Français au vouvoiement partout (guidage T5.3 compris).
+- A-22 : `system.kick.*` EN/FR, traduits avec `Player.LocaleId` ;
+  conditions d'expulsion inchangées.
+- Unités des améliorations localisées (`unit.*`).
+- Espace insécable avant `! ? : ;` en français, appliquée au chargement.
+- `Localization.keys`, `Localization.NBSP` ; suite `LocalizationTests`.
+- Aucune mécanique, valeur économique ni règle serveur modifiée.
