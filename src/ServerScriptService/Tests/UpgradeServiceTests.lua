@@ -400,7 +400,7 @@ function UpgradeServiceTests.run(modules: Modules): ({ string }, number)
 		local after = env.collection.GetClientState(USER_A)
 		check(after.upgrades.Backpack == 2, "niveau non transmis")
 		check(after.inventory.capacity == 75, "capacité non transmise")
-		check(after.coins == 900, "solde non transmis")
+		check(after.coins == 1_000 - UpgradeConfig.Backpack.levels[2].cost, "solde non transmis")
 	end)
 
 	-- 7-8. ACHATS RÉPÉTÉS ET CONCURRENTS -------------------------------------
@@ -430,14 +430,16 @@ function UpgradeServiceTests.run(modules: Modules): ({ string }, number)
 
 	case("deux achats simultanés : pas de double débit", function(check)
 		local env = newEnv({ USER_A })
-		env.set(USER_A, { coins = 349 }) -- 100 (niveau 2) + 249 : niveau 3 (250) inaccessible
+		-- Coût du niveau 2 + 249 : niveau 3 (250) inaccessible.
+		local levelTwoCost = UpgradeConfig.Backpack.levels[2].cost
+		env.set(USER_A, { coins = levelTwoCost + 249 })
 		local first = env.buy(USER_A, "Backpack")
 		local second = env.buy(USER_A, "Backpack")
 		check(first.ok and first.level == 2, "premier achat incorrect")
 		check(not second.ok and second.code == Code.InsufficientFunds, `second achat : {tostring(second.code)}`)
 		local profile = env.profile(USER_A)
 		check(profile.currencies.coins == 249 and profile.upgrades.backpackLevel == 2, "débit en double")
-		check(profile.stats.totalCoinsSpent == 100, "totalCoinsSpent en double")
+		check(profile.stats.totalCoinsSpent == levelTwoCost, "totalCoinsSpent en double")
 	end)
 
 	case("deux joueurs simultanés : achats isolés", function(check)
@@ -447,7 +449,7 @@ function UpgradeServiceTests.run(modules: Modules): ({ string }, number)
 		check(env.buy(USER_A, "Grabber").ok and env.buy(USER_B, "Backpack").ok, "achats refusés")
 		local a, b = env.profile(USER_A), env.profile(USER_B)
 		check(a.currencies.coins == 0 and a.upgrades.grabberLevel == 2 and a.upgrades.backpackLevel == 1, "profil A incorrect")
-		check(b.currencies.coins == 900 and b.upgrades.backpackLevel == 2 and b.upgrades.grabberLevel == 1, "profil B incorrect")
+		check(b.currencies.coins == 1_000 - UpgradeConfig.Backpack.levels[2].cost and b.upgrades.backpackLevel == 2 and b.upgrades.grabberLevel == 1, "profil B incorrect")
 	end)
 
 	-- 9. STATISTIQUES ET COMPATIBILITÉ T3 ------------------------------------
@@ -498,7 +500,7 @@ function UpgradeServiceTests.run(modules: Modules): ({ string }, number)
 
 	case("payloads falsifiés : prix, niveau, solde, effet ignorés et refusés", function(check)
 		local env = newEnv({ USER_A })
-		env.set(USER_A, { coins = 99 })
+		env.set(USER_A, { coins = UpgradeConfig.Backpack.levels[2].cost - 1 })
 		local before = fingerprint(env.profile(USER_A))
 		local payloads: { any } = {
 			{ upgradeId = "Backpack", price = 0 },

@@ -1,11 +1,12 @@
 # GRAB & GROW — Progression économique (T4)
 
-Dernière mise à jour : 2026-11-12.
+Dernière mise à jour : 2026-11-14 (T7 : Backpack 2 à 75, succès ; analyse complète dans `phases/T7_ECONOMY_SIMULATION.md`, D-020).
 
-**Projections théoriques**, pas des résultats de playtest. Valeurs :
-`UpgradeConfig` et `WorldConfig` (Bible 5 et 6, inchangées). Aucune
-valeur n'a été modifiée. Toute correction attend l'accord du propriétaire
-(T7).
+**Projections théoriques**, pas des résultats de playtest. Analyse T4,
+conservée telle quelle : seule la ligne Backpack 2 est mise à jour (T7,
+D-020) ; les coûts cumulés suivants comptent encore 100 pour ce niveau
+(25 Coins de plus). Projections à jour, succès compris :
+`phases/T7_ECONOMY_SIMULATION.md` et `tools/simulate_progression.luau`.
 
 ## Modèle
 
@@ -39,7 +40,7 @@ minute.
 | Niveau | Capacité | Coût | Cumulé | Gain | Rentabilisé |
 |---|---|---|---|---|---|
 | 1 | 50 | 0 | 0 | — | — |
-| 2 | 75 | 100 | 100 | +8,4 % | 18 min |
+| 2 | 75 | 75 (T7 ; 100 avant D-020) | 75 | +8,4 % | 13 min |
 | 3 | 100 | 250 | 350 | +5,0 % | 71 min |
 | 4 | 140 | 600 | 950 | +4,0 % | 3,4 h |
 | 5 | 180 | 1 200 | 2 150 | +2,3 % | 11 h |

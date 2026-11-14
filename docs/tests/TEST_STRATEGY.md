@@ -181,7 +181,7 @@ inaccessible au client, aucun paramètre économique modifié.
 | Préréglage | État |
 |---|---|
 | `reset` | Nouveau joueur |
-| `U1` | 100 Coins |
+| `U1` | 75 Coins (T7, D-020 ; auparavant 100) |
 | `U2` | 150 Coins |
 | `U3` | 200 Coins |
 | `U4` | 250 Coins |

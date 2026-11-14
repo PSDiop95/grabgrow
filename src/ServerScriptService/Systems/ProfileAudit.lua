@@ -8,7 +8,9 @@
 --   * préréglages de test Studio (StudioTestPresets) : fixent solde,
 --     niveaux et mondes sans passer par les ventes ni les achats -> des
 --     constats sont ATTENDUS sur un profil de test Studio ;
---   * aucune autre source en production au 2026-11-13 (ni récompense, ni
+--   * succès (T7, D-020) : crédités par EconomyService.credit, donc inclus
+--     dans stats.totalCoinsEarned (aucun constat attendu) ;
+--   * aucune autre source en production au 2026-11-14 (ni boost, ni
 --     achat Robux) ; toute future source devra alimenter
 --     stats.totalCoinsEarned ou être ajoutée ici.
 -- Un constat est donc un signal à examiner, jamais une preuve de triche.

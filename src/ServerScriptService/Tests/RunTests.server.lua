@@ -29,6 +29,8 @@ local OnboardingTests = require(script.Parent.OnboardingTests)
 local LocalizationTests = require(script.Parent.LocalizationTests)
 local MovementValidatorTests = require(script.Parent.MovementValidatorTests)
 local SecurityTests = require(script.Parent.SecurityTests)
+local PlayTimeTests = require(script.Parent.PlayTimeTests)
+local AchievementTests = require(script.Parent.AchievementTests)
 
 local GameConfig = require(Config.GameConfig)
 local ResourceConfig = require(Config.ResourceConfig)
@@ -51,6 +53,10 @@ local MovementValidator = require(ServerScriptService.Systems.MovementValidator)
 local PayloadValidator = require(ServerScriptService.Systems.PayloadValidator)
 local ProfileAudit = require(ServerScriptService.Systems.ProfileAudit)
 local SecurityLog = require(ServerScriptService.Services.SecurityLog)
+local PlayTimeTracker = require(ServerScriptService.Systems.PlayTimeTracker)
+local AchievementService = require(ServerScriptService.Services.AchievementService)
+local AchievementRules = require(ReplicatedStorage.Shared.Util.AchievementRules)
+local AchievementConfig = require(Config.AchievementConfig)
 local Remotes = require(ReplicatedStorage.Shared.Remotes.Remotes)
 local Localization = require(ReplicatedStorage.Shared.Util.Localization)
 local SaleValue = require(ReplicatedStorage.Shared.Util.SaleValue)
@@ -298,6 +304,32 @@ report(
 		EconomySecurityConfig = EconomySecurityConfig,
 		MovementSecurityConfig = MovementSecurityConfig,
 		SecurityLogConfig = SecurityLogConfig,
+		Remotes = Remotes,
+	})
+)
+
+report(
+	"PlayTimeTests",
+	PlayTimeTests.run({
+		PlayTimeTracker = PlayTimeTracker,
+		PlayerDataService = PlayerDataService,
+		MemoryDataStore = MemoryDataStore,
+		DataConfig = DataConfig,
+	})
+)
+
+report(
+	"AchievementTests",
+	AchievementTests.run({
+		AchievementConfig = AchievementConfig,
+		AchievementRules = AchievementRules,
+		AchievementService = AchievementService,
+		PlayerDataService = PlayerDataService,
+		MemoryDataStore = MemoryDataStore,
+		DataSchema = DataSchema,
+		ProfileAudit = ProfileAudit,
+		Localization = Localization,
+		FeedbackRules = FeedbackRules,
 		Remotes = Remotes,
 	})
 )

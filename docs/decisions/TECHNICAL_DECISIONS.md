@@ -587,7 +587,8 @@ propriétaire), ACCEPTÉE, REMPLACÉE.
 
 - **Date :** 2026-11-13
 - **Statut :** ACCEPTÉE pour l'implémentation (propriétaire, 2026-11-13 :
-  R1, R2, R3 validés ; R4 validé sous réserve). T6 non clôturée.
+  R1, R2, R3 validés ; R4 validé sous réserve). T6 validée et clôturée
+  par le propriétaire le 2026-11-14 ; R4 reste à calibrer.
 - **Contexte :** audit T6 (A-26, A-27, A-37) : position simulée par le
   client, vente sans contrôle de déplacement, « Reset » qui efface la
   référence de trajet, `WalkSpeed` local invisible, NaN, arguments
@@ -634,3 +635,59 @@ propriétaire), ACCEPTÉE, REMPLACÉE.
   `PayloadValidator`, `ProfileAudit`, `SecurityLog`,
   `MovementSecurityConfig`, `SecurityLogConfig`, tests,
   `phases/T6_SECURITY_REPORT.md`, `phases/T6_MULTIPLAYER_TEST_REPORT.md`.
+
+## D-020 — T7 : première amélioration, temps de jeu, succès permanents
+
+- **Date :** 2026-11-14
+- **Statut :** ACCEPTÉE pour l'implémentation (propriétaire, 2026-11-14 :
+  « Oui, comme recommandé » sur les décisions D1 à D7 de l'étape A).
+  Implémentée le 2026-11-14 ; T7 validée et clôturée par le propriétaire le 2026-11-14 après test réel.
+- **Contexte :** audit T7 (`phases/T7_PROGRESSION_AUDIT.md`), risques A-19,
+  A-21, A-36. Simulation reproductible
+  (`tools/simulate_progression.luau`, `phases/T7_ECONOMY_SIMULATION.md`) :
+  première amélioration seulement à la 2e vente ; attente entre deux achats
+  de plus de 20 min après 1 h de jeu, de plus d'1 h après 6 h ; chaque
+  achat n'ajoute que 2 à 5 % de revenu. Cause structurelle : la courbe de
+  la Bible est financée par des mondes encore vides dans le MVP.
+- **Décision :**
+  - **D1 / P0** : Backpack niveau 2 à 75 Coins (100 dans la Bible 1.0).
+  - **D2 / P3** : 12 succès permanents récompensés une seule fois en Coins
+    (`Shared/Config/AchievementConfig`), attribués par
+    `Services/AchievementService` après chaque action validée par le
+    serveur et au chargement du profil ; crédit par `EconomyService` dans
+    le même `Update` que le marquage (atomique, jamais deux fois). Aucune
+    quête quotidienne, série ni pénalité d'absence. Message serveur ->
+    client `ActionResult { action = "Achievement" }` ; aucune demande
+    client.
+  - **D3 / A-21** : temps de jeu compté par le serveur
+    (`Systems/PlayTimeTracker`, horloge `os.clock`) et ajouté à
+    `stats.playTimeSeconds` dans `PlayerDataService` juste avant chaque
+    écriture ; aucune écriture supplémentaire ; intervalle borné à 300 s.
+  - **D4** : schéma v2, migration v1 -> v2 (`achievements = {}`).
+  - **D5** : `AnalyticsService` Roblox reporté à T8 ; indicateurs de
+    rétention natifs du Creator Hub en attendant.
+  - **D6** : P1 (coûts ≥ 2 000 × 0,6) et P2 (Golden Desert dès Backpack
+    4) écartés tant que les mondes 2 à 4 sont vides.
+  - **D7** : Bible économique révisée sur place (1.0.2) dans
+    `GRAB_AND_GROW_ECONOMY_v1.0.md` ; ce fichier porte déjà la révision
+    1.0.1 dans son historique : aucun doublon créé.
+  - Un profil qui a déjà atteint un seuil reçoit le succès au chargement
+    (récompense rétroactive ; seuls des profils de test existent) :
+    confirmé par le propriétaire le 2026-11-14.
+- **Justification :** P0 place la première amélioration juste après la
+  première vente (GDD 4.2 et 4.3). P3 ajoute des récompenses perceptibles
+  entre 30 min et 8 h sans toucher la courbe des mondes futurs ; les
+  récompenses uniques ne créent pas d'inflation durable. A-21 sans
+  migration ni écriture supplémentaire.
+- **Conséquences :** projections (joueur régulier) : première amélioration
+  3,2 -> 1,6 min ; Golden Desert 1,8 -> 1,5 h ; Backpack 8 10,6 -> 8,4 h ;
+  coût total inchangé à 25 Coins près. A-36 réduit, non résolu (structurel
+  jusqu'au contenu de Golden Desert). Un serveur v1 refuse les profils v2 :
+  redémarrer tous les serveurs à la publication.
+- **Affecte :** `UpgradeConfig`, `DataConfig`, `DataSchema`,
+  `PlayerDataService`, `Bootstrap`, `Remotes`, `FeedbackRules`,
+  `Localization`, `ProfileAudit` (commentaire), `StudioTestPresets` (U1),
+  nouveaux `AchievementConfig`, `AchievementRules`, `AchievementService`,
+  `PlayTimeTracker`, `AchievementController`,
+  `tools/simulate_progression.luau`, tests, Bible 1.0.2,
+  `DATA_PERSISTENCE.md`, `PROGRESSION.md`, rapports T7.

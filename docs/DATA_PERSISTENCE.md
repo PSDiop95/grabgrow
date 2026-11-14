@@ -1,9 +1,9 @@
 # GRAB & GROW — Persistance des profils joueurs
 
-Dernière mise à jour : 2026-11-11 (T1)
+Dernière mise à jour : 2026-11-14 (T7 : schéma v2, temps de jeu, D-020)
 
 Références : architecture technique section 7 ; décisions D-006, D-008,
-D-009. Réglages : `Shared/Config/DataConfig.lua`.
+D-009, D-020. Réglages : `Shared/Config/DataConfig.lua`.
 
 ## Modules
 
@@ -11,6 +11,7 @@ D-009. Réglages : `Shared/Config/DataConfig.lua`.
 |---|---|
 | `Shared/Config/DataConfig.lua` | Version du schéma, noms de DataStore, reprises, verrou, sauvegarde auto |
 | `Systems/DataSchema.lua` | Profil par défaut, contrôle d'intégrité, migrations (logique pure) |
+| `Systems/PlayTimeTracker.lua` | Temps de jeu de la session (T7, logique pure) |
 | `Services/PlayerDataService.lua` | Chargement, données en mémoire, sauvegarde, verrou de session |
 | `Systems/MemoryDataStore.lua` | Magasin en mémoire (tests, Studio) |
 | `Systems/PlayerSession.lua` | Branchement Roblox : PlayerAdded, PlayerRemoving, sauvegarde auto, BindToClose |
@@ -20,7 +21,7 @@ D-009. Réglages : `Shared/Config/DataConfig.lua`.
 
 - DataStore : `GrabAndGrow_PlayerData_v1` (production).
 - Clé : `Player_<UserId>`.
-- Valeur : `{ profile = <profil v1>, session = { id, expiresAt } | nil }`.
+- Valeur : `{ profile = <profil v2>, session = { id, expiresAt } | nil }`.
   Les autres champs de premier niveau éventuels sont conservés.
 - Copies de récupération (D-008) : même DataStore, clé
   `Recovery_<UserId>_<heure Unix du chargement>`, jamais écrasées ni
@@ -166,17 +167,35 @@ copie.
 ## Migrations
 
 `DataSchema.Migrations[n]` transforme un profil de version `n` en version
-`n + 1` et fixe son `schemaVersion`. Table vide en v1. Pour passer en v2 :
+`n + 1` et fixe son `schemaVersion`. Procédure pour une nouvelle version :
 
 1. Augmenter `DataConfig.SchemaVersion`.
-2. Ajouter `Migrations[1]`.
+2. Ajouter `Migrations[n]`.
 3. Mettre à jour `newProfile` et le contrôle dans `DataSchema`.
-4. Ajouter des tests sur des profils v1 représentatifs.
+4. Ajouter des tests sur des profils de l'ancienne version.
 5. Noter le changement ici.
 
-Attention : après publication d'une v2, un retour à un serveur v1 refuse
-les profils déjà migrés (`UnsupportedVersion`). Prévoir le retour arrière
-avant toute hausse de version.
+### v1 -> v2 (T7, D-020, 2026-11-14)
+
+- Ajout de la section `achievements = { [identifiant] = true }` (succès
+  permanents, vide après migration). Aucune autre donnée modifiée.
+- Contrôle : clé texte de 1 à 64 caractères, valeur `true` seulement ;
+  sinon `CorruptData`. Identifiants inconnus d'`AchievementConfig`
+  conservés. Section absente d'un profil v2 : ajoutée (réparation).
+- Un profil migré est un profil normalisé : sa copie `Recovery_` (D-008)
+  est écrite avant sa première sauvegarde, une fois par profil.
+- Au chargement suivant la migration, les succès déjà atteints sont
+  attribués (D-020, confirmé par le propriétaire le 2026-11-14 : jeu non
+  publié, profils de test seulement).
+- Tests : `DataSchemaTests` (v1 -> v2, conservation de toutes les
+  sections, valeurs invalides), `AchievementTests` (profil v1 chargé puis
+  évalué).
+
+Attention : après publication de la v2, un serveur v1 encore actif refuse
+les profils déjà migrés (`UnsupportedVersion`, joueur expulsé, rien
+d'écrasé). À la publication, redémarrer tous les serveurs (pas de
+cohabitation v1 / v2) ; un retour arrière exige un serveur qui accepte la
+v2.
 
 ## Environnements
 
@@ -216,8 +235,14 @@ le DataStore de production.
 - **Quotas** : une écriture par joueur et par minute, plus chargement et
   sortie. Non mesuré sur un serveur réel.
 - **Messages d'expulsion** : texte anglais brut, non localisé.
-- **`stats.playTimeSeconds`** : présent dans le schéma, alimenté par aucun
-  système pour l'instant.
+- **`stats.playTimeSeconds`** (T7, A-21) : temps passé avec le profil
+  chargé, compté par le serveur (`os.clock`, `PlayTimeTracker`) et ajouté
+  juste avant chaque écriture (sauvegarde auto, sortie, fermeture) ; aucune
+  écriture supplémentaire. Hors ligne et chargement non comptés ; écriture
+  en échec : temps conservé en mémoire, jamais compté deux fois ; crash
+  serveur : perte du temps depuis la dernière sauvegarde (≤ 60 s) ;
+  intervalle borné à 300 s (`DataConfig.PlayTime`). Le temps d'inactivité
+  avant l'expulsion Roblox (≈ 20 min) est compté.
 - **Magasin en mémoire** : ne reproduit ni quotas, ni latence, ni limite
   de taille du DataStore réel.
 

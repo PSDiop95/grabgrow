@@ -450,7 +450,7 @@ function PlayerDataServiceTests.run(modules: Modules): ({ string }, number)
 				return nil
 			end,
 			["version modifiée"] = function(draft: any): boolean?
-				draft.schemaVersion = 2
+				draft.schemaVersion = config.SchemaVersion + 1
 				return nil
 			end,
 			["erreur"] = function(draft: any): boolean?

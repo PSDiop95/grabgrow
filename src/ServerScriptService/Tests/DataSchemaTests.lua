@@ -51,10 +51,18 @@ function DataSchemaTests.run(modules: Modules): ({ string }, number)
 		end
 	end
 
-	case("nouveau profil conforme à v1", function(check)
+	-- Profil tel qu'écrit par un serveur v1 (avant T7) : sans succès.
+	local function v1Profile(): any
 		local profile = DataSchema.newProfile()
-		check(profile.schemaVersion == 1, "schemaVersion ~= 1")
-		check(DataConfig.SchemaVersion == 1, "DataConfig.SchemaVersion ~= 1")
+		profile.schemaVersion = 1
+		profile.achievements = nil
+		return profile
+	end
+
+	case("nouveau profil conforme à v2", function(check)
+		local profile = DataSchema.newProfile()
+		check(profile.schemaVersion == 2, "schemaVersion ~= 2")
+		check(DataConfig.SchemaVersion == 2, "DataConfig.SchemaVersion ~= 2")
 		local valid, message = DataSchema.validate(profile)
 		check(valid, `profil par défaut refusé : {tostring(message)}`)
 		local normalized, _, _, repairs = DataSchema.normalize(profile)
@@ -62,10 +70,10 @@ function DataSchemaTests.run(modules: Modules): ({ string }, number)
 		check(deepEqual(normalized, profile), "normalize modifie le profil par défaut")
 	end)
 
-	case("valeurs par défaut (D-006)", function(check)
+	case("valeurs par défaut (D-006, D-020)", function(check)
 		local profile = DataSchema.newProfile()
 		local expected = {
-			schemaVersion = 1,
+			schemaVersion = 2,
 			currencies = { coins = 0, gems = 0, stars = 0 },
 			inventory = { resources = {} },
 			upgrades = {
@@ -88,10 +96,11 @@ function DataSchemaTests.run(modules: Modules): ({ string }, number)
 				totalSales = 0,
 				playTimeSeconds = 0,
 			},
+			achievements = {},
 			settings = { musicEnabled = true, sfxEnabled = true },
 			lastSaveAt = 0,
 		}
-		check(deepEqual(profile, expected), "le profil par défaut diffère du schéma v1 de référence")
+		check(deepEqual(profile, expected), "le profil par défaut diffère du schéma v2 de référence")
 	end)
 
 	case("valeurs par défaut cohérentes avec les configurations", function(check)
@@ -294,12 +303,104 @@ function DataSchemaTests.run(modules: Modules): ({ string }, number)
 		check(not DataSchema.validate(raw), "validate accepte une version future")
 	end)
 
-	case("aucune migration fictive en v1", function(check)
-		check(next(DataSchema.Migrations) == nil, "DataSchema.Migrations doit être vide tant que le schéma est v1")
+	-- MIGRATION RÉELLE v1 -> v2 (T7, D-020) ------------------------------
+
+	case("migrations réelles : seulement v1 -> v2", function(check)
+		local count = 0
+		for version in pairs(DataSchema.Migrations) do
+			count += 1
+			check(version == 1, `migration inattendue depuis v{tostring(version)}`)
+		end
+		check(count == 1, `1 migration attendue, trouvé {count}`)
 	end)
 
-	-- Mécanisme de migration, exercé avec des migrations de test : aucune
-	-- migration réelle n'existe en v1.
+	case("v1 -> v2 : succès vides, toutes les données conservées", function(check)
+		local raw = v1Profile()
+		raw.currencies.coins = 4321
+		raw.inventory.resources.wood = 17
+		raw.inventory.resources.ancienne_ressource = 2
+		raw.upgrades.backpackLevel = 6
+		raw.upgrades.magnetLevel = 3
+		raw.worlds.GoldenDesert = true
+		raw.stats.totalResourcesCollected = 5000
+		raw.stats.totalCoinsEarned = 9000
+		raw.stats.totalCoinsSpent = 4679
+		raw.stats.totalSales = 70
+		raw.stats.playTimeSeconds = 3600
+		raw.settings.musicEnabled = false
+		raw.lastSaveAt = 1_700_000_000
+		raw.champFutur = { valeur = 1 }
+
+		local profile, code, message, repairs = DataSchema.normalize(raw)
+		check(profile ~= nil, `refusé : {tostring(code)} {tostring(message)}`)
+		if profile == nil then
+			return
+		end
+		check(profile.schemaVersion == 2, "version finale incorrecte")
+		check(type(profile.achievements) == "table" and next(profile.achievements) == nil, "succès non vides")
+		check(#repairs == 0, `aucune réparation attendue, trouvé {#repairs}`)
+		check(raw.schemaVersion == 1 and raw.achievements == nil, "l'entrée a été modifiée")
+		-- Toutes les autres sections : identiques.
+		for key, value in pairs(raw) do
+			if key ~= "schemaVersion" then
+				check(deepEqual(profile[key], value), `section {key} modifiée par la migration`)
+			end
+		end
+		check(DataSchema.validate(profile), "profil migré invalide")
+	end)
+
+	case("v1 -> v2 : section achievements déjà présente conservée", function(check)
+		local raw = v1Profile()
+		raw.achievements = { collect_100 = true }
+		local profile = DataSchema.normalize(raw)
+		check(profile ~= nil and profile.achievements.collect_100 == true, "succès existant perdu")
+	end)
+
+	case("v2 : succès invalides refusés, inconnus conservés", function(check)
+		local unknown = DataSchema.newProfile()
+		unknown.achievements.ancien_succes = true
+		local kept = DataSchema.normalize(unknown)
+		check(kept ~= nil and kept.achievements.ancien_succes == true, "succès inconnu supprimé")
+
+		local samples: { [string]: (profile: any) -> () } = {
+			["achievements non table"] = function(profile)
+				profile.achievements = true
+			end,
+			["valeur false"] = function(profile)
+				profile.achievements.collect_100 = false
+			end,
+			["valeur nombre"] = function(profile)
+				profile.achievements.collect_100 = 1
+			end,
+			["clé numérique"] = function(profile)
+				profile.achievements[1] = true
+			end,
+			["clé vide"] = function(profile)
+				profile.achievements[""] = true
+			end,
+			["clé trop longue"] = function(profile)
+				profile.achievements[string.rep("a", 65)] = true
+			end,
+		}
+		for name, mutate in pairs(samples) do
+			local profile = DataSchema.newProfile()
+			mutate(profile)
+			local normalized, code = DataSchema.normalize(profile)
+			check(normalized == nil and code == DataSchema.ErrorCode.CorruptData, `{name} : {tostring(code)}`)
+			check(not DataSchema.validate(profile), `{name} : validate accepte`)
+		end
+	end)
+
+	case("v2 : section achievements absente ajoutée", function(check)
+		local raw = DataSchema.newProfile()
+		raw.achievements = nil
+		local profile, _, _, repairs = DataSchema.normalize(raw)
+		check(profile ~= nil and type(profile.achievements) == "table", "section non ajoutée")
+		check(#repairs == 1, "ajout non signalé")
+		check(not DataSchema.validate(raw), "validate accepte un profil sans achievements")
+	end)
+
+	-- Mécanisme de migration, exercé avec des migrations de test.
 	local testMigrations = {
 		[1] = function(profile: any): any
 			profile.schemaVersion = 2
@@ -314,7 +415,7 @@ function DataSchemaTests.run(modules: Modules): ({ string }, number)
 	}
 
 	case("migration : profil déjà à jour inchangé", function(check)
-		local raw = DataSchema.newProfile()
+		local raw = v1Profile()
 		raw.currencies.coins = 42
 		local migrated, code = DataSchema.migrate(raw, {}, 1)
 		check(migrated ~= nil, `refusé : {tostring(code)}`)
@@ -322,7 +423,7 @@ function DataSchemaTests.run(modules: Modules): ({ string }, number)
 	end)
 
 	case("migration : v1 -> v2 -> v3 conserve les données", function(check)
-		local raw = DataSchema.newProfile()
+		local raw = v1Profile()
 		raw.currencies.coins = 4200
 		raw.inventory.resources.stone = 9
 		raw.upgrades.backpackLevel = 6
@@ -340,7 +441,7 @@ function DataSchemaTests.run(modules: Modules): ({ string }, number)
 	end)
 
 	case("migration : étape manquante refusée", function(check)
-		local migrated, code = DataSchema.migrate(DataSchema.newProfile(), { [2] = testMigrations[2] }, 3)
+		local migrated, code = DataSchema.migrate(v1Profile(), { [2] = testMigrations[2] }, 3)
 		check(migrated == nil and code == DataSchema.ErrorCode.MigrationFailed, `code {tostring(code)}`)
 	end)
 
@@ -350,7 +451,7 @@ function DataSchemaTests.run(modules: Modules): ({ string }, number)
 				error("panne")
 			end,
 		}
-		local migrated, code = DataSchema.migrate(DataSchema.newProfile(), failing, 2)
+		local migrated, code = DataSchema.migrate(v1Profile(), failing, 2)
 		check(migrated == nil and code == DataSchema.ErrorCode.MigrationFailed, `erreur : code {tostring(code)}`)
 
 		local forgetful = {
@@ -358,7 +459,7 @@ function DataSchemaTests.run(modules: Modules): ({ string }, number)
 				return profile -- schemaVersion non mis à jour
 			end,
 		}
-		migrated, code = DataSchema.migrate(DataSchema.newProfile(), forgetful, 2)
+		migrated, code = DataSchema.migrate(v1Profile(), forgetful, 2)
 		check(migrated == nil and code == DataSchema.ErrorCode.MigrationFailed, `oubli : code {tostring(code)}`)
 	end)
 

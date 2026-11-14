@@ -1,7 +1,7 @@
 # GRAB & GROW --- Bible économique
 
 > **Document de référence économique et de monétisation**\
-> Version : 1.0 --- 10 novembre 2026\
+> Version : 1.0.2 --- 14 novembre 2026 (révision T7, D-020)\
 > Statut : proposition chiffrée initiale à tester\
 > Projet : GRAB & GROW\
 > Plateforme : Roblox\
@@ -293,7 +293,7 @@ plafond. Les effets sont appliqués par le serveur.
     Niveau   Capacité   Coût Coins
   -------- ---------- ------------
          1         50      Gratuit
-         2         75          100
+         2         75     75 (T7)
          3        100          250
          4        140          600
          5        180        1 200
@@ -310,6 +310,11 @@ plafond. Les effets sont appliqués par le serveur.
         16      2 000    1 000 000
 
 Les niveaux 17+ seront définis après les tests de la version initiale.
+
+**Révision 1.0.2 (T7, D-020) :** coût du niveau 2 abaissé de 100 à 75
+Coins, pour que la première amélioration soit payable dès la première
+vente (sac de 50 ≈ 89 Coins en moyenne sur la carte MVP). Hypothèse de
+départ, à mesurer en test privé.
 
 ### 5.3 Grabber
 
@@ -542,6 +547,12 @@ inaccessible à son niveau.
   Exploration       Découvrir 10 ressources rares   15 Gems
 
 ### 8.3 Succès permanents
+
+**MVP (T7, D-020) :** douze succès permanents, récompensés une seule fois
+en Coins (50 à 10 000), définis dans `Shared/Config/AchievementConfig`
+(source unique des valeurs) et attribués par le serveur à partir des
+compteurs du profil. Ni quête quotidienne ni série. Justification et
+simulation : `docs/phases/T7_ECONOMY_SIMULATION.md`.
 
 Exemples : - première collecte ; - première vente ; - premier sac
 amélioré ; - premier monde débloqué ; - 1 000 ressources collectées ; -
@@ -1096,6 +1107,12 @@ final.
                                                   de réapparition (3.6).
                                                   Aucune valeur unitaire
                                                   modifiée
+
+  1.0.2                   2026-11-14              T7 (D-020) : Backpack
+                                                  niveau 2 à 75 Coins ;
+                                                  succès permanents MVP
+                                                  (8.3). Autres valeurs
+                                                  inchangées
 
   -----------------------------------------------------------------------
 

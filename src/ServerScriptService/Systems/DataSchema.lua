@@ -1,5 +1,5 @@
 --!strict
--- Schéma versionné du profil joueur (v1, décision D-006) : profil par
+-- Schéma versionné du profil joueur (v1 D-006, v2 D-020) : profil par
 -- défaut, contrôle d'intégrité et migrations.
 --
 -- Règles d'intégrité (décision D-008) :
@@ -64,9 +64,23 @@ local SETTING_DEFAULTS: { [string]: boolean } = {
 	sfxEnabled = true,
 }
 
+-- Longueur maximale d'un identifiant de succès persisté.
+local MAX_ACHIEVEMENT_ID_LENGTH = 64
+
 -- Migrations : Migrations[n] transforme un profil de version n en profil de
--- version n + 1 (et fixe son schemaVersion). Vide tant que le schéma est v1.
-DataSchema.Migrations = {} :: { [number]: (profile: any) -> any }
+-- version n + 1 (et fixe son schemaVersion).
+DataSchema.Migrations = {
+	-- v1 -> v2 (T7, D-020) : succès permanents, aucun obtenu. Aucune autre
+	-- donnée modifiée. Une section `achievements` déjà présente (clé
+	-- inconnue d'un v1) est conservée et contrôlée ensuite.
+	[1] = function(profile: any): any
+		if profile.achievements == nil then
+			profile.achievements = {}
+		end
+		profile.schemaVersion = 2
+		return profile
+	end,
+} :: { [number]: (profile: any) -> any }
 
 -- Construit un profil par défaut neuf à chaque appel : aucune table
 -- partagée entre joueurs.
@@ -99,6 +113,8 @@ function DataSchema.newProfile(): any
 		upgrades = upgrades,
 		worlds = worlds,
 		stats = stats,
+		-- Succès obtenus (T7, v2) : { [identifiant] = true }.
+		achievements = {},
 		settings = TableUtil.deepCopy(SETTING_DEFAULTS),
 		lastSaveAt = 0,
 	}
@@ -234,6 +250,19 @@ local function checkProfile(profile: any, repair: boolean): CheckContext
 	if stats then
 		for _, statId in ipairs(STAT_IDS) do
 			checkInteger(context, stats, "stats", statId, 0, 0, MAX_SAFE_INTEGER)
+		end
+	end
+
+	-- Succès (v2) : identifiants inconnus d'AchievementConfig conservés
+	-- (succès retiré puis rétabli) ; seule la valeur `true` est valide.
+	local achievements = getSection(context, profile, "", "achievements")
+	if achievements then
+		for achievementId, earned in pairs(achievements) do
+			if type(achievementId) ~= "string" or achievementId == "" or #achievementId > MAX_ACHIEVEMENT_ID_LENGTH then
+				fail(context, `achievements : clé invalide ({tostring(achievementId)})`)
+			elseif earned ~= true then
+				fail(context, `achievements.{achievementId} : true attendu, reçu {tostring(earned)} ({type(earned)})`)
+			end
 		end
 	end
 

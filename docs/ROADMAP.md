@@ -1,6 +1,6 @@
 # GRAB & GROW — Roadmap
 
-Dernière mise à jour : 2026-11-13
+Dernière mise à jour : 2026-11-14
 
 Phasage du MVP repris de l'architecture technique (section 20, T0 à T8).
 Le calendrier 10 semaines du GDD (section 20) reste la cible commerciale,
@@ -20,11 +20,11 @@ réellement exécuté. État détaillé : `PROJECT_STATUS.md`.
 | T3 | Vente et Coins | Transaction fiable, inventaire vidé correctement | **Terminé** (clôturé le 2026-11-12) — E1–E7, E9 et rendu 3D validés, E8 partiel accepté (manette physique reportée) ; A-34 et A-35 corrigés ; place version 25 ; commits locaux, non poussés |
 | T4 | Améliorations (5) et progression des mondes | Achats validés côté serveur | **Terminé** (clôturé le 2026-11-12) — U1–U9b validés (Studio, émulateur, téléphone réel), U10 manette reporté ; A-39, A-40, A-41 corrigés ; commits locaux 69fb421 et e63039d, non poussés. Ouvertes : A-36 (T7), A-37 (T6), A-38 (T5) |
 | T5 | HUD et feedback mobile | Boucle complète utilisable sur téléphone | **Terminé** (clôturé le 2026-11-13, D-018, avec réserves : manette, tablette réelle, performance non chiffrée) — T5.1 HUD **terminé** (clôturé le 2026-11-12 : tests automatisés, Studio, téléphone réel OK ; commit local 5d4f339) ; T5.2 feedback **terminé** (clôturé le 2026-11-12 : tests automatisés, Studio, téléphone réel OK) ; T5.3 première session **terminé** (2026-11-13 : tests automatisés, Studio et émulateur OK ; D-017 acceptée ; commit local) ; T5.4 textes EN/FR **terminé** (2026-11-13 : validé ; commit local) ; T5.5 validation **terminée avec réserves** (2026-11-13 : technique, émulateur, téléphone réel et PC validés par le propriétaire ; manette reportée, tablette réelle non testée)  |
-| T6 | Tests multijoueurs et anti-exploit | Aucun exploit simple, aucune fuite de données | **En cours** — implémentation faite le 2026-11-13 (D-019, `phases/T6_SECURITY_REPORT.md`) ; Local Server multi-joueurs OK (propriétaire) ; commit local ; validation formelle en attente |
-| T7 | Équilibrage MVP | Première session compréhensible et satisfaisante | À faire |
+| T6 | Tests multijoueurs et anti-exploit | Aucun exploit simple, aucune fuite de données | **Terminé** (clôturé le 2026-11-14, D-019, `phases/T6_SECURITY_REPORT.md`) — tests automatisés, Studio un joueur, Local Server 2 joueurs (propriétaire) OK ; commit local c199d85, non poussé. Réserves : A-27 (mobile réel), A-42, seuils R4 à calibrer |
+| T7 | Équilibrage MVP | Première session compréhensible et satisfaisante | **Terminé** (clôturé le 2026-11-14, test réel du propriétaire) — D-020 : Backpack 2 à 75, temps de jeu, schéma v2, succès permanents, simulateur ; `phases/T7_IMPLEMENTATION_REPORT.md` ; tests automatisés et Studio OK ; commit et push autorisés le 2026-11-14 |
 | T8 | Préparation publication | Tests privés concluants | À faire |
 
-## Phases terminées : T2, T3, T4, T5
+## Phases terminées : T2, T3, T4, T5, T6
 
 T2 — Collecte et inventaire (`COLLECTION.md`), clôturée le 2026-11-11.
 
@@ -56,9 +56,12 @@ EN/FR (`LOCALIZATION.md`) ; validé, clôturé. Lot T5.5 (validation) : terminé
 réserves le 2026-11-13 (`tests/T5_MULTIPLATFORM_REPORT.md`) ; aucune
 P0/P1 ; T55-01 corrigée ; place version 56. T5 clôturée (D-018).
 
-Phase en cours : T6, implémentée le 2026-11-13, en attente de validation
-(rapports `phases/T6_SECURITY_REPORT.md` et
-`phases/T6_MULTIPLAYER_TEST_REPORT.md`). T7 non commencée.
+T6 — Tests multijoueurs et anti-exploit (`phases/T6_SECURITY_REPORT.md`,
+`phases/T6_MULTIPLAYER_TEST_REPORT.md`, D-019) : clôturée le 2026-11-14.
+
+T7 — Équilibrage MVP : validée et clôturée par le propriétaire le 2026-11-14 après test réel
+(`phases/T7_PROGRESSION_AUDIT.md`, `phases/T7_ECONOMY_SIMULATION.md`,
+`phases/T7_IMPLEMENTATION_REPORT.md`). T8 non commencée.
 
 ## Après le MVP (ne pas commencer avant validation de T0 à T8)
 

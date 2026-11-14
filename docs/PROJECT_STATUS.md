@@ -1,15 +1,22 @@
 # GRAB & GROW — État du projet
 
-Dernière mise à jour : 2026-11-13 (T6 implémentée, validation en attente, D-019)
+Dernière mise à jour : 2026-11-14 (T7 validée et clôturée par le propriétaire le 2026-11-14 après test réel, D-020)
 
 ## Résumé
 
-**T6 (sécurité multijoueur) : implémentée le 2026-11-13, NON clôturée**,
-validation du propriétaire en attente (D-019). MovementValidator,
+**T7 (progression et équilibrage) : implémentée le 2026-11-14, NON
+clôturée**, validation du propriétaire en attente (D-020). Backpack 2 à
+75 Coins ; temps de jeu serveur (A-21) ; schéma v2 et 12 succès
+permanents ; simulateur `tools/simulate_progression.luau`. 17 suites Lune
+OK, luau-lsp 0 erreur, rojo build OK, Play Studio OK (succès réel
+attribué). Détail : `phases/T7_IMPLEMENTATION_REPORT.md`. Aucun commit.
+
+**T6 (sécurité multijoueur) : VALIDÉE et CLÔTURÉE** (propriétaire,
+2026-11-14, D-019 ; commit local c199d85, aucun push). MovementValidator,
 PayloadValidator, SecurityLog, ProfileAudit ; 15 suites Lune OK,
 luau-lsp 0 erreur, rojo build OK ; scénarios Studio à un joueur OK.
-Local Server multi-joueurs : OK selon le propriétaire. Reste : latence
-mobile réelle. Commit local autorisé (aucun push).
+Local Server multi-joueurs : OK selon le propriétaire. Réserves : latence
+mobile réelle (A-27), seuils R4 à calibrer, A-42.
 
 T0 est clos. **T1 est validé avec réserves** (propriétaire, 2026-11-11) :
 socle commité en e90f709, protection D-008 dans le commit suivant
@@ -807,15 +814,15 @@ focus) : caméra et personnage vérifiés normaux.
 | A-12 | Golden Desert exige niveau de sac ET Coins ; le GDD 7.3 déconseille les conditions simultanées | Avant l'ouverture réelle de Golden Desert |
 | A-14 | Les documents se citent sous `docs/GDD.md`, etc. ; noms réels `docs/GRAB_AND_GROW_*_v1.0.md` | Sans effet technique |
 | A-17 | Table Magnet de la Bible (niveau 1 gratuit à 12 studs) à réaligner sur `magnetLevel = 0` | **Décidée** (D-015, propriétaire, 2026-11-12) : niveau k = ligne k + 1, maximum 9 ; note ajoutée à la Bible 5.4 |
-| A-36 | Projection : niveaux au-delà de 5 rentabilisés en dizaines d'heures tant que Green Valley est le seul monde jouable ; Golden Desert à ≈ 85 min (actif) | À mesurer en T7 (`PROGRESSION.md`) |
-| A-37 | `WalkSpeed` fixé par le serveur mais modifiable localement par un client tricheur ; la collecte reste bornée par la vitesse des Boots du profil | **Réduite en T6, en attente de validation** (D-019) : vitesse observée comparée aux Boots du profil ; speed hack ≤ ~2 × la vitesse de référence non détecté |
+| A-36 | Projection : niveaux au-delà de 5 rentabilisés en dizaines d'heures tant que Green Valley est le seul monde jouable ; Golden Desert à ≈ 85 min (actif) | **Réduite en T7, validée** (D-020) : cause structurelle (mondes 2 à 4 vides) ; succès permanents et Backpack 2 à 75 ; Golden Desert 1,8 -> 1,5 h, Backpack 8 10,6 -> 8,4 h (régulier, projection). Plateau après 2 à 4 h maintenu jusqu'au contenu de Golden Desert (`phases/T7_PROGRESSION_AUDIT.md`) |
+| A-37 | `WalkSpeed` fixé par le serveur mais modifiable localement par un client tricheur ; la collecte reste bornée par la vitesse des Boots du profil | **Réduite en T6, validée** (2026-11-14) (D-019) : vitesse observée comparée aux Boots du profil ; speed hack ≤ ~2 × la vitesse de référence non détecté |
 | A-40 | Magnet : achat sans effet perçu (retour du propriétaire, U3). Effet réel vérifié dans Studio (`U3` : ressource à 12,6 studs hors portée avant achat, collectée après) mais faible (+2 studs, valeur de la Bible) et sans retour visuel de la portée | **Corrigé en T4, validé** (décision options 1 + 2 puis validation du propriétaire, 2026-11-12) : message d'achat « valeur avant → après » pour les 5 améliorations, EN/FR (`Sac 50 → 75`, `Délai de collecte 0,75 → 0,7 s`, `Portée 12 → 14 studs`, `Vitesse 16 → 16,5 studs/s`, `Valeur de vente x1 → x1,05`, vérifiés par achats réels dans Studio) ; anneau de portée temporaire (Magnet seulement, rayon 14,00 = portée, au sol, détruit à 2,5 s, sans boucle). Messages déplacés dans `NotificationsUI` (DisplayOrder 10) : ils étaient cachés par le panneau Boutique. Aucun changement serveur, économique ni de collecte. Émulateur Studio (téléphone paysage) : captures OK ; téléphone réel non testé |
 | A-38 | Icônes de la boutique en glyphes Unicode (rendu OK sur un téléphone réel, U9b, 2026-11-12 ; autres appareils non vérifiés) ; noms de mondes identiques en anglais et en français | Phase UX (T5) |
 | A-18 | GDD 15.5 et 20 non alignés sur D-004 et D-006 ; l'exemple de l'architecture 8.1 indique encore Stone « Uncommon » | Prochaine révision des documents |
 | A-20 | Le prompt T1 cite `docs/GRAB_AND_GROW_ECONOMY_v1.0.1.md` ; le fichier réel est `..._v1.0.md` (contenu 1.0.1, en-tête encore « Version : 1.0 ») | Sans effet technique |
-| A-21 | `stats.playTimeSeconds` existe dans le schéma mais aucun système ne l'alimente | À décider avant T5 |
+| A-21 | `stats.playTimeSeconds` existe dans le schéma mais aucun système ne l'alimente | **Corrigée en T7, validée** (D-020) : `PlayTimeTracker`, ajout avant chaque écriture, sans écriture supplémentaire ; 15 tests automatisés ; non vérifié sur DataStore réel |
 | A-22 | Messages d'expulsion (`PlayerSession`) en anglais brut, non localisés | **Corrigé en T5.4, validé** (propriétaire, 2026-11-13) : clés `system.kick.*` EN/FR, traduites avec `Player.LocaleId` ; règles d'expulsion inchangées. Vérifié dans Studio (fr-fr) : `Server Kick Message: Votre session a été ouverte sur un autre serveur.` |
-| A-19 | Première amélioration (100 Coins) atteinte à la 2e vente avec 3 ressources (sac ≈ 89 Coins) ; revenu théorique maximal ≈ 142 Coins/min pour une cible de 120–250 | À mesurer en T7 |
+| A-19 | Première amélioration (100 Coins) atteinte à la 2e vente avec 3 ressources (sac ≈ 89 Coins) ; revenu théorique maximal ≈ 142 Coins/min pour une cible de 120–250 | **Corrigée en T7, validée** (D-020) : Backpack 2 à 75, payable après la 1re vente (projection 1,3 à 2,1 min) ; à mesurer en test privé |
 | A-23 | `rojo serve` lancé avant T2 ne prenait pas en compte les nouvelles entrées de `default.project.json` (`ServerStorage`, `StarterPlayer`) | **Levée** le 2026-11-11 : `rojo serve` relancé, plugin reconnecté par le propriétaire ; dans Studio, 29 scripts identiques au dépôt (empreinte comparée), aucun doublon |
 | A-24 | La carte de test n'existait que dans le place ouvert, non enregistré | **Levée** le 2026-11-11 : carte reconstruite par script, place de test sauvegardé en version 15 (non publié), copie locale `GrabAndGrow.rbxl` contenant la carte vérifiée (18:59 UTC). Non versionnée dans Git (D-013) : sauvegarde de travail locale |
 | A-25 | Ressources inconnues de `ResourceConfig` conservées par D-008 | **Décidée** (propriétaire, 2026-11-11, D-012) : conservées, et comptées dans l'occupation du sac pour empêcher tout dépassement de capacité. Comportement actuel, documenté dans `COLLECTION.md`. Vente (T3, D-014) : jamais vendues ni supprimées ; `NOTHING_TO_SELL` si elles sont seules |
@@ -826,7 +833,7 @@ focus) : caméra et personnage vérifiés normaux.
 | A-41 | Téléphone : le panneau du sac (en haut au centre) masque le texte du chat Roblox, en haut à gauche (constat du propriétaire, appareil réel, 2026-11-12) | **Corrigé en T4, validé** (téléphone réel, propriétaire, 2026-11-12) : essai en haut à droite refusé par le propriétaire (« le sac doit être centré et en haut au milieu », capture du 2026-11-12) ; 2e capture : sac monté dans la bande de la barre Roblox, zone annotée par le propriétaire (`IgnoreGuiInset = true`, 8 px du bord, toast juste dessous) ; sac en haut au centre, largeur réduite de 60 % à 45 % de l'écran (170 à 300 px, auparavant 200 à 320), ligne Coins réduite plutôt que tronquée ; `UpgradeController` place Boutique à gauche de Prendre si le sac gêne au-dessus. Vérifié dans Studio (705 × 280, bande 58 px) : sac centré (centre 352 / 352), à 8 px du bord réel, Boutique au-dessus de Prendre sans chevauchement pour les positions réalistes. **Reste** : chat ouvert sur téléphone, recouvrement réduit mais pas supprimé (fenêtre du chat ≈ 50 % de la largeur, valeur Roblox supposée) ; écran très bas, Boutique à gauche de Prendre peut toucher le coin du sac |
 | A-39 | Mobile paysage : bouton « Boutique » (bord droit, 38 % de la hauteur) posé sur le bouton « Prendre » (constat du propriétaire, émulateur, 2026-11-12) | **Corrigé en T4, validé** (U9a émulateur, propriétaire, 2026-11-12) : `UpgradeController` place Boutique juste au-dessus de Prendre (écart 12 px), ou à sa gauche si la place manque ; position fixe d'origine quand Prendre est masqué (PC). Vérifié dans Studio (positions de Prendre simulées, écran 705 × 280) : aucun chevauchement avec Prendre, bouton toujours à l'écran. Aucun chevauchement signalé |
 | A-35 | Mobile portrait : bouton « Prendre » placé à 190 px du bord droit, donc dans la zone du stick gauche sur un écran étroit (constat du propriétaire, émulateur) | **Corrigé en T3** (décision du propriétaire, 2026-11-12) : `CollectionController` place le bouton juste au-dessus du `JumpButton` de Roblox (positions suivies par événements, repli en bas à droite). Vérifié en portrait et en paysage, touchers réels du propriétaire : aucun chevauchement, collecte et vente OK. Acceptée par le propriétaire ; commit local autorisé |
-| A-26 | Position du personnage simulée par le client : le contrôle de trajet ne bloque que la téléportation entre deux collectes | **PARTIEL — réduite en T6, en attente de validation** (D-019) : MovementValidator (fenêtre glissante, téléportation, vertical), contrôle avant collecte et vente, référence de réapparition serveur, correction graduelle. La position reste simulée par le client |
+| A-26 | Position du personnage simulée par le client : le contrôle de trajet ne bloque que la téléportation entre deux collectes | **PARTIEL — réduite en T6, validée** (2026-11-14) (D-019) : MovementValidator (fenêtre glissante, téléportation, vertical), contrôle avant collecte et vente, référence de réapparition serveur, correction graduelle. La position reste simulée par le client |
 | A-27 | Marges de sécurité de la collecte (4 studs, 0,1 s, 5 demandes/s) jamais mesurées avec une latence mobile réelle | **Ouverte** : latence Studio 0,4 s partiellement testée en T6 ; mobile réel non mesuré ; seuils R4 provisoires |
 | A-42 | Projection physique forte (≥ 40 studs) en continuant de courir : l'épisode peut durer 3 s et provoquer la correction d'un joueur honnête | **Ouverte (T6)** : calibrer `persistentEpisodeSeconds` avec des mesures réelles |
 | A-43 | Profils créés par les préréglages Studio : constats `data_inconsistency` attendus au chargement | **Documentée (T6)** : sans effet en production, audit en lecture seule |
@@ -928,7 +935,7 @@ scripts identiques au dépôt (correction T55-01 incluse),
 `useMemoryStore = true`, station présente, aucun résidu de Play. La
 publication reste à faire par le propriétaire.
 
-## Vérifications T6 — Sécurité multijoueur (2026-11-13, EN ATTENTE DE VALIDATION)
+## Vérifications T6 — Sécurité multijoueur (2026-11-13, VALIDÉ le 2026-11-14)
 
 Détail : `phases/T6_SECURITY_REPORT.md` et
 `phases/T6_MULTIPLAYER_TEST_REPORT.md`.
@@ -955,15 +962,29 @@ Aucun changement d'économie, de schéma ni de client.
 À remettre en état : `IncomingReplicationLag` laissé à **0,4** dans Studio
 (session fermée avant remise à 0) ; Studio Settings > Network → **0**.
 
+## Vérifications T7 — Progression et équilibrage (2026-11-14, VALIDÉE ET CLÔTURÉE)
+
+Détail : `phases/T7_IMPLEMENTATION_REPORT.md`, `phases/T7_ECONOMY_SIMULATION.md`,
+`phases/T7_PROGRESSION_AUDIT.md`.
+
+| Vérification | Type | Résultat |
+|---|---|---|
+| 17 suites Lune (dont `PlayTimeTests` 15 cas, `AchievementTests` 16 cas) | Automatisé | OK |
+| Mutations volontaires des nouveaux modules | Automatisé | Détectées, code restauré |
+| `luau-lsp analyze` | Automatisé | 0 erreur |
+| `rojo build` (fichier temporaire) | Automatisé | Réussi |
+| Play Studio : suites, 40 collectes réelles, succès `collect_100` | Studio, magasin en mémoire | OK (+50 Coins, journal, bandeau FR) |
+| Test réel par le propriétaire | Manuel (propriétaire) | Effectué, T7 validée le 2026-11-14 |
+| Migration v2 sur DataStore réel | Manuel | Non exécutée (optionnelle) |
+
 ## Décisions en attente
 
-1. Push GitHub des commits T1 à T5 (non autorisé à ce jour).
+1. Push GitHub des commits T1 à T7 : autorisé et effectué le 2026-11-14.
 2. D-8 (persistance des préférences) et D-9 (emplacement) : recommandations
    appliquées, sans décision consignée.
 
 ## Prochaine étape
 
-1. Validation formelle de T6 par le propriétaire (Local Server déclaré OK,
-   commit local fait) ; vérifier `IncomingReplicationLag` = 0.
-2. Push : non autorisé.
-3. T7 non commencée.
+1. Vérifier dans Studio que `IncomingReplicationLag` = 0.
+2. Commit et push T7 : autorisés le 2026-11-14.
+3. T8 : non commencée ; lancement sur décision du propriétaire.

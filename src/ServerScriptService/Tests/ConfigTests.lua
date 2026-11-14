@@ -359,6 +359,30 @@ function ConfigTests.run(configs: Configs): { string }
 		end
 	end
 
+	-- T7 (D-020, P0) : la première amélioration doit être payable dès la
+	-- première vente d'un sac plein. Carte de test : 36 nœuds 16/12/8 ;
+	-- valeur moyenne d'un sac de départ moins deux écarts types (sac
+	-- défavorable, riche en feuilles).
+	local nodeCounts = { green_leaf = 16, wood = 12, stone = 8 }
+	local nodes, sum, sumSquares = 0, 0, 0
+	for resourceId, count in pairs(nodeCounts) do
+		local resource = resources[resourceId]
+		check(resource ~= nil, `ressource de la carte de test absente : {resourceId}`)
+		if resource then
+			nodes += count
+			sum += count * resource.sellValue
+			sumSquares += count * resource.sellValue * resource.sellValue
+		end
+	end
+	local capacity = upgrades.Backpack.levels[1].value
+	local mean = sum / nodes
+	local deviation = math.sqrt(math.max(0, sumSquares / nodes - mean * mean))
+	local unfavourableBag = math.floor(capacity * mean - 2 * math.sqrt(capacity) * deviation)
+	check(
+		upgrades.Backpack.levels[2].cost <= unfavourableBag,
+		`Backpack 2 ({upgrades.Backpack.levels[2].cost}) non payable après un premier sac défavorable ({unfavourableBag})`
+	)
+
 	return failures
 end
 

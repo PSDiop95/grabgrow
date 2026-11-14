@@ -1,7 +1,7 @@
 # T6 — Rapport de sécurité multijoueur et robustesse serveur
 
-Date : 2026-11-13. Décision : D-019. Statut : **implémentation faite,
-validation du propriétaire en attente** (T6 non clôturée).
+Date : 2026-11-13. Décision : D-019. Statut : **validée et clôturée**
+(propriétaire, 2026-11-14 ; commit local c199d85).
 Résultats de tests : `T6_MULTIPLAYER_TEST_REPORT.md`.
 
 ## 1. Vulnérabilités identifiées (étape A)

@@ -1,7 +1,7 @@
 --!strict
 -- Les cinq améliorations (T4, décision D-015).
 -- Source : Bible économique v1.0, sections 5.2 à 5.6 (hypothèses à tester).
--- Aucune valeur de coût ou d'effet n'a été modifiée par rapport à la Bible.
+-- Écart à la Bible v1.0 : Backpack niveau 2 à 75 Coins (T7, D-020).
 --
 -- Lecture d'une table `levels` :
 --   levels[i] décrit le niveau (startLevel + i - 1) ;
@@ -46,7 +46,9 @@ local UpgradeConfig: { [string]: UpgradeDefinition } = {
 		stat = "capacity", -- unités de ressources
 		levels = {
 			{ cost = 0, value = 50 },
-			{ cost = 100, value = 75 },
+			-- T7 (D-020, P0) : 100 -> 75, payable dès la première vente
+			-- (sac de 50 ≈ 89 Coins en moyenne). Hypothèse, à mesurer.
+			{ cost = 75, value = 75 },
 			{ cost = 250, value = 100 },
 			{ cost = 600, value = 140 },
 			{ cost = 1_200, value = 180 },

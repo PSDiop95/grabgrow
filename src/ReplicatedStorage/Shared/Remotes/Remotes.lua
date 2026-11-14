@@ -25,6 +25,8 @@ Remotes.Name = table.freeze({
 	--   Sell    : sellZoneId?, coinsEarned, quantitySold
 	--   Upgrade : upgradeId?, level?, coinsSpent
 	--   UnlockWorld : worldId?, coinsSpent
+	--   Achievement : achievementId, coinsEarned (T7, envoyé par le serveur
+	--                 seul, après une action validée ; aucune demande client)
 	ActionResult = "ActionResult",
 	-- Serveur -> Client. Payload : état public du joueur (voir
 	-- CollectionService.GetClientState).
@@ -36,6 +38,7 @@ Remotes.Action = table.freeze({
 	Sell = "Sell",
 	Upgrade = "Upgrade",
 	UnlockWorld = "UnlockWorld",
+	Achievement = "Achievement",
 })
 
 Remotes.ResultCode = table.freeze({

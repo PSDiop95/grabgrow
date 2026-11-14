@@ -4,6 +4,7 @@
 -- T4 : améliorations et déblocage des mondes.
 -- T6 : validation des déplacements, payloads communs, journal de sécurité,
 -- contrôle de cohérence au chargement (D-019).
+-- T7 : temps de jeu (A-21) et succès permanents (D-020).
 
 local DataStoreService = game:GetService("DataStoreService")
 local HttpService = game:GetService("HttpService")
@@ -19,6 +20,7 @@ local SellSecurityConfig = require(ServerStorage.ServerOnlyConfig.SellSecurityCo
 local EconomySecurityConfig = require(ServerStorage.ServerOnlyConfig.EconomySecurityConfig)
 local MovementSecurityConfig = require(ServerStorage.ServerOnlyConfig.MovementSecurityConfig)
 local SecurityLogConfig = require(ServerStorage.ServerOnlyConfig.SecurityLogConfig)
+local AchievementService = require(script.Parent.Services.AchievementService)
 local CollectionService = require(script.Parent.Services.CollectionService)
 local InventoryService = require(script.Parent.Services.InventoryService)
 local PlayerDataService = require(script.Parent.Services.PlayerDataService)
@@ -78,6 +80,8 @@ local playerDataService = PlayerDataService.new({
 		task.spawn(callback)
 	end,
 	onSessionLost = PlayerSession.kickSessionLost,
+	-- T7 (A-21) : temps de jeu compté avec une horloge monotone.
+	playClock = os.clock,
 })
 
 -- Sécurité (T6) -------------------------------------------------------------
@@ -195,6 +199,25 @@ local worldUnlockService = WorldUnlockService.new({
 	security = securityLog,
 })
 
+-- Succès (T7, D-020) -------------------------------------------------------
+
+local achievementService = AchievementService.new({ playerData = playerDataService })
+
+-- Attribue les succès atteints et prévient le client. Appelé uniquement
+-- après une action validée par le serveur, avant l'envoi de l'état (le
+-- solde transmis inclut donc les récompenses).
+local function grantAchievements(player: Player)
+	for _, grant in ipairs(achievementService.Evaluate(player.UserId)) do
+		actionResult:FireClient(player, {
+			action = Remotes.Action.Achievement,
+			ok = true,
+			code = Remotes.ResultCode.Success,
+			achievementId = grant.achievementId,
+			coinsEarned = grant.reward,
+		})
+	end
+end
+
 local function sendState(player: Player)
 	local state = collectionService.GetClientState(player.UserId)
 	if state then
@@ -219,6 +242,7 @@ remotes[Remotes.Name.RequestCollect].OnServerEvent:Connect(function(player: Play
 		amount = result.amount,
 	})
 	if result.ok then
+		grantAchievements(player)
 		sendState(player)
 	end
 end)
@@ -239,6 +263,7 @@ remotes[Remotes.Name.RequestSell].OnServerEvent:Connect(function(player: Player,
 		quantitySold = result.quantitySold,
 	})
 	if result.ok then
+		grantAchievements(player)
 		sendState(player)
 	end
 end)
@@ -259,6 +284,7 @@ remotes[Remotes.Name.RequestUpgrade].OnServerEvent:Connect(function(player: Play
 		coinsSpent = result.coinsSpent,
 	})
 	if result.ok then
+		grantAchievements(player)
 		sendState(player)
 	end
 end)
@@ -277,6 +303,7 @@ remotes[Remotes.Name.RequestUnlockWorld].OnServerEvent:Connect(function(player: 
 		coinsSpent = result.coinsSpent,
 	})
 	if result.ok then
+		grantAchievements(player)
 		sendState(player)
 	end
 end)
@@ -395,6 +422,8 @@ end)
 PlayerSession.start(playerDataService, {
 	onProfileLoaded = function(player: Player)
 		applyWalkSpeed(player)
+		-- T7 : succès déjà atteints (profil v1 migré, par exemple).
+		grantAchievements(player)
 		sendState(player)
 		-- T6 : contrôle de cohérence, journal seulement (aucune correction).
 		local ok, issues = pcall(ProfileAudit.run, playerDataService.GetData(player.UserId))

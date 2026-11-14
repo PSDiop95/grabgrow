@@ -26,6 +26,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local DataConfig = require(ReplicatedStorage.Shared.Config.DataConfig)
 local TableUtil = require(ReplicatedStorage.Shared.Util.TableUtil)
 local DataSchema = require(script.Parent.Parent.Systems.DataSchema)
+local PlayTimeTracker = require(script.Parent.Parent.Systems.PlayTimeTracker)
 
 local PlayerDataService = {}
 
@@ -70,6 +71,9 @@ export type Dependencies = {
 	-- Appelé quand un autre serveur a repris le verrou d'un joueur présent.
 	onSessionLost: ((userId: number) -> ())?,
 	log: ((level: string, message: string) -> ())?,
+	-- Horloge monotone en secondes (os.clock en production) pour le temps
+	-- de jeu (T7, A-21). Absente : stats.playTimeSeconds n'est pas alimenté.
+	playClock: (() -> number)?,
 	-- Remplace DataConfig (tests uniquement).
 	config: any?,
 }
@@ -87,6 +91,8 @@ type Session = {
 	-- Copie de récupération à écrire avant la première sauvegarde d'un
 	-- profil normalisé (D-008). nil une fois écrite, ou si inutile.
 	pendingBackup: { key: string, record: any }?,
+	-- Temps de jeu non encore ajouté au profil (nil tant que non actif).
+	playTime: PlayTimeTracker.State?,
 }
 
 local OK: Result = table.freeze({ ok = true })
@@ -128,6 +134,8 @@ function PlayerDataService.new(dependencies: Dependencies)
 	local spawn = dependencies.spawn
 	local log = dependencies.log or defaultLog
 	local config = dependencies.config or DataConfig
+	local playClock = dependencies.playClock
+	local playTimeConfig = config.PlayTime or DataConfig.PlayTime
 
 	local sessions: { [number]: Session } = {}
 	local loadCounter = 0
@@ -205,6 +213,21 @@ function PlayerDataService.new(dependencies: Dependencies)
 		end
 	end
 
+	-- Ajoute au profil en mémoire le temps de jeu écoulé depuis le dernier
+	-- ajout (T7, A-21). Appelé juste avant chaque écriture : le temps compté
+	-- reste en mémoire si l'écriture échoue, donc jamais compté deux fois.
+	local function accruePlayTime(session: Session)
+		local tracker = session.playTime
+		if tracker == nil or playClock == nil then
+			return
+		end
+		local seconds = PlayTimeTracker.accrue(tracker, playClock(), playTimeConfig.maxAccrualSeconds)
+		local stats = if type(session.data) == "table" then session.data.stats else nil
+		if seconds > 0 and type(stats) == "table" and type(stats.playTimeSeconds) == "number" then
+			stats.playTimeSeconds = PlayTimeTracker.add(stats.playTimeSeconds, seconds, DataSchema.MAX_SAFE_INTEGER)
+		end
+	end
+
 	-- Écrit le profil si ce serveur détient toujours le verrou. `release`
 	-- retire le verrou dans la même écriture. Ne réécrit jamais une valeur
 	-- détenue par une autre session.
@@ -225,6 +248,7 @@ function PlayerDataService.new(dependencies: Dependencies)
 			end
 		end
 
+		accruePlayTime(session)
 		local snapshot = TableUtil.deepCopy(session.data)
 		snapshot.lastSaveAt = clock()
 
@@ -508,6 +532,10 @@ function PlayerDataService.new(dependencies: Dependencies)
 		end
 
 		session.state = "active"
+		if playClock ~= nil then
+			-- Le temps de chargement et le temps hors ligne ne comptent pas.
+			session.playTime = PlayTimeTracker.start(playClock())
+		end
 		return OK
 	end
 

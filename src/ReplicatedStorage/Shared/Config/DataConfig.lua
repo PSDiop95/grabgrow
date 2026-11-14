@@ -10,7 +10,8 @@ local TableUtil = require(script.Parent.Parent.Util.TableUtil)
 local DataConfig = {
 	-- Version courante du schéma de profil. Toute hausse exige une
 	-- migration dans DataSchema.Migrations et des tests.
-	SchemaVersion = 1,
+	-- v2 (T7, D-020) : section `achievements` (succès permanents).
+	SchemaVersion = 2,
 
 	Store = {
 		-- DataStore de production (architecture 7.2).
@@ -49,6 +50,13 @@ local DataConfig = {
 		-- l'ancien serveur termine sa sauvegarde de sortie).
 		acquireAttempts = 6,
 		acquireDelaySeconds = 5,
+	},
+
+	-- Temps de jeu (T7, A-21, D-020) : intervalle maximal compté entre deux
+	-- sauvegardes. Les sauvegardes ont lieu toutes les 60 s ; un écart plus
+	-- long que 300 s signale un serveur figé et n'est compté qu'à 300 s.
+	PlayTime = {
+		maxAccrualSeconds = 300,
 	},
 
 	Save = {

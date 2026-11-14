@@ -2,6 +2,7 @@
 -- Point d'entrée du client : démarre les contrôleurs.
 -- T2 : affichage du sac et collecte. T3 : vente. T4 : boutique et mondes.
 -- T5.2 : retours audio et visuels. T5.3 : guidage de première session.
+-- T7 : succès permanents.
 
 local Controllers = script.Parent:WaitForChild("Controllers")
 local InventoryController = require(Controllers:WaitForChild("InventoryController"))
@@ -10,6 +11,7 @@ local SellController = require(Controllers:WaitForChild("SellController"))
 local UpgradeController = require(Controllers:WaitForChild("UpgradeController"))
 local FeedbackController = require(Controllers:WaitForChild("FeedbackController"))
 local OnboardingController = require(Controllers:WaitForChild("OnboardingController"))
+local AchievementController = require(Controllers:WaitForChild("AchievementController"))
 
 InventoryController.start()
 CollectionController.start()
@@ -19,3 +21,5 @@ UpgradeController.start()
 FeedbackController.start()
 -- T5.3 : après la Boutique et le sac (repères sur leurs éléments).
 OnboardingController.start()
+-- T7 : bandeau des succès (après le sac : NotificationsUI).
+AchievementController.start()

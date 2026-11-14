@@ -39,7 +39,7 @@ export type Preset = {
 -- d'éventuelles ressources inconnues (règle D-008 non applicable ici).
 StudioTestPresets.Presets = table.freeze({
 	reset = { description = "Nouveau joueur", coins = 0 },
-	U1 = { description = "Backpack 2 tout juste payable", coins = 100 },
+	U1 = { description = "Backpack 2 tout juste payable", coins = 75 },
 	U2 = { description = "Grabber 2 tout juste payable", coins = 150 },
 	U3 = { description = "Magnet 1 tout juste payable", coins = 200 },
 	U4 = { description = "Boots 2 tout juste payable", coins = 250 },

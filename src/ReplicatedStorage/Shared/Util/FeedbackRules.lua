@@ -10,6 +10,7 @@
 -- Aucune règle de jeu ici : rien n'est décidé ni calculé pour le serveur.
 
 local Shared = script.Parent.Parent
+local AchievementConfig = require(Shared.Config.AchievementConfig)
 local FeedbackConfig = require(Shared.Config.FeedbackConfig)
 local ResourceConfig = require(Shared.Config.ResourceConfig)
 local UpgradeConfig = require(Shared.Config.UpgradeConfig)
@@ -130,6 +131,21 @@ local function successCues(result: any): { Cue }
 		end
 		return {
 			cue({ sound = "world", visual = "world", positive = true, key = `UnlockWorld:{worldId}`, id = worldId }),
+		}
+	elseif action == Action.Achievement then
+		-- T7 : son seul ; le message est affiché par AchievementController.
+		local achievementId = result.achievementId
+		if type(achievementId) ~= "string" or AchievementConfig[achievementId] == nil or not isPositiveInteger(result.coinsEarned) then
+			return {}
+		end
+		return {
+			cue({
+				sound = "coins",
+				positive = true,
+				key = `Achievement:{achievementId}`,
+				id = achievementId,
+				amount = result.coinsEarned,
+			}),
 		}
 	end
 	return {}
