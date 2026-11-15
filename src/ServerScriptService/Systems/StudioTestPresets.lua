@@ -72,6 +72,19 @@ StudioTestPresets.Presets = table.freeze({
 		upgrades = { Backpack = 8 },
 		worlds = { "GoldenDesert" },
 	},
+	-- T8.5 : déblocage de Mystic World (Backpack 10, 250 000 Coins).
+	U7_mystic_locked = {
+		description = "Mystic World : Coins suffisants, Backpack 9 insuffisant",
+		coins = 250_000,
+		upgrades = { Backpack = 9 },
+		worlds = { "GoldenDesert", "FrozenPeaks" },
+	},
+	U7_mystic_ready = {
+		description = "Mystic World débloquable (Backpack 10, 250 000 Coins)",
+		coins = 250_000,
+		upgrades = { Backpack = 10 },
+		worlds = { "GoldenDesert", "FrozenPeaks" },
+	},
 	U8 = {
 		description = "État varié à sauvegarder puis restaurer",
 		coins = 1_000,

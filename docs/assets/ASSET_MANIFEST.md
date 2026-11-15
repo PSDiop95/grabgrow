@@ -1,6 +1,6 @@
 # Manifeste des assets 3D — GRAB & GROW
 
-Dernière mise à jour : 2026-11-15 (T8.4, D-021 D7). Sons : voir
+Dernière mise à jour : 2026-11-15 (T8.5, D-021 D7). Sons : voir
 `SOUND_MANIFEST.md` (manifeste distinct, inchangé).
 
 ## Statut du manifeste
@@ -22,6 +22,9 @@ par le code ou par des scripts de construction, avec des primitives Roblox
 | Île de Frozen Peaks (camp, plateau, lac gelé et cascade, grotte de cristaux, sommet), station de vente, point d'arrivée, portail de retour (T8.4) | Primitives (Part, WedgePart, Cylinder, Ball), `tools/studio/build_world_frozen_peaks.luau` | `Workspace.Map.FrozenPeaks`, `Workspace.SellZones.FrozenPeaks`, `Workspace.WorldArrivals.FrozenPeaks` |
 | Modèles des ressources de Frozen Peaks à plusieurs pièces (T8.4) | Primitives, `ResourceVisualConfig.details` | Enfants des nœuds dans `Workspace.ResourceNodes` |
 | Particules du Diamant de glace (T8.4) | `ParticleEmitter` Roblox, texture par défaut, `ResourceVisualConfig.particles` | Enfant du nœud `ice_diamond_001` |
+| Archipel de Mystic World (île d'arrivée, forêt mystique, îles flottantes, grotte spectrale, sanctuaire, 7 ponts suspendus, rochers flottants, cascades), station de vente, point d'arrivée, portail de retour (T8.5) | Primitives (Part, WedgePart, Cylinder, Ball), `tools/studio/build_world_mystic_world.luau` | `Workspace.Map.MysticWorld`, `Workspace.SellZones.MysticWorld`, `Workspace.WorldArrivals.MysticWorld` |
+| Modèles des ressources de Mystic World à plusieurs pièces (T8.5) | Primitives, `ResourceVisualConfig.details` | Enfants des nœuds dans `Workspace.ResourceNodes` |
+| Particules du Cœur mystique (T8.5) | `ParticleEmitter` Roblox, texture par défaut, `ResourceVisualConfig.particles` | Enfant du nœud `mystic_core_001` |
 | Particules du Cristal solaire (T8.3) | `ParticleEmitter` Roblox, texture par défaut, `ResourceVisualConfig.particles` | Enfant du nœud `sun_crystal_001` |
 | Interface (HUD, boutique) | Instances d'interface créées par les contrôleurs | `PlayerGui` |
 

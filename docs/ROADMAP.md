@@ -24,7 +24,7 @@ réellement exécuté. État détaillé : `PROJECT_STATUS.md`.
 | T5 | HUD et feedback mobile | Boucle complète utilisable sur téléphone | **Terminé** (clôturé le 2026-11-13, D-018, avec réserves : manette, tablette réelle, performance non chiffrée) — T5.1 HUD **terminé** (clôturé le 2026-11-12 : tests automatisés, Studio, téléphone réel OK ; commit local 5d4f339) ; T5.2 feedback **terminé** (clôturé le 2026-11-12 : tests automatisés, Studio, téléphone réel OK) ; T5.3 première session **terminé** (2026-11-13 : tests automatisés, Studio et émulateur OK ; D-017 acceptée ; commit local) ; T5.4 textes EN/FR **terminé** (2026-11-13 : validé ; commit local) ; T5.5 validation **terminée avec réserves** (2026-11-13 : technique, émulateur, téléphone réel et PC validés par le propriétaire ; manette reportée, tablette réelle non testée)  |
 | T6 | Tests multijoueurs et anti-exploit | Aucun exploit simple, aucune fuite de données | **Terminé** (clôturé le 2026-11-14, D-019, `phases/T6_SECURITY_REPORT.md`) — tests automatisés, Studio un joueur, Local Server 2 joueurs (propriétaire) OK ; commit local c199d85, non poussé. Réserves : A-27 (mobile réel), A-42, seuils R4 à calibrer |
 | T7 | Équilibrage MVP | Première session compréhensible et satisfaisante | **Terminé** (clôturé le 2026-11-14, test réel du propriétaire) — D-020 : Backpack 2 à 75, temps de jeu, schéma v2, succès permanents, simulateur ; `phases/T7_IMPLEMENTATION_REPORT.md` ; tests automatisés et Studio OK ; commit et push autorisés le 2026-11-14 |
-| T8 | Mondes et contenu (D-021) : quatre îles, ressources par monde, voyage serveur | Quatre mondes jouables, collecte et vente par monde, multijoueur et performance mobile vérifiés | **En cours** — T8.0 à T8.4 validées ; T8.5 à T8.7 soumis à validation |
+| T8 | Mondes et contenu (D-021) : quatre îles, ressources par monde, voyage serveur | Quatre mondes jouables, collecte et vente par monde, multijoueur et performance mobile vérifiés | **En cours** — T8.0 à T8.5 validées ; T8.6 et T8.7 soumis à validation |
 | T9 | Préparation publication, `AnalyticsService` (D-020 D5, D-021) | Tests privés concluants | À faire (ne pas commencer avant validation de T8) |
 
 ## Phases terminées : T2, T3, T4, T5, T6
@@ -75,7 +75,7 @@ T7 — Équilibrage MVP : validée et clôturée par le propriétaire le 2026-11
 | T8.2 | Green Valley : zones, hub, Fruit sauvage et Cristal vert, portails, interface de voyage | Validé (2026-11-15, `phases/T8_IMPLEMENTATION_REPORT.md`) |
 | T8.3 | Golden Desert : oasis (vente, portail de retour), dunes, ruines et arche, crête, recoin du Cristal solaire ; particules réservées à l'Épique | Validé (2026-11-15, `phases/T8_3_GOLDEN_DESERT_REPORT.md`) |
 | T8.4 | Frozen Peaks : camp de base (vente, portail de retour), plateau enneigé, lac gelé et cascade, grotte de cristaux bleus, sommet panoramique ; particules du Diamant de glace | Validé (2026-11-15, `phases/T8_4_FROZEN_PEAKS_REPORT.md`) |
-| T8.5 | Mystic World | En attente |
+| T8.5 | Mystic World : archipel de 7 îles flottantes et 7 ponts suspendus ; île d'arrivée (vente, portail de retour, repère), forêt mystique, îles flottantes, grotte spectrale, sanctuaire du Cœur mystique ; particules du Cœur mystique | Validé (2026-11-15) (`phases/T8_5_MYSTIC_WORLD_REPORT.md`) |
 | T8.6 | (Journal de collection : reporté, D-021 D6) | Non retenu |
 | T8.7 | Validation multijoueur et performance, rapport | En attente |
 

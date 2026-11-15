@@ -109,12 +109,54 @@ local ResourceVisualConfig: { [string]: ResourceVisual } = {
 		},
 	},
 
-	-- Mystic World
-	mystic_dust = { shape = "Ball", size = { 1.6, 1.6, 1.6 }, color = { 190, 120, 255 }, orientation = { 0, 0, 0 }, material = "SmoothPlastic" },
-	star_fragment = { shape = "Wedge", size = { 1.6, 1.6, 1.6 }, color = { 255, 240, 150 }, orientation = { 0, 30, 0 }, material = "SmoothPlastic" },
-	spectral_ore = { shape = "Block", size = { 1.8, 1.8, 1.8 }, color = { 120, 230, 220 }, orientation = { 15, 30, 15 }, material = "SmoothPlastic" },
-	purple_crystal = { shape = "Block", size = { 1.2, 2.8, 1.2 }, color = { 170, 60, 255 }, orientation = { 0, 45, 15 }, material = "Neon" },
-	mystic_core = { shape = "Ball", size = { 2.2, 2.2, 2.2 }, color = { 255, 80, 200 }, orientation = { 0, 0, 0 }, material = "Neon" },
+	-- Mystic World (T8.5 : modèles à plusieurs pièces, sans transparence)
+	-- Poudre mystique : petit amas compact violet et lavande.
+	mystic_dust = {
+		shape = "Ball", size = { 1.5, 1.5, 1.5 }, color = { 176, 112, 240 }, orientation = { 0, 0, 0 }, material = "SmoothPlastic",
+		details = {
+			{ shape = "Ball", size = { 1, 1, 1 }, offset = { 0.75, -0.3, 0.3 }, orientation = { 0, 0, 0 }, color = { 214, 184, 255 }, material = "SmoothPlastic" },
+			{ shape = "Ball", size = { 0.8, 0.8, 0.8 }, offset = { -0.6, -0.4, -0.5 }, orientation = { 0, 0, 0 }, color = { 150, 90, 220 }, material = "SmoothPlastic" },
+			{ shape = "Ball", size = { 0.45, 0.45, 0.45 }, offset = { 0.1, 0.85, 0.1 }, orientation = { 0, 0, 0 }, color = { 240, 224, 255 }, material = "SmoothPlastic" },
+		},
+	},
+	-- Éclat d'étoile : fragment angulaire bleu clair et cyan, facettes.
+	star_fragment = {
+		shape = "Wedge", size = { 1.3, 2.2, 1.6 }, color = { 120, 220, 255 }, orientation = { 0, 35, 0 }, material = "SmoothPlastic",
+		details = {
+			{ shape = "Wedge", size = { 1.1, 1.6, 1.2 }, offset = { 0, -0.3, 0 }, orientation = { 0, 215, 0 }, color = { 80, 236, 236 }, material = "SmoothPlastic" },
+			{ shape = "Block", size = { 0.5, 0.9, 0.5 }, offset = { 0.7, -0.6, 0.55 }, orientation = { 30, 45, 20 }, color = { 200, 244, 255 }, material = "SmoothPlastic" },
+		},
+	},
+	-- Minerai spectral : bloc rocheux sombre, inclusions cyan et violettes.
+	spectral_ore = {
+		shape = "Block", size = { 2, 1.7, 1.9 }, color = { 52, 46, 82 }, orientation = { 8, 25, 6 }, material = "Slate",
+		details = {
+			{ shape = "Block", size = { 0.55, 0.55, 0.55 }, offset = { 0.7, 0.6, 0.35 }, orientation = { 45, 30, 0 }, color = { 90, 240, 230 }, material = "SmoothPlastic" },
+			{ shape = "Block", size = { 0.5, 0.5, 0.5 }, offset = { -0.65, 0.4, -0.55 }, orientation = { 30, 0, 45 }, color = { 190, 110, 255 }, material = "SmoothPlastic" },
+			{ shape = "Block", size = { 0.45, 0.45, 0.45 }, offset = { 0.2, 0.8, -0.35 }, orientation = { 0, 45, 45 }, color = { 120, 250, 240 }, material = "SmoothPlastic" },
+			{ shape = "Block", size = { 0.4, 0.4, 0.4 }, offset = { -0.9, -0.1, 0.5 }, orientation = { 45, 0, 30 }, color = { 210, 140, 255 }, material = "SmoothPlastic" },
+		},
+	},
+	-- Cristal violet : grand prisme vertical facetté, deux pointes.
+	purple_crystal = {
+		shape = "Block", size = { 1.2, 3, 1.2 }, color = { 160, 60, 255 }, orientation = { 0, 45, 6 }, material = "Neon",
+		details = {
+			{ shape = "Block", size = { 0.7, 1.7, 0.7 }, offset = { 0.8, -0.6, 0.2 }, orientation = { 0, 30, -26 }, color = { 200, 120, 255 }, material = "Neon" },
+			{ shape = "Block", size = { 0.6, 1.3, 0.6 }, offset = { -0.7, -0.8, -0.3 }, orientation = { 18, 10, 24 }, color = { 120, 40, 220 }, material = "Neon" },
+		},
+	},
+	-- Cœur mystique : noyau géométrique magenta, facettes violettes, pointes
+	-- magenta et cyan ; particules (seul émetteur du monde).
+	mystic_core = {
+		shape = "Block", size = { 2.2, 2.2, 2.2 }, color = { 255, 70, 200 }, orientation = { 45, 45, 0 }, material = "Neon",
+		particles = { color = { 255, 150, 240 }, rate = 4 },
+		details = {
+			{ shape = "Block", size = { 1.8, 1.8, 1.8 }, offset = { 0, 0, 0 }, orientation = { 0, 45, 45 }, color = { 150, 70, 255 }, material = "Neon" },
+			{ shape = "Block", size = { 0.5, 1.4, 0.5 }, offset = { 0, 1.9, 0 }, orientation = { 0, 45, 0 }, color = { 255, 150, 240 }, material = "Neon" },
+			{ shape = "Block", size = { 0.5, 1.2, 0.5 }, offset = { 1.5, 0.4, 0 }, orientation = { 0, 0, -50 }, color = { 110, 250, 255 }, material = "Neon" },
+			{ shape = "Block", size = { 0.5, 1.2, 0.5 }, offset = { -1.5, 0.4, 0 }, orientation = { 0, 0, 50 }, color = { 110, 250, 255 }, material = "Neon" },
+		},
+	},
 }
 
 return TableUtil.deepFreeze(ResourceVisualConfig)

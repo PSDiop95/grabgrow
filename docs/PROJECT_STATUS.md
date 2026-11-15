@@ -1,6 +1,6 @@
 # GRAB & GROW — État du projet
 
-Dernière mise à jour : 2026-11-15 (T8 en cours : T8.0 à T8.4 validées)
+Dernière mise à jour : 2026-11-15 (T8 en cours : T8.0 à T8.5 validées)
 
 ## Résumé
 
@@ -16,7 +16,10 @@ Desert) autorisée et construite le 2026-11-15, testée en Studio à un
 joueur et en Local Server à 2 joueurs, **validée** par le propriétaire le 2026-11-15 (`phases/T8_3_GOLDEN_DESERT_REPORT.md`). T8.0 à
 T8.2 commitées (dd806ef) ; T8.3 commitée (33830ca). T8.4 (Frozen Peaks)
 construite et testée en Studio à un joueur et en Local Server à 2 joueurs
-le 2026-11-15, **validée** par le propriétaire le 2026-11-15 (`phases/T8_4_FROZEN_PEAKS_REPORT.md`) ; non commitée.
+le 2026-11-15, **validée** par le propriétaire le 2026-11-15 (`phases/T8_4_FROZEN_PEAKS_REPORT.md`) ; commitée (628e9a2).
+T8.5 (Mystic World) construite et testée en Studio à un joueur et en
+Local Server à 2 joueurs le 2026-11-15 (`phases/T8_5_MYSTIC_WORLD_REPORT.md`) ;
+**validée** par le propriétaire le 2026-11-15 ; non commitée.
 
 **T7 (progression et équilibrage) : VALIDÉE et CLÔTURÉE** (propriétaire,
 2026-11-14, après test réel, D-020 ; commit 0b821a2, poussé). Backpack 2 à
@@ -1049,6 +1052,19 @@ Détail : `phases/T8_4_FROZEN_PEAKS_REPORT.md`.
 | Local Server à 2 joueurs (lancé par le propriétaire) : refus verrouillé, voyages simultanés, collecte du même nœud (un seul succès), nœuds distincts, ventes simultanées (+36 / +18), déconnexion | Studio, multijoueur | PASS ; aucune anomalie de déplacement, aucune erreur |
 | Appui réel au portail, rendu visuel, téléphone réel | Manuel | NOT TESTED |
 
+## Vérifications T8.5 — Mystic World (2026-11-15, VALIDÉE par le propriétaire)
+
+Détail : `phases/T8_5_MYSTIC_WORLD_REPORT.md`.
+
+| Vérification | Type | Résultat |
+|---|---|---|
+| 19 suites Lune, mutation « Neon sur Peu commune » détectée, `luau-lsp analyze`, `rojo build` | Automatisé | PASS |
+| Construction (`build_world_mystic_world.luau`, mode Edit) et relance | Studio | 40 points (16/12/7/4/1), 719 parts de décor (budget 1 200), 1 émetteur, 0 lumière ; sans doublon ; autres îles intactes ; raycasts : 40 points posés, 7 ponts continus |
+| Play Studio : refus avant déblocage, déblocage (-250 000), voyage, collecte des 5 ressources à pied, double collecte, réapparitions (3,02 / 4,00 / 8,01 / 20,02 / 60,02 s), vente +1 077, portails, chute → hub, payloads falsifiés, limite de fréquence | Studio, un joueur | PASS ; aucune anomalie de déplacement, aucune erreur |
+| Noms FR du prompt (« Poussière mystique », « Fragment d'étoile ») au-delà de la limite de 16 caractères | Décision | **Tranché** par le propriétaire le 2026-11-15 : « Poudre mystique » et « Éclat d'étoile » conservés |
+| Local Server à 2 joueurs (lancé par le propriétaire) : refus verrouillé, voyages simultanés, collecte du même nœud (un seul succès), nœuds distincts, ventes simultanées (+136 / +68), déconnexion | Studio, multijoueur | PASS ; aucune anomalie de déplacement, aucune erreur |
+| Appui réel au portail, rendu en jeu, téléphone réel | Manuel | NOT TESTED |
+
 ## Décisions en attente
 
 1. Push GitHub des commits T1 à T7 : autorisé et effectué le 2026-11-14.
@@ -1063,6 +1079,12 @@ Détail : `phases/T8_4_FROZEN_PEAKS_REPORT.md`.
 3. T8.3 (Golden Desert) validée le 2026-11-15. Vérifier que le place est
    enregistré avec les deux îles.
 4. T8.4 (Frozen Peaks) validée le 2026-11-15. Vérifier que le place est
-   enregistré avec les trois îles. T8.5 (Mystic World) : en attente
-   d'autorisation.
-5. Commits : T8.0 à T8.2 (dd806ef), T8.3 (33830ca) ; T8.4 non commitée ; push non autorisé.
+   enregistré avec les trois îles.
+5. T8.5 (Mystic World) construite et testée (un joueur, Local Server à
+   2 joueurs) le 2026-11-15 ; noms FR existants conservés (propriétaire,
+   2026-11-15) ; **validée** par le propriétaire le 2026-11-15. Place
+   enregistré avec les quatre îles (version 90, non publié). T8.6 : en
+   attente d'autorisation. Enregistrer le place avec les quatre îles.
+6. Commits : T8.0 à T8.2 (dd806ef), T8.3 (33830ca), T8.4 (628e9a2),
+   T8.5 (`feat(worlds): T8.5 Mystic World archipelago`) ; push de T8.0 à
+   T8.5 autorisé et effectué le 2026-11-15.
