@@ -1,6 +1,6 @@
 # GRAB & GROW — État du projet
 
-Dernière mise à jour : 2026-11-15 (T8 en cours : T8.0 à T8.3 validées)
+Dernière mise à jour : 2026-11-15 (T8 en cours : T8.0 à T8.4 validées)
 
 ## Résumé
 
@@ -14,7 +14,9 @@ le jour même (Local Server, 2 joueurs). T8.2 (carte de Green Valley,
 portails, interface de voyage) validée le 2026-11-15 ; T8.3 (Golden
 Desert) autorisée et construite le 2026-11-15, testée en Studio à un
 joueur et en Local Server à 2 joueurs, **validée** par le propriétaire le 2026-11-15 (`phases/T8_3_GOLDEN_DESERT_REPORT.md`). T8.0 à
-T8.2 commitées (dd806ef) ; T8.3 commitée.
+T8.2 commitées (dd806ef) ; T8.3 commitée (33830ca). T8.4 (Frozen Peaks)
+construite et testée en Studio à un joueur et en Local Server à 2 joueurs
+le 2026-11-15, **validée** par le propriétaire le 2026-11-15 (`phases/T8_4_FROZEN_PEAKS_REPORT.md`) ; non commitée.
 
 **T7 (progression et équilibrage) : VALIDÉE et CLÔTURÉE** (propriétaire,
 2026-11-14, après test réel, D-020 ; commit 0b821a2, poussé). Backpack 2 à
@@ -1033,6 +1035,20 @@ Détail : `phases/T8_3_GOLDEN_DESERT_REPORT.md`.
 | Local Server à 2 joueurs (lancé par le propriétaire) : refus verrouillé, voyages, collecte du même nœud, ventes simultanées, déconnexion | Studio, multijoueur | PASS ; aucune anomalie de déplacement, aucune erreur |
 | Téléphone réel | Manuel | NOT TESTED |
 
+## Vérifications T8.4 — Frozen Peaks (2026-11-15, VALIDÉE par le propriétaire)
+
+Détail : `phases/T8_4_FROZEN_PEAKS_REPORT.md`.
+
+| Vérification | Type | Résultat |
+|---|---|---|
+| 19 suites Lune, `luau-lsp analyze`, `rojo build` | Automatisé | PASS |
+| Construction (`build_world_frozen_peaks.luau`, mode Edit) et relances | Studio | 40 points (16/12/7/4/1), 592 parts de décor (budget 1 200), 1 émetteur, 0 lumière ; sans doublon ; autres îles intactes |
+| Modèles à plusieurs pièces (`ResourceVisualConfig.details`, `ResourceNodes`), mutation Neon détectée | Automatisé et Studio | PASS |
+| Play Studio : refus avant déblocage, déblocage, voyage, collecte des 5 ressources à pied, double collecte, réapparitions (3,01 / 4,02 / 8,02 / 60,02 s), vente +278, noms EN/FR, portails, mort → hub, payloads falsifiés | Studio, un joueur | PASS ; aucune anomalie de déplacement |
+| Écart de raretés (complément : `silver_ore` Peu commune, `frozen_stone` Commune) | Décision | **Tranché** par le propriétaire le 2026-11-15 : `ResourceConfig` / Bible 1.1 conservés |
+| Local Server à 2 joueurs (lancé par le propriétaire) : refus verrouillé, voyages simultanés, collecte du même nœud (un seul succès), nœuds distincts, ventes simultanées (+36 / +18), déconnexion | Studio, multijoueur | PASS ; aucune anomalie de déplacement, aucune erreur |
+| Appui réel au portail, rendu visuel, téléphone réel | Manuel | NOT TESTED |
+
 ## Décisions en attente
 
 1. Push GitHub des commits T1 à T7 : autorisé et effectué le 2026-11-14.
@@ -1045,6 +1061,8 @@ Détail : `phases/T8_3_GOLDEN_DESERT_REPORT.md`.
 2. T8.2 validée (2026-11-15). Vérifier que le place est enregistré avec la
    carte de Green Valley.
 3. T8.3 (Golden Desert) validée le 2026-11-15. Vérifier que le place est
-   enregistré avec les deux îles. T8.4 (Frozen Peaks) : en attente
+   enregistré avec les deux îles.
+4. T8.4 (Frozen Peaks) validée le 2026-11-15. Vérifier que le place est
+   enregistré avec les trois îles. T8.5 (Mystic World) : en attente
    d'autorisation.
-4. Commits : T8.0 à T8.2 (dd806ef), T8.3 (autorisé le 2026-11-15) ; push non autorisé.
+5. Commits : T8.0 à T8.2 (dd806ef), T8.3 (33830ca) ; T8.4 non commitée ; push non autorisé.

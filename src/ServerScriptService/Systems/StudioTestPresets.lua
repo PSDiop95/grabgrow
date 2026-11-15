@@ -59,6 +59,19 @@ StudioTestPresets.Presets = table.freeze({
 		coins = 1_500,
 		upgrades = { Backpack = 5 },
 	},
+	-- T8.4 : déblocage de Frozen Peaks (Backpack 8, 35 000 Coins).
+	U7_peaks_locked = {
+		description = "Frozen Peaks : Coins suffisants, Backpack 7 insuffisant",
+		coins = 35_000,
+		upgrades = { Backpack = 7 },
+		worlds = { "GoldenDesert" },
+	},
+	U7_peaks_ready = {
+		description = "Frozen Peaks débloquable (Backpack 8, 35 000 Coins)",
+		coins = 35_000,
+		upgrades = { Backpack = 8 },
+		worlds = { "GoldenDesert" },
+	},
 	U8 = {
 		description = "État varié à sauvegarder puis restaurer",
 		coins = 1_000,

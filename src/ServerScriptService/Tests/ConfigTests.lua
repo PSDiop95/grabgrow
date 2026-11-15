@@ -39,6 +39,12 @@ local MIN_RESOURCE_SIZE = 1.2
 local MAX_RESOURCE_SIZE = 3
 -- T8.3 : débit maximal d'un émetteur de ressource (particules/s, mobile).
 local MAX_PARTICLE_RATE = 8
+-- T8.4 : pièces de détail d'un nœud (budget d'instances, lisibilité).
+local MAX_DETAILS = 4
+local MAX_DETAIL_OFFSET = 2
+-- Matériaux autorisés : sans transparence ni effet coûteux (pas de Glass,
+-- ForceField).
+local MATERIALS = { SmoothPlastic = true, Plastic = true, Neon = true, Metal = true, Ice = true, Slate = true }
 -- T4 (D-015) : les cinq améliorations et les quatre mondes de la Bible.
 local MVP_UPGRADE_COUNT = 5
 local WORLD_COUNT = 4
@@ -204,6 +210,42 @@ function ConfigTests.run(configs: Configs): { string }
 					)
 					local pcolor = particles.color
 					check(type(pcolor) == "table" and #pcolor == 3, `{resourceId} : couleur de particules RGB attendue`)
+				end
+				-- T8.4 : détails facultatifs.
+				check(MATERIALS[visual.material] == true, `{resourceId} : matériau non autorisé ({tostring(visual.material)})`)
+				local details = visual.details
+				if details ~= nil then
+					check(type(details) == "table" and #details <= MAX_DETAILS, `{resourceId} : {MAX_DETAILS} détails au plus`)
+					for index, detail in ipairs(details) do
+						local label = `{resourceId}.details[{index}]`
+						check(SHAPES[detail.shape] == true, `{label} : forme inconnue`)
+						check(MATERIALS[detail.material] == true, `{label} : matériau non autorisé`)
+						check(
+							detail.material ~= "Neon" or NEON_RARITIES[resource.rarity] == true,
+							`{label} : Neon réservé aux raretés Rare et Épique`
+						)
+						for _, field in ipairs({ "size", "offset", "orientation", "color" }) do
+							check(type(detail[field]) == "table" and #detail[field] == 3, `{label}.{field} : trois valeurs attendues`)
+						end
+						if type(detail.size) == "table" and #detail.size == 3 then
+							for _, value in ipairs(detail.size) do
+								check(type(value) == "number" and value > 0 and value <= MAX_RESOURCE_SIZE, `{label} : dimension hors de ]0, {MAX_RESOURCE_SIZE}]`)
+							end
+							if detail.shape == "Ball" then
+								check(detail.size[1] == detail.size[2] and detail.size[2] == detail.size[3], `{label} : sphère à dimensions égales attendue`)
+							end
+						end
+						if type(detail.offset) == "table" and #detail.offset == 3 then
+							for _, value in ipairs(detail.offset) do
+								check(type(value) == "number" and math.abs(value) <= MAX_DETAIL_OFFSET, `{label} : décalage hors de [-{MAX_DETAIL_OFFSET}, {MAX_DETAIL_OFFSET}]`)
+							end
+						end
+						if type(detail.color) == "table" and #detail.color == 3 then
+							for _, value in ipairs(detail.color) do
+								check(isNonNegativeInteger(value) and value <= 255, `{label} : composante de couleur invalide`)
+							end
+						end
+					end
 				end
 			end
 		end

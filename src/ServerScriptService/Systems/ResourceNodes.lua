@@ -20,7 +20,9 @@
 -- tous : CollectionService exige que le joueur ait débloqué ce monde.
 --
 -- Modèles : formes simples provisoires (Shared/Config/ResourceVisualConfig,
--- avec un ParticleEmitter facultatif pour l'Épique, T8.3),
+-- avec un ParticleEmitter facultatif pour l'Épique, T8.3, et des pièces de
+-- détail facultatives, T8.4 : enfants du Part du nœud, sans collision ni
+-- requête, masquées avec lui),
 -- à remplacer par des assets contrôlés (ASSET_MANIFEST) sans toucher à la
 -- logique.
 
@@ -60,6 +62,16 @@ local function readVisual(resourceType: string): (Enum.PartType?, Enum.Material?
 	local okMaterial, material = pcall(function(): Enum.Material
 		return (Enum.Material :: any)[visual.material]
 	end)
+	-- T8.4 : une pièce de détail invalide écarte tout le nœud (avertissement).
+	for _, detail in ipairs(visual.details or {}) do
+		local okDetail = pcall(function()
+			local _ = (Enum.PartType :: any)[detail.shape]
+			local _ = (Enum.Material :: any)[detail.material]
+		end)
+		if not okDetail then
+			return nil, nil
+		end
+	end
 	return if okShape then shape else nil, if okMaterial then material else nil
 end
 
@@ -91,6 +103,29 @@ local function createPart(
 	part:SetAttribute("ResourceType", resourceType)
 	part:SetAttribute("WorldId", worldId)
 	part:SetAttribute("Available", true)
+	-- T8.4 : pièces de détail (le Part du nœud reste la seule cible du
+	-- client et la seule porteuse des attributs).
+	local center = origin * CFrame.new(0, size.Y / 2, 0)
+	for index, detail in ipairs(visual.details or {}) do
+		local detailShape = (Enum.PartType :: any)[detail.shape]
+		local detailMaterial = (Enum.Material :: any)[detail.material]
+		local d = Instance.new("Part")
+		d.Name = `Detail{index}`
+		d.Shape = detailShape
+		d.Size = vector(detail.size)
+		d.Color = Color3.fromRGB(detail.color[1], detail.color[2], detail.color[3])
+		d.Material = detailMaterial
+		d.Anchored = true
+		d.CanCollide = false
+		d.CanQuery = false
+		d.CanTouch = false
+		d.CastShadow = false
+		local turn = vector(detail.orientation)
+		d.CFrame = center
+			* CFrame.new(vector(detail.offset))
+			* CFrame.Angles(math.rad(turn.X), math.rad(turn.Y), math.rad(turn.Z))
+		d.Parent = part
+	end
 	-- T8.3 : petit émetteur facultatif (Épique seulement, ConfigTests),
 	-- sans lumière dynamique.
 	local particles = visual.particles
@@ -122,6 +157,11 @@ function ResourceNodes.applyState(nodeId: string, state: string)
 	local emitter = part:FindFirstChildOfClass("ParticleEmitter")
 	if emitter ~= nil then
 		emitter.Enabled = available
+	end
+	for _, child in ipairs(part:GetChildren()) do
+		if child:IsA("BasePart") then
+			child.Transparency = part.Transparency
+		end
 	end
 end
 
