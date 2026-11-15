@@ -9,19 +9,27 @@
 --
 -- Nœuds créés dans Workspace.ResourceNodes, un Part chacun, avec les
 -- attributs lus par le client :
---   NodeId (texte), ResourceType (texte), Available (booléen).
+--   NodeId (texte), ResourceType (texte), WorldId (texte, T8),
+--   Available (booléen).
 -- Les identifiants sont attribués ici, par type, dans l'ordre des noms des
 -- points de spawn : "green_leaf_001", "wood_001"...
 --
--- Modèles : formes simples provisoires, à remplacer par des assets
--- contrôlés (ASSET_MANIFEST) sans toucher à la logique.
+-- T8 (D-021) : tous les mondes de WorldConfig sont acceptés ; le monde
+-- d'un nœud est celui de sa ressource (ResourceConfig.worldId), jamais le
+-- dossier du point de spawn. Créer un nœud ne le rend pas collectable par
+-- tous : CollectionService exige que le joueur ait débloqué ce monde.
+--
+-- Modèles : formes simples provisoires (Shared/Config/ResourceVisualConfig),
+-- à remplacer par des assets contrôlés (ASSET_MANIFEST) sans toucher à la
+-- logique.
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Workspace = game:GetService("Workspace")
 
 local Config = ReplicatedStorage.Shared.Config
-local GameConfig = require(Config.GameConfig)
 local ResourceConfig = require(Config.ResourceConfig)
+local ResourceVisualConfig = require(Config.ResourceVisualConfig)
+local WorldConfig = require(Config.WorldConfig)
 local ResourceSpawner = require(script.Parent.ResourceSpawner)
 
 local ResourceNodes = {}
@@ -31,56 +39,56 @@ ResourceNodes.NODE_FOLDER_NAME = "ResourceNodes"
 
 type Spawner = typeof(ResourceSpawner.new({} :: any))
 
-type Visual = {
-	shape: Enum.PartType,
-	size: Vector3,
-	color: Color3,
-	-- Orientation en degrés, appliquée après celle du point de spawn.
-	orientation: Vector3,
-}
-
--- Silhouettes et couleurs distinctes (GDD : formes lisibles).
-local VISUALS: { [string]: Visual } = {
-	green_leaf = {
-		shape = Enum.PartType.Ball,
-		size = Vector3.new(1.8, 1.8, 1.8),
-		color = Color3.fromRGB(96, 204, 78),
-		orientation = Vector3.zero,
-	},
-	wood = {
-		shape = Enum.PartType.Cylinder,
-		size = Vector3.new(2.6, 1.4, 1.4),
-		color = Color3.fromRGB(150, 98, 56),
-		orientation = Vector3.new(0, 35, 0),
-	},
-	stone = {
-		shape = Enum.PartType.Block,
-		size = Vector3.new(2, 1.6, 2),
-		color = Color3.fromRGB(138, 142, 150),
-		orientation = Vector3.new(0, 20, 8),
-	},
-}
-
 local parts: { [string]: BasePart } = {}
 local started = false
 
-local function createPart(nodeId: string, resourceType: string, origin: CFrame): BasePart
-	local visual = VISUALS[resourceType]
+local function vector(values: { number }): Vector3
+	return Vector3.new(values[1], values[2], values[3])
+end
+
+-- Conversion des données de ResourceVisualConfig ; nil si un nom d'Enum
+-- est inconnu (le point de spawn est alors ignoré avec un avertissement).
+local function readVisual(resourceType: string): (Enum.PartType?, Enum.Material?)
+	local visual = ResourceVisualConfig[resourceType]
+	if visual == nil then
+		return nil, nil
+	end
+	local okShape, shape = pcall(function(): Enum.PartType
+		return (Enum.PartType :: any)[visual.shape]
+	end)
+	local okMaterial, material = pcall(function(): Enum.Material
+		return (Enum.Material :: any)[visual.material]
+	end)
+	return if okShape then shape else nil, if okMaterial then material else nil
+end
+
+local function createPart(
+	nodeId: string,
+	resourceType: string,
+	worldId: string,
+	origin: CFrame,
+	shape: Enum.PartType,
+	material: Enum.Material
+): BasePart
+	local visual = ResourceVisualConfig[resourceType]
+	local size = vector(visual.size)
+	local orientation = vector(visual.orientation)
 	local part = Instance.new("Part")
 	part.Name = nodeId
-	part.Shape = visual.shape
-	part.Size = visual.size
-	part.Color = visual.color
-	part.Material = Enum.Material.SmoothPlastic
+	part.Shape = shape
+	part.Size = size
+	part.Color = Color3.fromRGB(visual.color[1], visual.color[2], visual.color[3])
+	part.Material = material
 	part.Anchored = true
 	-- Traversable ; CanQuery reste actif pour le toucher / clic du client.
 	part.CanCollide = false
 	part.CanTouch = false
 	part.CastShadow = false
-	local rotation = CFrame.Angles(math.rad(visual.orientation.X), math.rad(visual.orientation.Y), math.rad(visual.orientation.Z))
-	part.CFrame = origin * CFrame.new(0, visual.size.Y / 2, 0) * rotation
+	local rotation = CFrame.Angles(math.rad(orientation.X), math.rad(orientation.Y), math.rad(orientation.Z))
+	part.CFrame = origin * CFrame.new(0, size.Y / 2, 0) * rotation
 	part:SetAttribute("NodeId", nodeId)
 	part:SetAttribute("ResourceType", resourceType)
+	part:SetAttribute("WorldId", worldId)
 	part:SetAttribute("Available", true)
 	return part
 end
@@ -136,19 +144,31 @@ function ResourceNodes.start(spawner: Spawner): number
 	for _, spawnPoint in ipairs(spawnPoints) do
 		local resourceType = spawnPoint:GetAttribute("ResourceType")
 		local definition = if type(resourceType) == "string" then ResourceConfig[resourceType] else nil
-		if type(resourceType) ~= "string" or definition == nil or VISUALS[resourceType] == nil then
+		if type(resourceType) ~= "string" or definition == nil then
 			warn(`[ResourceNodes] {spawnPoint:GetFullName()} : ResourceType invalide ({tostring(resourceType)}), ignoré`)
 			continue
 		end
-		if definition.worldId ~= GameConfig.StartingWorldId then
-			warn(`[ResourceNodes] {spawnPoint:GetFullName()} : monde {definition.worldId} hors MVP, ignoré`)
+		if WorldConfig[definition.worldId] == nil then
+			warn(`[ResourceNodes] {spawnPoint:GetFullName()} : monde {definition.worldId} inconnu, ignoré`)
+			continue
+		end
+		local shape, material = readVisual(resourceType)
+		if shape == nil or material == nil then
+			warn(`[ResourceNodes] {spawnPoint:GetFullName()} : apparence de {resourceType} absente ou invalide, ignoré`)
 			continue
 		end
 
 		local index = (countByType[resourceType] or 0) + 1
 		countByType[resourceType] = index
 		local nodeId = string.format("%s_%03d", resourceType, index)
-		local part = createPart(nodeId, resourceType, spawnPoint.CFrame)
+		local part = createPart(
+			nodeId,
+			resourceType,
+			definition.worldId,
+			spawnPoint.CFrame,
+			shape :: Enum.PartType,
+			material :: Enum.Material
+		)
 		local position = part.Position
 		local ok, reason = spawner.Register(nodeId, resourceType, { X = position.X, Y = position.Y, Z = position.Z })
 		if not ok then

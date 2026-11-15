@@ -1,6 +1,8 @@
 --!nocheck
 -- Carte de test minimale de Green Valley (T2) : sol, point d'apparition et
--- points de spawn des ressources. Provisoire : remplacée par la vraie carte.
+-- points de spawn des ressources. OBSOLÈTE depuis T8.2 : remplacée par
+-- build_green_valley.luau (le relancer écraserait la carte de T8.2).
+-- Conservée comme référence des tests T2 à T7.
 --
 -- Outil de développement, absent du jeu (non mappé dans
 -- default.project.json). À exécuter dans Roblox Studio en mode Edit : coller
@@ -87,8 +89,11 @@ spawnLocation.Parent = spawnLocations
 -- Points de spawn des ressources
 local resourceTypes = {}
 local totalWeight = 0
+-- T8 (D-021) : seules les ressources dotées d'un anneau (carte MVP à
+-- 36 points) sont placées ; Fruit sauvage et Cristal vert le seront par la
+-- carte de Green Valley (T8.2). Carte produite inchangée.
 for resourceType, definition in pairs(ResourceConfig) do
-	if definition.worldId == WORLD_ID then
+	if definition.worldId == WORLD_ID and RINGS[resourceType] ~= nil then
 		table.insert(resourceTypes, resourceType)
 		totalWeight += definition.spawnWeight
 	end

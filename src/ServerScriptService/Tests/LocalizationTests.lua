@@ -29,6 +29,7 @@ local LENGTH_LIMITS: { { prefix: string, max: number } } = {
 	{ prefix = "shop.close", max = 10 },
 	{ prefix = "shop.max", max = 10 },
 	{ prefix = "world.unlock", max = 12 },
+	{ prefix = "travel.go", max = 12 },
 	{ prefix = "settings.on", max = 10 },
 	{ prefix = "settings.off", max = 10 },
 	{ prefix = "onboarding.show", max = 10 },

@@ -5,6 +5,7 @@
 -- T6 : validation des déplacements, payloads communs, journal de sécurité,
 -- contrôle de cohérence au chargement (D-019).
 -- T7 : temps de jeu (A-21) et succès permanents (D-020).
+-- T8 : voyage entre mondes fait par le serveur (D-021).
 
 local DataStoreService = game:GetService("DataStoreService")
 local HttpService = game:GetService("HttpService")
@@ -20,6 +21,7 @@ local SellSecurityConfig = require(ServerStorage.ServerOnlyConfig.SellSecurityCo
 local EconomySecurityConfig = require(ServerStorage.ServerOnlyConfig.EconomySecurityConfig)
 local MovementSecurityConfig = require(ServerStorage.ServerOnlyConfig.MovementSecurityConfig)
 local SecurityLogConfig = require(ServerStorage.ServerOnlyConfig.SecurityLogConfig)
+local TravelSecurityConfig = require(ServerStorage.ServerOnlyConfig.TravelSecurityConfig)
 local AchievementService = require(script.Parent.Services.AchievementService)
 local CollectionService = require(script.Parent.Services.CollectionService)
 local InventoryService = require(script.Parent.Services.InventoryService)
@@ -28,6 +30,7 @@ local RateLimitService = require(script.Parent.Services.RateLimitService)
 local SecurityLog = require(script.Parent.Services.SecurityLog)
 local SellService = require(script.Parent.Services.SellService)
 local UpgradeService = require(script.Parent.Services.UpgradeService)
+local WorldTravelService = require(script.Parent.Services.WorldTravelService)
 local WorldUnlockService = require(script.Parent.Services.WorldUnlockService)
 local MemoryDataStore = require(script.Parent.Systems.MemoryDataStore)
 local MovementValidator = require(script.Parent.Systems.MovementValidator)
@@ -37,6 +40,7 @@ local ResourceNodes = require(script.Parent.Systems.ResourceNodes)
 local ResourceSpawner = require(script.Parent.Systems.ResourceSpawner)
 local SellZones = require(script.Parent.Systems.SellZones)
 local StudioTestPresets = require(script.Parent.Systems.StudioTestPresets)
+local WorldArrivals = require(script.Parent.Systems.WorldArrivals)
 
 -- Choix du magasin. Le magasin en mémoire exige Studio ET le réglage
 -- explicite : il ne peut pas s'activer sur un serveur publié.
@@ -199,6 +203,46 @@ local worldUnlockService = WorldUnlockService.new({
 	security = securityLog,
 })
 
+-- Voyage entre mondes (T8, D-021) -----------------------------------------
+
+-- Déplacement décidé par le SERVEUR : position d'arrivée lue sur la carte,
+-- jamais envoyée par le client. Les références de déplacement repartent du
+-- point d'arrivée, avec une courte grâce d'observation (positions encore
+-- en transit) ; suspension et historique T6 conservés (Reset).
+local function teleportCharacter(userId: number, target: WorldTravelService.Position): boolean
+	local player = Players:GetPlayerByUserId(userId)
+	local character = if player then player.Character else nil
+	local humanoid = if character then character:FindFirstChildOfClass("Humanoid") else nil
+	if humanoid == nil or humanoid.Health <= 0 then
+		return false
+	end
+	local root = humanoid.RootPart
+	if root == nil then
+		return false
+	end
+	humanoid.Sit = false
+	root.AssemblyLinearVelocity = Vector3.zero
+	root.CFrame = CFrame.new(target.X, target.Y, target.Z) * root.CFrame.Rotation
+	movementValidator.Reset(userId, target, os.clock(), MovementSecurityConfig.ServerTeleport.graceSeconds)
+	collectionService.ResetTravelReference(userId, target)
+	return true
+end
+
+local worldTravelService = WorldTravelService.new({
+	playerData = playerDataService,
+	rateLimit = RateLimitService.new({
+		clock = os.clock,
+		limits = TravelSecurityConfig.RateLimits,
+		logEveryRejections = TravelSecurityConfig.RateLimitFeedback.logEveryRejections,
+	}),
+	clock = os.clock,
+	getArrival = function(worldId: string): WorldTravelService.Position?
+		return WorldArrivals.find(worldId, TravelSecurityConfig.Arrival.heightStuds)
+	end,
+	teleport = teleportCharacter,
+	security = securityLog,
+})
+
 -- Succès (T7, D-020) -------------------------------------------------------
 
 local achievementService = AchievementService.new({ playerData = playerDataService })
@@ -306,6 +350,21 @@ remotes[Remotes.Name.RequestUnlockWorld].OnServerEvent:Connect(function(player: 
 		grantAchievements(player)
 		sendState(player)
 	end
+end)
+
+-- Seul le premier argument est lu ; destination et position viennent du
+-- serveur (WorldConfig, profil, carte).
+remotes[Remotes.Name.TravelToWorld].OnServerEvent:Connect(function(player: Player, payload: any, ...: any)
+	local result = worldTravelService.HandleRequest(player.UserId, payload, select("#", ...))
+	if result.silent then
+		return
+	end
+	actionResult:FireClient(player, {
+		action = Remotes.Action.Travel,
+		ok = result.ok,
+		code = result.code,
+		worldId = result.worldId,
+	})
 end)
 
 local function onPlayerAdded(player: Player)
@@ -440,6 +499,7 @@ PlayerSession.start(playerDataService, {
 		sellService.RemovePlayer(player.UserId)
 		upgradeService.RemovePlayer(player.UserId)
 		worldUnlockService.RemovePlayer(player.UserId)
+		worldTravelService.RemovePlayer(player.UserId)
 		movementValidator.Remove(player.UserId)
 		securityLog.Remove(player.UserId)
 	end,

@@ -347,6 +347,78 @@ function MovementValidatorTests.run(modules: Modules): ({ string }, number)
 		check(verdict.status == "anomaly", `statut {verdict.status}`)
 	end)
 
+	-- VOYAGE SERVEUR (T8, D-021) ---------------------------------------------
+
+	case("T8 voyage serveur : positions en transit non jugées, aucun faux positif", function(check)
+		local env = newEnv()
+		env.walk(16, 2)
+		local grace = Config.ServerTeleport.graceSeconds
+		local arrival = { X = 5000, Y = 10, Z = 0 }
+		env.validator.Reset(USER, arrival, env.now, grace)
+		-- Le client renvoie encore l'ancienne position, puis la nouvelle.
+		local old = env.position
+		local statuses = {}
+		-- Échantillons strictement avant la fin de la grâce.
+		for index = 1, math.ceil(grace / DT) - 1 do
+			env.now += DT
+			local sample = if index <= 2 then old else arrival
+			table.insert(statuses, env.validator.Observe(USER, sample, env.now).status)
+		end
+		for index, status in ipairs(statuses) do
+			check(status == "skipped", `échantillon {index} pendant la grâce : {status}`)
+		end
+		env.position = { X = arrival.X, Y = arrival.Y, Z = arrival.Z }
+		env.walk(16, 3)
+		check(env.count("anomaly") == 0 and env.corrections == 0, "faux positif après le voyage")
+		local inspect = env.validator.Inspect(USER)
+		check(inspect.recentEpisodes == 0, "épisode créé par le voyage")
+		check(env.canAct(), "action refusée après un voyage légitime")
+	end)
+
+	case("T8 voyage serveur : CanAct jugé au point d'arrivée pendant la grâce", function(check)
+		local env = newEnv()
+		local arrival = { X = 5000, Y = 10, Z = 0 }
+		env.validator.Reset(USER, arrival, env.now, Config.ServerTeleport.graceSeconds)
+		env.now += DT
+		check(env.validator.CanAct(USER, arrival, env.now), "action au point d'arrivée refusée")
+		local allowed, reason = env.validator.CanAct(USER, { X = 0, Y = 0, Z = 0 }, env.now)
+		check(not allowed and reason == "position_mismatch", `action loin de l'arrivée : {tostring(reason)}`)
+	end)
+
+	case("T8 voyage serveur : déplacement anormal détecté après la grâce", function(check)
+		local env = newEnv()
+		local arrival = { X = 5000, Y = 10, Z = 0 }
+		env.validator.Reset(USER, arrival, env.now, Config.ServerTeleport.graceSeconds)
+		env.now += Config.ServerTeleport.graceSeconds
+		env.position = { X = arrival.X, Y = arrival.Y, Z = arrival.Z }
+		local verdict = env.step(300)
+		check(verdict.status == "anomaly", `téléportation après la grâce : {verdict.status}`)
+	end)
+
+	case("T8 voyage serveur : suspension et historique conservés", function(check)
+		local env = newEnv()
+		for _ = 1, 3 do
+			env.step(45)
+			env.walk(0, 2.5)
+		end
+		local before = env.validator.Inspect(USER)
+		env.validator.Reset(USER, { X = 5000, Y = 10, Z = 0 }, env.now, Config.ServerTeleport.graceSeconds)
+		local after = env.validator.Inspect(USER)
+		check(after.suspendedUntil == before.suspendedUntil, "suspension effacée par le voyage")
+		check(after.lastCorrectionAt == before.lastCorrectionAt, "historique de correction effacé")
+		check(not env.validator.CanAct(USER, { X = 5000, Y = 10, Z = 0 }, env.now), "voyage utilisé pour lever la suspension")
+	end)
+
+	case("T8 : Reset sans grâce inchangé (réapparition T6)", function(check)
+		local env = newEnv()
+		env.validator.Reset(USER, { X = 0, Y = 0, Z = 0 }, env.now, nil)
+		env.now += DT
+		check(env.validator.Observe(USER, { X = 300, Y = 0, Z = 0 }, env.now).status == "anomaly", "grâce appliquée sans demande")
+		env.validator.Reset(USER, { X = 0, Y = 0, Z = 0 }, env.now, 0 / 0)
+		env.now += DT
+		check(env.validator.Observe(USER, { X = 300, Y = 0, Z = 0 }, env.now).status == "anomaly", "grâce NaN acceptée")
+	end)
+
 	case("NaN et infini : refusés, jamais pris comme référence", function(check)
 		local env = newEnv()
 		env.walk(SPEED, 1)

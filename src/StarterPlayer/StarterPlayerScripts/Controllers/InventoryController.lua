@@ -416,10 +416,23 @@ local function renderBag(inventory: { used: number, capacity: number, resources:
 		detailLabel.TextColor3 = COLOR_WARNING
 		detailLabel.Font = Enum.Font.GothamBold
 	else
+		-- T8 (D-021) : 20 ressources configurées ; seules celles présentes
+		-- dans le sac sont listées. Sac vide : ressources du monde de départ
+		-- à 0 (affichage MVP inchangé).
 		local parts: { string } = {}
 		for _, resourceId in ipairs(resourceOrder) do
 			local quantity = inventory.resources[resourceId] or 0
-			table.insert(parts, `{translate(ResourceConfig[resourceId].displayNameKey)} {quantity}`)
+			if quantity > 0 then
+				table.insert(parts, `{translate(ResourceConfig[resourceId].displayNameKey)} {quantity}`)
+			end
+		end
+		if #parts == 0 then
+			for _, resourceId in ipairs(resourceOrder) do
+				local definition = ResourceConfig[resourceId]
+				if definition.worldId == GameConfig.StartingWorldId and definition.rarity == "Common" then
+					table.insert(parts, `{translate(definition.displayNameKey)} 0`)
+				end
+			end
 		end
 		detailLabel.Text = table.concat(parts, "   ")
 		detailLabel.TextColor3 = COLOR_TEXT

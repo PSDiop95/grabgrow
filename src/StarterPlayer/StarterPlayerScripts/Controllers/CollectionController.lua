@@ -221,6 +221,10 @@ local function onActionResult(result: any)
 		InventoryController.showMessage("sell.go_sell")
 	elseif code == Remotes.ResultCode.TooFar then
 		InventoryController.showMessage("collect.too_far")
+	elseif code == Remotes.ResultCode.WorldLocked then
+		-- T8 : ressource d'un monde non débloqué (refus du serveur).
+		holding = false
+		InventoryController.showMessage("collect.world_locked")
 	end
 	-- Les autres refus (cadence, ressource déjà prise...) restent silencieux.
 end

@@ -10,8 +10,9 @@
 -- serveur. Une amélioration achetée s'applique donc à la demande suivante.
 --
 -- Ordre des contrôles (le moins coûteux d'abord) :
---   limite de fréquence -> profil chargé -> payload -> nœud connu -> nœud
---   actif -> personnage (position finie) -> distance -> déplacements
+--   limite de fréquence -> profil chargé -> payload -> nœud connu -> monde
+--   de la ressource débloqué (T8) -> nœud actif -> personnage (position
+--   finie) -> distance -> déplacements
 --   (MovementValidator, T6) -> trajet depuis la dernière collecte -> cadence
 --   -> capacité et ajout (InventoryService) -> consommation du nœud.
 -- T6 : les refus sont journalisés par SecurityLog (limité par joueur).
@@ -46,6 +47,17 @@ local function statOf(profile: any, statId: string): number
 	local stats = profile.stats
 	local value = if type(stats) == "table" then stats[statId] else nil
 	return if type(value) == "number" then value else 0
+end
+
+-- Le monde de la ressource est-il débloqué dans le profil serveur ?
+-- Ressource inconnue, monde absent ou section `worlds` illisible : non.
+local function isWorldUnlocked(profile: any, resourceType: string): boolean
+	local definition = ResourceConfig[resourceType]
+	local worlds = profile.worlds
+	if definition == nil or type(worlds) ~= "table" then
+		return false
+	end
+	return worlds[definition.worldId] == true
 end
 
 -- Nom de la limite dans CollectionSecurityConfig.RateLimits.
@@ -224,6 +236,14 @@ function CollectionService.new(dependencies: Dependencies)
 		if node == nil then
 			security.Record(userId, Event.UnknownId, { action = ACTION, id = nodeId })
 			return reject(ResultCode.InvalidTarget, nodeId)
+		end
+		-- T8 (D-021) : le monde de la ressource (ResourceConfig, serveur) doit
+		-- être débloqué dans le profil serveur. Indépendant de la carte et de
+		-- la position : une demande falsifiée vers un nœud d'un monde
+		-- verrouillé est refusée même si le personnage est à portée.
+		if not isWorldUnlocked(profile, node.resourceType) then
+			security.Record(userId, Event.ActionRefused, { action = ACTION, code = ResultCode.WorldLocked })
+			return reject(ResultCode.WorldLocked, nodeId)
 		end
 		if node.state ~= ResourceSpawner.State.Active then
 			return reject(ResultCode.ResourceUnavailable, nodeId)

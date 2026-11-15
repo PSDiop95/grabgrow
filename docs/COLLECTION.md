@@ -33,6 +33,7 @@ Serveur (CollectionService.HandleRequest), dans cet ordre :
   2. profil chargé                -> PROFILE_NOT_LOADED
   3. payload                      -> INVALID_TARGET
   4. nœud connu                   -> INVALID_TARGET
+  4b. monde de la ressource débloqué dans le profil (T8, D-021) -> WORLD_LOCKED
   5. nœud ACTIVE                  -> RESOURCE_UNAVAILABLE
   6. personnage présent et vivant -> NO_CHARACTER
   7. distance                     -> TOO_FAR

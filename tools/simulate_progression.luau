@@ -1,11 +1,13 @@
 --!nocheck
--- Simulateur de progression économique (T7, D-020).
+-- Simulateur de progression économique (T7, D-020 ; quatre mondes T8, D-021).
 -- Usage (racine du dépôt) :
 --   lune run tools/simulate_progression.luau            -> configuration actuelle
---   lune run tools/simulate_progression.luau bible      -> valeurs de la Bible v1.0
---                                                          (Backpack 2 = 100, sans succès)
+--   lune run tools/simulate_progression.luau bible      -> Backpack 2 = 100, sans succès
 --   lune run tools/simulate_progression.luau noach      -> actuelle, sans succès
 --   lune run tools/simulate_progression.luau current events -> détail des achats
+--   option `t7` (ex. `current t7`) : hypothèses de T7 (carte de test de
+--     Green Valley seule, mondes 2 à 4 sans contenu) ; reproduit
+--     docs/phases/T7_ECONOMY_SIMULATION.md.
 --
 -- Outil de développement : absent du jeu (non mappé dans
 -- default.project.json). Lit les VRAIES tables UpgradeConfig, WorldConfig,
@@ -16,8 +18,13 @@
 --     d0 = déplacement par unité. Repère MESURÉ (émulateur, T2) : maintien,
 --     39 collectes / 60 s à 0,75 s -> d0 ≈ 0,79 s (joueur régulier) ;
 --   * aller-retour de vente = T0 × 16 / vitesse ;
---   * valeur d'un sac = floor(capacité × valeur moyenne de la carte de test
---     (36 nœuds 16/12/8 : 1,78)), puis Multiplier arrondi à l'inférieur ;
+--   * valeur d'un sac = floor(capacité × valeur moyenne par nœud du monde
+--     joué), puis Multiplier arrondi à l'inférieur ;
+--   * T8 : carte prévue de NODES_PER_WORLD nœuds par monde, répartis selon
+--     ResourceConfig.spawnWeight (plus forts restes) ; le joueur passe au
+--     monde suivant dès son déblocage et n'y collecte que ses ressources ;
+--     rareté due aux temps de réapparition et concurrence entre joueurs
+--     IGNORÉES (le jeu réel sera plus lent) ;
 --   * achats après chaque vente ; mondes débloqués dès que possible.
 -- Résultats et limites : docs/phases/T7_ECONOMY_SIMULATION.md.
 
@@ -26,7 +33,12 @@ local luau = require("@lune/luau")
 local process = require("@lune/process")
 
 local VARIANT = process.args[1] or "current"
-local SHOW_EVENTS = process.args[2] == "events"
+local FLAGS = {}
+for index = 2, #process.args do
+	FLAGS[process.args[index]] = true
+end
+local SHOW_EVENTS = FLAGS.events == true
+local T7_MODE = FLAGS.t7 == true
 local SHARED = "src/ReplicatedStorage/Shared"
 
 -- Chargeur minimal des modules de configuration (seule dépendance :
@@ -84,7 +96,60 @@ for resourceId, count in NODE_COUNT do
 	nodes += count
 	value += count * Resources[resourceId].sellValue
 end
-local VALUE_PER_UNIT = value / nodes
+local T7_VALUE_PER_UNIT = value / nodes
+
+-- T8 (D-021 D8, hypothèse) : nœuds prévus par monde.
+local NODES_PER_WORLD = 40
+
+-- Répartition de `total` nœuds selon les poids (plus forts restes, ordre
+-- stable) ; retourne la valeur moyenne par nœud et le détail.
+local function plannedValue(worldId)
+	local ids, totalWeight = {}, 0
+	for id, definition in Resources do
+		if definition.worldId == worldId then
+			table.insert(ids, id)
+			totalWeight += definition.spawnWeight
+		end
+	end
+	table.sort(ids)
+	local counts, used, remainders = {}, 0, {}
+	for _, id in ids do
+		local exact = NODES_PER_WORLD * Resources[id].spawnWeight / totalWeight
+		counts[id] = math.floor(exact)
+		used += counts[id]
+		table.insert(remainders, { id = id, rest = exact - counts[id] })
+	end
+	table.sort(remainders, function(a, b)
+		if a.rest ~= b.rest then
+			return a.rest > b.rest
+		end
+		return a.id < b.id
+	end)
+	for index = 1, NODES_PER_WORLD - used do
+		local id = remainders[index].id
+		counts[id] += 1
+	end
+	local sum, parts = 0, {}
+	for _, id in ids do
+		sum += counts[id] * Resources[id].sellValue
+		table.insert(parts, `{id} {counts[id]}`)
+	end
+	return sum / NODES_PER_WORLD, table.concat(parts, ", ")
+end
+
+-- Valeur moyenne par unité selon le monde joué.
+local WORLD_VALUES = {}
+local WORLD_LAYOUTS = {}
+for worldId in Worlds do
+	WORLD_VALUES[worldId], WORLD_LAYOUTS[worldId] = plannedValue(worldId)
+end
+if T7_MODE then
+	-- T7 : carte de test seule ; débloquer un monde ne change pas la valeur.
+	for worldId in Worlds do
+		WORLD_VALUES[worldId] = T7_VALUE_PER_UNIT
+	end
+end
+local VALUE_PER_UNIT = WORLD_VALUES.GreenValley
 
 -- Profils (HYPOTHÈSES). strategy : "roi" = meilleur gain/coût (attend s'il
 -- faut économiser) ; "cheap" = achète le moins cher abordable.
@@ -128,6 +193,7 @@ local function cycle(profile, levels, scale)
 end
 
 local function simulate(profile, capHours, scale)
+	VALUE_PER_UNIT = WORLD_VALUES.GreenValley
 	local levels = {}
 	for _, id in ORDER do
 		levels[id] = Upgrades[id].startLevel
@@ -174,6 +240,7 @@ local function simulate(profile, capHours, scale)
 		state.spent += world.unlockCost
 		state.worlds += 1
 		metrics.worldsUnlocked = state.worlds
+		VALUE_PER_UNIT = WORLD_VALUES[worldId]
 		push(`Monde {worldId}`, world.unlockCost)
 		checkAchievements()
 		return true
@@ -266,13 +333,21 @@ local WINDOWS = { { 0, 10 }, { 10, 30 }, { 30, 60 }, { 60, 120 }, { 120, 300 }, 
 local CAP_HOURS = 400
 
 print(`# Simulation de progression — variante « {VARIANT} » (succès : {if useAchievements then "oui" else "non"})`)
-print(`Valeur moyenne par unité (carte de test) : {string.format("%.3f", VALUE_PER_UNIT)} Coins. PROJECTIONS THÉORIQUES.`)
+if T7_MODE then
+	print(`Mode t7 : carte de test de Green Valley seule ({string.format("%.3f", T7_VALUE_PER_UNIT)} Coins par nœud), mondes 2 à 4 sans contenu. PROJECTIONS THÉORIQUES.`)
+else
+	print(`Carte prévue (T8) : {NODES_PER_WORLD} nœuds par monde. PROJECTIONS THÉORIQUES.`)
+	for _, worldId in { "GreenValley", "GoldenDesert", "FrozenPeaks", "MysticWorld" } do
+		print(`- {worldId} : {string.format("%.2f", WORLD_VALUES[worldId])} Coins par nœud ({WORLD_LAYOUTS[worldId]})`)
+	end
+end
 
 for _, profile in PROFILES do
 	local startLevels = {}
 	for _, id in ORDER do
 		startLevels[id] = Upgrades[id].startLevel
 	end
+	VALUE_PER_UNIT = WORLD_VALUES.GreenValley
 	local start = cycle(profile, startLevels)
 	local result = simulate(profile, CAP_HOURS)
 	local at = {}

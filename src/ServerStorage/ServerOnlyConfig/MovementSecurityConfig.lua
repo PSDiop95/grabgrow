@@ -91,6 +91,17 @@ local MovementSecurityConfig = {
 		minCorrectionIntervalSeconds = 5,
 	},
 
+	ServerTeleport = {
+		-- T8 (D-021) : après un voyage fait par le SERVEUR (WorldTravelService),
+		-- échantillons ignorés pendant cette durée (s), le temps que la
+		-- position imposée revienne du client : les positions encore en
+		-- transit ne créent pas de faux positif. Même valeur que
+		-- Escalation.postCorrectionGraceSeconds (validée en T6). CanAct reste
+		-- appliqué pendant la grâce (collecte et vente jugées par rapport au
+		-- point d'arrivée). HYPOTHÈSE, à mesurer avec la latence mobile.
+		graceSeconds = 1,
+	},
+
 	Action = {
 		-- Collecte et vente refusées pendant un épisode ouvert et durant
 		-- holdSeconds après sa fin.

@@ -2,7 +2,9 @@
 
 Dernière mise à jour : 2026-11-14
 
-Phasage du MVP repris de l'architecture technique (section 20, T0 à T8).
+Phasage du MVP repris de l'architecture technique (section 20, T0 à T8),
+modifié par D-021 (2026-11-14) : T8 = mondes et contenu ; la préparation
+de publication devient T9.
 Le calendrier 10 semaines du GDD (section 20) reste la cible commerciale,
 mais son ordre (Pets avant sauvegarde) n'est pas suivi : voir
 `decisions/TECHNICAL_DECISIONS.md`, D-004.
@@ -22,7 +24,8 @@ réellement exécuté. État détaillé : `PROJECT_STATUS.md`.
 | T5 | HUD et feedback mobile | Boucle complète utilisable sur téléphone | **Terminé** (clôturé le 2026-11-13, D-018, avec réserves : manette, tablette réelle, performance non chiffrée) — T5.1 HUD **terminé** (clôturé le 2026-11-12 : tests automatisés, Studio, téléphone réel OK ; commit local 5d4f339) ; T5.2 feedback **terminé** (clôturé le 2026-11-12 : tests automatisés, Studio, téléphone réel OK) ; T5.3 première session **terminé** (2026-11-13 : tests automatisés, Studio et émulateur OK ; D-017 acceptée ; commit local) ; T5.4 textes EN/FR **terminé** (2026-11-13 : validé ; commit local) ; T5.5 validation **terminée avec réserves** (2026-11-13 : technique, émulateur, téléphone réel et PC validés par le propriétaire ; manette reportée, tablette réelle non testée)  |
 | T6 | Tests multijoueurs et anti-exploit | Aucun exploit simple, aucune fuite de données | **Terminé** (clôturé le 2026-11-14, D-019, `phases/T6_SECURITY_REPORT.md`) — tests automatisés, Studio un joueur, Local Server 2 joueurs (propriétaire) OK ; commit local c199d85, non poussé. Réserves : A-27 (mobile réel), A-42, seuils R4 à calibrer |
 | T7 | Équilibrage MVP | Première session compréhensible et satisfaisante | **Terminé** (clôturé le 2026-11-14, test réel du propriétaire) — D-020 : Backpack 2 à 75, temps de jeu, schéma v2, succès permanents, simulateur ; `phases/T7_IMPLEMENTATION_REPORT.md` ; tests automatisés et Studio OK ; commit et push autorisés le 2026-11-14 |
-| T8 | Préparation publication | Tests privés concluants | À faire |
+| T8 | Mondes et contenu (D-021) : quatre îles, ressources par monde, voyage serveur | Quatre mondes jouables, collecte et vente par monde, multijoueur et performance mobile vérifiés | **En cours** — étape A validée le 2026-11-14 (`phases/T8_WORLD_AUDIT.md`) ; T8.0 et T8.1 autorisés ; T8.2 à T8.7 soumis à validation |
+| T9 | Préparation publication, `AnalyticsService` (D-020 D5, D-021) | Tests privés concluants | À faire (ne pas commencer avant validation de T8) |
 
 ## Phases terminées : T2, T3, T4, T5, T6
 
@@ -61,13 +64,26 @@ T6 — Tests multijoueurs et anti-exploit (`phases/T6_SECURITY_REPORT.md`,
 
 T7 — Équilibrage MVP : validée et clôturée par le propriétaire le 2026-11-14 après test réel
 (`phases/T7_PROGRESSION_AUDIT.md`, `phases/T7_ECONOMY_SIMULATION.md`,
-`phases/T7_IMPLEMENTATION_REPORT.md`). T8 non commencée.
+`phases/T7_IMPLEMENTATION_REPORT.md`).
 
-## Après le MVP (ne pas commencer avant validation de T0 à T8)
+## T8 — Mondes et contenu (en cours, D-021)
+
+| Lot | Contenu | État |
+|---|---|---|
+| T8.0 | D-021, harmonisation des documents, Bible 1.1, `assets/ASSET_MANIFEST.md` | Validé (2026-11-14) |
+| T8.1 | Architecture : ressources des quatre mondes, `ResourceNodes` générique, collecte refusée dans un monde verrouillé, `WorldTravelService` et `TravelToWorld`, simulateur quatre mondes, tests | Validé sous réserve du test multijoueur, puis test Local Server réussi (2026-11-14) |
+| T8.2 | Green Valley : zones, hub, Fruit sauvage et Cristal vert, portails, interface de voyage | Validé (2026-11-15, `phases/T8_IMPLEMENTATION_REPORT.md`) |
+| T8.3 à T8.5 | Golden Desert, Frozen Peaks, Mystic World | En attente |
+| T8.6 | (Journal de collection : reporté, D-021 D6) | Non retenu |
+| T8.7 | Validation multijoueur et performance, rapport | En attente |
+
+## Après le MVP (ne pas commencer avant validation de T0 à T9)
 
 - Achats x10 / x100 / MAX (Magnet, Boots, Multiplier faits en T4, D-015).
-- Wild Fruit, Green Crystal ; Grab Combo.
-- Contenu réel de Golden Desert, Frozen Peaks, Mystic World (déblocage seul en T4).
+- Grab Combo. (Wild Fruit, Green Crystal et le contenu des mondes 2 à 4
+  passent en T8, D-021.)
+- Journal de collection et schéma v3 (reportés, D-021 D6) ; événements
+  environnementaux (D-021 D9).
 - Gems, Stars et Prestige.
 - Pets et œufs ; quêtes et succès ; événements coopératifs.
 - Monétisation (Game Pass, Developer Products).

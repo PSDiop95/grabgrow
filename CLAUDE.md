@@ -169,9 +169,13 @@ Le MVP doit rester limité à :
 
 ### 5.2 Systèmes reportés
 
-Ne pas commencer ces systèmes avant validation du MVP :
+Exception décidée par le propriétaire (D-021, 2026-11-14) : la phase T8
+est consacrée aux mondes et au contenu. Golden Desert, Frozen Peaks,
+Mystic World, Wild Fruit et Green Crystal y sont développés, lot par lot
+et après validation. La préparation de publication et `AnalyticsService`
+passent en T9.
 
--   Golden Desert, Frozen Peaks et Mystic World.
+Ne pas commencer ces systèmes avant validation du MVP :
 -   Gems et Stars comme économies complètes.
 -   Pets et œufs.
 -   Quêtes et succès avancés.

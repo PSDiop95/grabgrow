@@ -1,18 +1,28 @@
 # GRAB & GROW — État du projet
 
-Dernière mise à jour : 2026-11-14 (T7 validée et clôturée par le propriétaire le 2026-11-14 après test réel, D-020)
+Dernière mise à jour : 2026-11-15 (T8 en cours : T8.0 à T8.2 validées ; T8.3 en attente d'autorisation)
 
 ## Résumé
 
-**T7 (progression et équilibrage) : implémentée le 2026-11-14, NON
-clôturée**, validation du propriétaire en attente (D-020). Backpack 2 à
+**T8 (mondes et contenu) : EN COURS** (D-021). Étape A validée par le
+propriétaire le 2026-11-14 (`phases/T8_WORLD_AUDIT.md`). T8.0
+(décisions, documentation, Bible 1.1, manifeste d'assets) et T8.1
+(architecture des mondes, contrôle serveur du monde, voyage serveur)
+autorisés ; rapport intermédiaire : `phases/T8_IMPLEMENTATION_REPORT.md`.
+T8.0 et T8.1 validées (2026-11-14) sous réserve du test multijoueur, réussi
+le jour même (Local Server, 2 joueurs). T8.2 (carte de Green Valley,
+portails, interface de voyage) validée le 2026-11-15 ; T8.3 (Golden
+Desert) non commencée, en attente d'autorisation. Aucun commit.
+
+**T7 (progression et équilibrage) : VALIDÉE et CLÔTURÉE** (propriétaire,
+2026-11-14, après test réel, D-020 ; commit 0b821a2, poussé). Backpack 2 à
 75 Coins ; temps de jeu serveur (A-21) ; schéma v2 et 12 succès
 permanents ; simulateur `tools/simulate_progression.luau`. 17 suites Lune
-OK, luau-lsp 0 erreur, rojo build OK, Play Studio OK (succès réel
-attribué). Détail : `phases/T7_IMPLEMENTATION_REPORT.md`. Aucun commit.
+OK, luau-lsp 0 erreur, rojo build OK, Play Studio OK. Détail :
+`phases/T7_IMPLEMENTATION_REPORT.md`.
 
 **T6 (sécurité multijoueur) : VALIDÉE et CLÔTURÉE** (propriétaire,
-2026-11-14, D-019 ; commit local c199d85, aucun push). MovementValidator,
+2026-11-14, D-019 ; commit c199d85, poussé le 2026-11-14). MovementValidator,
 PayloadValidator, SecurityLog, ProfileAudit ; 15 suites Lune OK,
 luau-lsp 0 erreur, rojo build OK ; scénarios Studio à un joueur OK.
 Local Server multi-joueurs : OK selon le propriétaire. Réserves : latence
@@ -977,6 +987,36 @@ Détail : `phases/T7_IMPLEMENTATION_REPORT.md`, `phases/T7_ECONOMY_SIMULATION.md
 | Test réel par le propriétaire | Manuel (propriétaire) | Effectué, T7 validée le 2026-11-14 |
 | Migration v2 sur DataStore réel | Manuel | Non exécutée (optionnelle) |
 
+## Vérifications T8.1 — Architecture des mondes (2026-11-14, À VALIDER)
+
+Détail : `phases/T8_IMPLEMENTATION_REPORT.md`.
+
+| Vérification | Type | Résultat |
+|---|---|---|
+| 18 suites Lune (dont `WorldTravelServiceTests` 25 cas avec les vérifications A/B, `CollectionServiceTests` 27, `MovementValidatorTests` 30) | Automatisé | OK |
+| Local Server, 2 joueurs (lancé par le propriétaire, piloté par MCP), magasin en mémoire, fixture temporaire retirée ensuite | Studio, multijoueur | **OK** : voir « Test multijoueur T8.1 » dans `phases/T8_IMPLEMENTATION_REPORT.md` |
+| Mutations volontaires (contrôle du monde en collecte, grâce, déblocage et monde connu en voyage) | Automatisé | Détectées, code restauré |
+| `luau-lsp analyze` | Automatisé | 0 erreur |
+| `rojo build` (fichier temporaire) | Automatisé | Réussi |
+| Simulateur, option `t7` | Automatisé | Sortie identique à celle de T7 |
+| Play Studio (magasin en mémoire) : 18 suites, voyage refusé (verrouillé), voyage réussi après U8, payload falsifié refusé, limite de fréquence, retour Green Valley, collecte réelle | Studio, un joueur | OK ; aucune anomalie de déplacement journalisée |
+| Reconnexion du même joueur en Local Server | Studio | Non exécutable (un nouveau joueur reçoit un autre UserId) ; couverte par Lune |
+| Téléphone réel, DataStore de test | Manuel | NON EXÉCUTÉ |
+
+## Vérifications T8.2 — Green Valley (2026-11-15, VALIDÉE par le propriétaire)
+
+Détail : `phases/T8_IMPLEMENTATION_REPORT.md`, section T8.2.
+
+| Vérification | Type | Résultat |
+|---|---|---|
+| 19 suites Lune (dont `TravelRulesTests` 8 cas) | Automatisé | OK |
+| `luau-lsp analyze`, `rojo build` | Automatisé | 0 erreur ; réussi |
+| Construction (`build_green_valley.luau`, mode Edit) | Studio | 40 points (16/12/8/3/1), 312 parts sur l'île (budget 1 200) |
+| Play Studio, magasin en mémoire : collecte des 3 Fruits sauvages et du Cristal vert, vente, réapparition (20,06 s), voyages, portails, boutique, réapparition du personnage au hub | Studio, un joueur | OK ; aucune anomalie de déplacement |
+| Appui réel sur F / clic sur « Voyager » | Manuel | NON VÉRIFIÉ (entrées simulées non transmises par MCP) |
+| Rendu visuel de l'île | Manuel | NON VÉRIFIÉ (capture Studio vide) |
+| Téléphone réel | Manuel | NON EXÉCUTÉ |
+
 ## Décisions en attente
 
 1. Push GitHub des commits T1 à T7 : autorisé et effectué le 2026-11-14.
@@ -986,5 +1026,7 @@ Détail : `phases/T7_IMPLEMENTATION_REPORT.md`, `phases/T7_ECONOMY_SIMULATION.md
 ## Prochaine étape
 
 1. Vérifier dans Studio que `IncomingReplicationLag` = 0.
-2. Commit et push T7 : autorisés le 2026-11-14.
-3. T8 : non commencée ; lancement sur décision du propriétaire.
+2. T8.2 validée (2026-11-15). Vérifier que le place est enregistré avec la
+   carte de Green Valley.
+3. T8.3 (Golden Desert) : en attente d'autorisation.
+4. Commit T8.0 à T8.2 : non autorisé à ce stade.

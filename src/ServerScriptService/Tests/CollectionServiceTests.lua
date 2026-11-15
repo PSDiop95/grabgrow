@@ -32,6 +32,8 @@ local LEAF = "green_leaf_001"
 local LEAF_2 = "green_leaf_002"
 local WOOD = "wood_001"
 local STONE_FAR = "stone_001"
+-- T8 : nœud de Golden Desert, enregistré par les cas qui en ont besoin.
+local SAND = "sandstone_001"
 
 -- Retourne (liste des échecs, nombre de cas exécutés).
 function CollectionServiceTests.run(modules: Modules): ({ string }, number)
@@ -496,6 +498,67 @@ function CollectionServiceTests.run(modules: Modules): ({ string }, number)
 		local resources = other.inventory.GetState(USER_A).resources
 		check(resources.green_leaf == 1 and resources.wood == 1, "inventaire non restauré")
 		check(other.playerData.GetData(USER_A).stats.totalResourcesCollected == 2, "statistique non restaurée")
+	end)
+
+	-- MONDES (T8, D-021) ---------------------------------------------------
+
+	case("T8 : ressource d'un monde verrouillé refusée (WORLD_LOCKED)", function(check)
+		local env = newEnv({ USER_A })
+		check(env.spawner.Register(SAND, "sandstone", { X = 2, Y = 0, Z = 0 }), "enregistrement du nœud")
+		local result = env.collect(USER_A, SAND)
+		check(not result.ok and result.code == Code.WorldLocked, `code {tostring(result.code)}`)
+		check(result.amount == 0 and result.resourceType == nil, "résultat de refus incohérent")
+		check(env.nodeState(SAND) == NodeState.Active, "nœud consommé malgré le refus")
+		local profile = env.playerData.GetData(USER_A)
+		check(profile.inventory.resources.sandstone == nil, "ressource créditée")
+		check(env.used(USER_A) == 0, "sac modifié")
+		check(profile.stats.totalResourcesCollected == 0, "statistique modifiée")
+	end)
+
+	case("T8 : demandes falsifiées répétées vers un monde verrouillé, sans effet", function(check)
+		local env = newEnv({ USER_A })
+		env.spawner.Register(SAND, "sandstone", { X = 2, Y = 0, Z = 0 })
+		for _ = 1, 5 do
+			check(env.collect(USER_A, SAND).code == Code.WorldLocked, "demande acceptée")
+			env.advance(interval)
+		end
+		check(env.used(USER_A) == 0, "sac modifié")
+		-- La cadence n'est pas consommée par un refus : collecte normale possible.
+		check(env.collect(USER_A, LEAF).ok, "collecte de Green Valley refusée ensuite")
+	end)
+
+	case("T8 : monde débloqué dans le profil serveur, collecte acceptée", function(check)
+		local env = newEnv({ USER_A }, {
+			prepare = function(profile: any)
+				profile.worlds.GoldenDesert = true
+			end,
+		})
+		env.spawner.Register(SAND, "sandstone", { X = 2, Y = 0, Z = 0 })
+		local result = env.collect(USER_A, SAND)
+		check(result.ok and result.resourceType == "sandstone", `code {tostring(result.code)}`)
+		check(env.playerData.GetData(USER_A).inventory.resources.sandstone == ResourceConfig.sandstone.collectAmount, "inventaire non crédité")
+		check(env.nodeState(SAND) == NodeState.Respawning, "nœud non consommé")
+	end)
+
+	case("T8 : deux joueurs, un seul a débloqué le monde", function(check)
+		local env = newEnv({ USER_A, USER_B }, {
+			prepare = function(profile: any)
+				profile.worlds.GoldenDesert = true
+			end,
+		})
+		env.spawner.Register(SAND, "sandstone", { X = 2, Y = 0, Z = 0 })
+		check(env.collect(USER_B, SAND).code == Code.WorldLocked, "joueur B : monde verrouillé accepté")
+		check(env.nodeState(SAND) == NodeState.Active, "refus de B : nœud consommé")
+		check(env.collect(USER_A, SAND).ok, "joueur A : collecte refusée")
+		check(env.used(USER_B) == 0 and env.used(USER_A) == 1, "inventaires incohérents")
+	end)
+
+	case("T8 : chaque ressource configurée appartient à un monde de la table", function(check)
+		local spawner = ResourceSpawner.new({ schedule = function() end })
+		for resourceId, definition in pairs(ResourceConfig) do
+			check(type(definition.worldId) == "string", `{resourceId} : worldId absent`)
+			check(spawner.Register(`{resourceId}_test`, resourceId, { X = 0, Y = 0, Z = 0 }), `{resourceId} : enregistrement refusé`)
+		end
 	end)
 
 	return failures, caseCount

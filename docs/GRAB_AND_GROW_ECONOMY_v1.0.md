@@ -1,7 +1,7 @@
 # GRAB & GROW --- Bible économique
 
 > **Document de référence économique et de monétisation**\
-> Version : 1.0.2 --- 14 novembre 2026 (révision T7, D-020)\
+> Version : 1.1 --- 14 novembre 2026 (révision T8, D-021)\
 > Statut : proposition chiffrée initiale à tester\
 > Projet : GRAB & GROW\
 > Plateforme : Roblox\
@@ -169,35 +169,57 @@ poids ci-dessus (moyenne pondérée des cinq ressources).
 poids (40 / 30 / 20), la moyenne est de 1,78 Coin par ressource. Les
 valeurs unitaires ne changent pas.
 
+**T8 (1.1, D-021 D4) :** Wild Fruit et Green Crystal sont ajoutés, aux
+valeurs ci-dessus, dans la zone avancée de Green Valley. Carte prévue de
+40 nœuds (16 / 12 / 8 / 3 / 1) : 2,28 Coins par nœud (+28 % par rapport à
+la carte MVP de 36 nœuds).
+
+**Révision 1.1 (T8, D-021 D3, « option B ») :** les valeurs unitaires des
+mondes 2 à 4 sont réduites par rapport à la version 1.0. Avec les valeurs
+1.0 (environ × 9 par monde), la simulation achève l'arbre complet des
+améliorations en ≈ 5 h de jeu (joueur régulier) ; avec les valeurs 1.1, en
+≈ 13,5 h (projection, `docs/phases/T8_WORLD_AUDIT.md`). Les coûts
+d'amélioration et de déblocage ne changent pas. Valeurs 1.0 rappelées
+entre parenthèses. **Hypothèses de départ**, à mesurer en test privé.
+
 ### 3.3 Golden Desert
 
   Ressource     Rareté          Valeur / unité   Poids de spawn indicatif
   ------------- ------------- ---------------- --------------------------
-  Sandstone     Commune                     12                         40
-  Copper Ore    Commune                     16                         30
-  Fossil        Peu commune                 24                         18
-  Gold Nugget   Rare                        45                         10
-  Sun Crystal   Épique                     100                          2
+  Sandstone     Commune                5 (12)                         40
+  Copper Ore    Commune                6 (16)                         30
+  Fossil        Peu commune            9 (24)                         18
+  Gold Nugget   Rare                  17 (45)                         10
+  Sun Crystal   Épique               38 (100)                          2
+
+Moyenne pondérée : 7,88 Coins (1.0 : 20,42). Carte prévue de 40 nœuds
+(16 / 12 / 7 / 4 / 1) : 8,03 Coins par nœud.
 
 ### 3.4 Frozen Peaks
 
   Ressource      Rareté          Valeur / unité   Poids de spawn indicatif
   -------------- ------------- ---------------- --------------------------
-  Ice Shard      Commune                     65                         40
-  Silver Ore     Commune                     85                         30
-  Frozen Stone   Peu commune                120                         18
-  Blue Crystal   Rare                       220                         10
-  Ice Diamond    Épique                     500                          2
+  Ice Shard      Commune               18 (65)                         40
+  Silver Ore     Commune               24 (85)                         30
+  Frozen Stone   Peu commune          34 (120)                         18
+  Blue Crystal   Rare                 62 (220)                         10
+  Ice Diamond    Épique              140 (500)                          2
+
+Moyenne pondérée : 29,52 Coins (1.0 : 105,1). Carte prévue :
+30,05 Coins par nœud.
 
 ### 3.5 Mystic World
 
   Ressource        Rareté          Valeur / unité   Poids de spawn indicatif
   ---------------- ------------- ---------------- --------------------------
-  Mystic Dust      Commune                    350                         40
-  Star Fragment    Commune                    450                         30
-  Spectral Ore     Peu commune                650                         18
-  Purple Crystal   Rare                     1 200                         10
-  Mystic Core      Épique                   2 500                          2
+  Mystic Dust      Commune               68 (350)                         40
+  Star Fragment    Commune               87 (450)                         30
+  Spectral Ore     Peu commune          125 (650)                         18
+  Purple Crystal   Rare               230 (1 200)                         10
+  Mystic Core      Épique             480 (2 500)                          2
+
+Moyenne pondérée : 108,4 Coins (1.0 : 562). Carte prévue :
+110,2 Coins par nœud.
 
 Les poids sont des valeurs relatives. Le système de spawn doit appliquer
 les poids, vérifier les plafonds de ressources simultanées et respecter
@@ -219,6 +241,11 @@ les zones autorisées.
 **Hypothèse provisoire (MVP) :** temps de réapparition de 2 s (Green
 Leaf), 3 s (Wood Chunk) et 4 s (Stone). Ces durées ne résultent d'aucune
 simulation ; elles sont à mesurer et ajuster pendant l'équilibrage.
+
+**Hypothèse T8 (1.1, D-021 D8, sous réserve) :** environ 40 nœuds par
+monde ; réapparition 3 et 4 s pour les deux communes des mondes 2 à 4,
+8 s (Peu commune), 20 s (Rare), 60 s (Épique). À ajuster uniquement sur
+mesures.
 
 ------------------------------------------------------------------------
 
@@ -244,12 +271,17 @@ doivent pas supposer une collecte parfaite en continu.
   ------------------- ------------------------- -------------------------
   Green Valley                       2,24 Coins            120--250 Coins
 
-  Golden Desert                     20,42 Coins          900--1 800 Coins
+  Golden Desert                      7,88 Coins              350--700 Coins
 
-  Frozen Peaks                      105,1 Coins        5 000--9 000 Coins
+  Frozen Peaks                      29,52 Coins          1 400--2 500 Coins
 
-  Mystic World                        562 Coins      25 000--45 000 Coins
+  Mystic World                      108,4 Coins          4 800--8 700 Coins
   -----------------------------------------------------------------------
+
+**Révision 1.1 (D-021) :** cibles des mondes 2 à 4 réduites dans la même
+proportion que leur valeur moyenne (1.0 : 900--1 800, 5 000--9 000 et
+25 000--45 000 Coins/min). Valeurs moyennes calculées avec les poids
+indicatifs.
 
 Ces plages sont des objectifs de simulation. Si les joueurs obtiennent
 durablement beaucoup plus ou beaucoup moins, ajuster les valeurs des
@@ -1113,6 +1145,17 @@ final.
                                                   succès permanents MVP
                                                   (8.3). Autres valeurs
                                                   inchangées
+
+  1.1                     2026-11-14              T8 (D-021) : valeurs
+                                                  des ressources des
+                                                  mondes 2 à 4 réduites
+                                                  (option B, 3.3 à 3.5) ;
+                                                  cibles 4.2 révisées ;
+                                                  Wild Fruit et Green
+                                                  Crystal actifs (3.2) ;
+                                                  réapparition (3.6).
+                                                  Coûts d'amélioration et
+                                                  de déblocage inchangés
 
   -----------------------------------------------------------------------
 

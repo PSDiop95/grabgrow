@@ -1,12 +1,16 @@
 --!strict
--- Mondes connus du MVP.
--- Source : Bible économique v1.0, section 6.
+-- Les quatre mondes du jeu.
+-- Source : Bible économique 1.1, section 6 (conditions inchangées, D-021 D10).
 --
--- GreenValley est le seul monde jouable du MVP.
--- GoldenDesert, FrozenPeaks et MysticWorld sont déclarés UNIQUEMENT pour
--- le verrouillage et le déblocage côté serveur (T4, D-015) : ni carte, ni
--- ressources, ni contenu. Débloquer un monde n'y donne pas encore accès.
---
+-- T8 (D-021) : un seul place, une île par monde. Un monde est ACCESSIBLE
+-- quand il est débloqué dans le profil serveur ET qu'un point d'arrivée
+-- existe sur la carte (Workspace.WorldArrivals, attribut `ArrivalWorldId`,
+-- lu par Systems/WorldArrivals). Le voyage est fait par le serveur
+-- (Services/WorldTravelService) ; la collecte d'une ressource exige le
+-- déblocage de son monde (Services/CollectionService). Aucune condition
+-- propre à un monde dans les services : tout se déduit de cette table, de
+-- ResourceConfig.worldId et de la carte.
+
 -- Règle de déblocage (D-015) : monde d'ordre n débloqué seulement si le
 -- monde d'ordre n - 1 l'est, si backpackLevel >= requiredBackpackLevel et
 -- si le solde couvre unlockCost, débité une seule fois (WorldUnlockService).

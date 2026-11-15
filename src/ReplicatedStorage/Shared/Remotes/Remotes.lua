@@ -20,11 +20,16 @@ Remotes.Name = table.freeze({
 	RequestUpgrade = "RequestUpgrade",
 	-- Client -> Serveur. Payload : { worldId = "GoldenDesert" } (T4).
 	RequestUnlockWorld = "RequestUnlockWorld",
+	-- Client -> Serveur. Payload : { worldId = "GoldenDesert" } (T8, D-021).
+	-- Le serveur choisit la destination (point d'arrivée de la carte) et
+	-- déplace lui-même le personnage ; jamais de position du client.
+	TravelToWorld = "TravelToWorld",
 	-- Serveur -> Client. Payload : { action, ok, code, ... }.
 	--   Collect : resourceId?, resourceType?, amount?
 	--   Sell    : sellZoneId?, coinsEarned, quantitySold
 	--   Upgrade : upgradeId?, level?, coinsSpent
 	--   UnlockWorld : worldId?, coinsSpent
+	--   Travel  : worldId? (T8)
 	--   Achievement : achievementId, coinsEarned (T7, envoyé par le serveur
 	--                 seul, après une action validée ; aucune demande client)
 	ActionResult = "ActionResult",
@@ -39,6 +44,7 @@ Remotes.Action = table.freeze({
 	Upgrade = "Upgrade",
 	UnlockWorld = "UnlockWorld",
 	Achievement = "Achievement",
+	Travel = "Travel",
 })
 
 Remotes.ResultCode = table.freeze({
@@ -55,6 +61,8 @@ Remotes.ResultCode = table.freeze({
 	MaxLevel = "MAX_LEVEL", -- amélioration déjà au niveau maximum (T4)
 	AlreadyUnlocked = "ALREADY_UNLOCKED", -- monde déjà débloqué (T4)
 	RequirementNotMet = "REQUIREMENT_NOT_MET", -- monde précédent ou niveau de Backpack manquant (T4)
+	WorldLocked = "WORLD_LOCKED", -- monde de la ressource ou destination non débloqué (T8)
+	WorldUnavailable = "WORLD_UNAVAILABLE", -- monde débloqué mais sans point d'arrivée sur la carte (T8)
 	RateLimited = "RATE_LIMITED",
 	InternalError = "INTERNAL_ERROR",
 })

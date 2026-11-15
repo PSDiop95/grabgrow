@@ -32,6 +32,8 @@ local Localization = require(Shared:WaitForChild("Util"):WaitForChild("Localizat
 local UpgradeMath = require(Shared:WaitForChild("Util"):WaitForChild("UpgradeMath"))
 local InventoryController = require(script.Parent:WaitForChild("InventoryController"))
 local RangeRing = require(script.Parent:WaitForChild("RangeRing"))
+local TravelController = require(script.Parent:WaitForChild("TravelController"))
+local TravelRules = require(Shared:WaitForChild("Util"):WaitForChild("TravelRules"))
 
 local UpgradeController = {}
 
@@ -67,6 +69,7 @@ local COLOR_MAX = Color3.fromRGB(214, 168, 54)
 local COLOR_COINS = Color3.fromRGB(255, 214, 92)
 local COLOR_WARNING = Color3.fromRGB(255, 140, 120)
 local COLOR_SUCCESS = Color3.fromRGB(120, 230, 140)
+local COLOR_TRAVEL = Color3.fromRGB(70, 150, 230)
 
 -- Icône par amélioration (glyphe simple, aucun asset externe).
 local ICONS: { [string]: { glyph: string, color: Color3 } } = {
@@ -272,12 +275,19 @@ local function render()
 		local row = worldRows[worldId]
 		local unlocked = state ~= nil and state.worlds[worldId] == true
 		if unlocked then
+			-- T8.2 : monde débloqué -> bouton « Voyager » (TravelController).
 			unlockedCount += 1
-			row.status.Text = if world.order == 1
-				then translate("world.unlocked")
-				else `{translate("world.unlocked")}  ·  {translate("world.coming_soon")}`
+			local travelState = TravelController.stateOf(worldId)
+			row.status.Text = if travelState == TravelRules.State.Here
+				then translate("travel.here")
+				elseif travelState == TravelRules.State.ComingSoon then
+					`{translate("world.unlocked")}  ·  {translate("world.coming_soon")}`
+				else translate("world.unlocked")
 			row.status.TextColor3 = COLOR_SUCCESS
-			row.button.Visible = false
+			local pending = travelState == TravelRules.State.Pending
+			row.button.Visible = pending or travelState == TravelRules.State.Travel
+			row.button.Text = translate(if pending then "shop.pending" else "travel.go")
+			row.button.BackgroundColor3 = if pending then COLOR_DISABLED else COLOR_TRAVEL
 			continue
 		end
 		row.button.Visible = true
@@ -413,6 +423,9 @@ local function onActionResult(result: any)
 			InventoryController.showMessage("world.failed")
 		end
 		render()
+	elseif result.action == Remotes.Action.Travel and result.ok == true then
+		-- T8.2 : panneau fermé à l'arrivée, pour voir la nouvelle île.
+		setOpen(false)
 	end
 	-- RATE_LIMITED, INVALID_TARGET : silencieux.
 end
@@ -494,7 +507,12 @@ local function buildWorldRow(list: Instance, worldId: string, order: number)
 	button.Position = UDim2.new(1, -10, 0.5, 0)
 	button.Size = UDim2.new(0, 124, 0, 44)
 	button.Activated:Connect(function()
-		requestWorld(worldId)
+		local state = InventoryController.getState()
+		if state ~= nil and state.worlds[worldId] == true then
+			TravelController.request(worldId)
+		else
+			requestWorld(worldId)
+		end
 	end)
 
 	worldRows[worldId] = { status = status, button = button }
@@ -709,6 +727,8 @@ function UpgradeController.start()
 	InventoryController.onStateChanged(function()
 		render()
 	end)
+	-- T8.2 : île courante, points d'arrivée, demandes de voyage en attente.
+	TravelController.onChanged(render)
 
 	UserInputService.InputBegan:Connect(function(input: InputObject, processed: boolean)
 		if input.KeyCode == TOGGLE_GAMEPAD then

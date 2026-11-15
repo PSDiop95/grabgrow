@@ -21,9 +21,22 @@ export type Configs = {
 	-- T4 : paramètres de sécurité des achats (améliorations, mondes).
 	EconomySecurityConfig: any,
 	Localization: any,
+	-- T8 (D-021) : apparence des ressources, voyage, grâce après voyage.
+	ResourceVisualConfig: any,
+	TravelSecurityConfig: any,
+	MovementSecurityConfig: any,
+	Remotes: any,
 }
 
-local MVP_RESOURCE_COUNT = 3
+-- T8 (D-021) : cinq ressources par monde (Bible 1.1, 3.2 à 3.5).
+local RESOURCES_PER_WORLD = 5
+local RARITIES = { Common = true, Uncommon = true, Rare = true, Epic = true }
+local SHAPES = { Ball = true, Block = true, Cylinder = true, Wedge = true }
+-- Raretés autorisées pour le matériau Neon (ResourceVisualConfig).
+local NEON_RARITIES = { Rare = true, Epic = true }
+-- Tailles lisibles sur mobile (studs, ResourceVisualConfig).
+local MIN_RESOURCE_SIZE = 1.2
+local MAX_RESOURCE_SIZE = 3
 -- T4 (D-015) : les cinq améliorations et les quatre mondes de la Bible.
 local MVP_UPGRADE_COUNT = 5
 local WORLD_COUNT = 4
@@ -111,11 +124,18 @@ function ConfigTests.run(configs: Configs): { string }
 	end
 
 	-- ResourceConfig
-	check(
-		count(resources) == MVP_RESOURCE_COUNT,
-		`le MVP attend {MVP_RESOURCE_COUNT} ressources, trouvé {count(resources)}`
-	)
+	local perWorld: { [string]: number } = {}
+	for _, resource in pairs(resources) do
+		perWorld[resource.worldId] = (perWorld[resource.worldId] or 0) + 1
+	end
+	for worldId in pairs(worlds) do
+		check(
+			perWorld[worldId] == RESOURCES_PER_WORLD,
+			`{worldId} : {RESOURCES_PER_WORLD} ressources attendues, trouvé {perWorld[worldId] or 0}`
+		)
+	end
 	for resourceId, resource in pairs(resources) do
+		check(RARITIES[resource.rarity] == true, `{resourceId}.rarity inconnue ({tostring(resource.rarity)})`)
 		check(isNonEmptyString(resource.displayNameKey), `{resourceId}.displayNameKey manquant`)
 		check(worlds[resource.worldId] ~= nil, `{resourceId}.worldId inconnu de WorldConfig`)
 		check(isNonEmptyString(resource.rarity), `{resourceId}.rarity manquant`)
@@ -129,6 +149,76 @@ function ConfigTests.run(configs: Configs): { string }
 			type(resource.respawnSeconds) == "number" and resource.respawnSeconds > 0,
 			`{resourceId}.respawnSeconds doit être > 0`
 		)
+	end
+
+	-- ResourceVisualConfig (T8) : une apparence valide par ressource, et
+	-- aucune apparence orpheline.
+	local visuals = configs.ResourceVisualConfig
+	if visuals ~= nil then
+		for resourceId, resource in pairs(resources) do
+			local visual = visuals[resourceId]
+			check(visual ~= nil, `{resourceId} : apparence absente de ResourceVisualConfig`)
+			if visual ~= nil then
+				check(SHAPES[visual.shape] == true, `{resourceId} : forme inconnue ({tostring(visual.shape)})`)
+				check(isNonEmptyString(visual.material), `{resourceId} : matériau manquant`)
+				check(
+					visual.material ~= "Neon" or NEON_RARITIES[resource.rarity] == true,
+					`{resourceId} : Neon réservé aux raretés Rare et Épique`
+				)
+				local size = visual.size
+				check(type(size) == "table" and #size == 3, `{resourceId} : taille à trois valeurs attendue`)
+				if type(size) == "table" and #size == 3 then
+					local largest = math.max(size[1], size[2], size[3])
+					check(
+						largest >= MIN_RESOURCE_SIZE and largest <= MAX_RESOURCE_SIZE,
+						`{resourceId} : taille hors de [{MIN_RESOURCE_SIZE}, {MAX_RESOURCE_SIZE}] studs`
+					)
+					for _, value in ipairs(size) do
+						check(type(value) == "number" and value > 0, `{resourceId} : dimension invalide`)
+					end
+					if visual.shape == "Ball" then
+						check(size[1] == size[2] and size[2] == size[3], `{resourceId} : sphère à dimensions égales attendue`)
+					end
+				end
+				local color = visual.color
+				check(type(color) == "table" and #color == 3, `{resourceId} : couleur RGB attendue`)
+				if type(color) == "table" then
+					for _, value in ipairs(color) do
+						check(isNonNegativeInteger(value) and value <= 255, `{resourceId} : composante de couleur invalide`)
+					end
+				end
+				check(
+					type(visual.orientation) == "table" and #visual.orientation == 3,
+					`{resourceId} : orientation à trois valeurs attendue`
+				)
+			end
+		end
+		for resourceId in pairs(visuals) do
+			check(resources[resourceId] ~= nil, `ResourceVisualConfig.{resourceId} : ressource inconnue`)
+		end
+	end
+
+	-- Voyage (T8)
+	local travel = configs.TravelSecurityConfig
+	if travel ~= nil then
+		local limit = travel.RateLimits.Travel
+		check(limit ~= nil and isPositiveInteger(limit.burst) and limit.refillPerSecond > 0, "TravelSecurityConfig.RateLimits.Travel invalide")
+		check(isPositiveInteger(travel.RateLimitFeedback.logEveryRejections), "Travel logEveryRejections doit être un entier > 0")
+		check(isPositiveInteger(travel.Payload.maxIdLength), "Travel maxIdLength doit être un entier > 0")
+		for worldId in pairs(worlds) do
+			check(#worldId <= travel.Payload.maxIdLength, `{worldId} plus long que Travel maxIdLength`)
+		end
+		check(type(travel.Arrival.heightStuds) == "number" and travel.Arrival.heightStuds >= 0, "Arrival.heightStuds invalide")
+	end
+	local movement = configs.MovementSecurityConfig
+	if movement ~= nil then
+		local grace = movement.ServerTeleport.graceSeconds
+		check(type(grace) == "number" and grace > 0 and grace <= 3, "ServerTeleport.graceSeconds doit être dans ]0, 3] s")
+	end
+	local remotes = configs.Remotes
+	if remotes ~= nil then
+		check(remotes.Name.TravelToWorld ~= nil, "RemoteEvent TravelToWorld absent")
+		check(remotes.ResultCode.WorldLocked ~= nil and remotes.ResultCode.WorldUnavailable ~= nil, "codes T8 absents")
 	end
 
 	-- UpgradeConfig
@@ -324,7 +414,7 @@ function ConfigTests.run(configs: Configs): { string }
 
 	-- Textes d'interface utilisés par les contrôleurs, dans chaque langue.
 	local uiKeys = {
-		"hud.bag", "hud.bag_full", "collect.action", "collect.too_far",
+		"hud.bag", "hud.bag_full", "collect.action", "collect.too_far", "collect.world_locked",
 		"hud.coins", "hud.sell_value", "sell.action", "sell.station", "sell.estimate",
 		"sell.gain", "sell.empty", "sell.nothing", "sell.too_far", "sell.failed", "sell.go_sell",
 		-- T4 : boutique et mondes.

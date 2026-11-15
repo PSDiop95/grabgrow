@@ -31,11 +31,14 @@ local MovementValidatorTests = require(script.Parent.MovementValidatorTests)
 local SecurityTests = require(script.Parent.SecurityTests)
 local PlayTimeTests = require(script.Parent.PlayTimeTests)
 local AchievementTests = require(script.Parent.AchievementTests)
+local WorldTravelServiceTests = require(script.Parent.WorldTravelServiceTests)
+local TravelRulesTests = require(script.Parent.TravelRulesTests)
 
 local GameConfig = require(Config.GameConfig)
 local ResourceConfig = require(Config.ResourceConfig)
 local UpgradeConfig = require(Config.UpgradeConfig)
 local WorldConfig = require(Config.WorldConfig)
+local ResourceVisualConfig = require(Config.ResourceVisualConfig)
 local DataConfig = require(Config.DataConfig)
 local DataSchema = require(ServerScriptService.Systems.DataSchema)
 local MemoryDataStore = require(ServerScriptService.Systems.MemoryDataStore)
@@ -47,6 +50,7 @@ local SellService = require(ServerScriptService.Services.SellService)
 local EconomyService = require(ServerScriptService.Services.EconomyService)
 local UpgradeService = require(ServerScriptService.Services.UpgradeService)
 local WorldUnlockService = require(ServerScriptService.Services.WorldUnlockService)
+local WorldTravelService = require(ServerScriptService.Services.WorldTravelService)
 local ResourceSpawner = require(ServerScriptService.Systems.ResourceSpawner)
 local StudioTestPresets = require(ServerScriptService.Systems.StudioTestPresets)
 local MovementValidator = require(ServerScriptService.Systems.MovementValidator)
@@ -64,6 +68,7 @@ local UpgradeMath = require(ReplicatedStorage.Shared.Util.UpgradeMath)
 local BagDisplay = require(ReplicatedStorage.Shared.Util.BagDisplay)
 local FeedbackRules = require(ReplicatedStorage.Shared.Util.FeedbackRules)
 local OnboardingRules = require(ReplicatedStorage.Shared.Util.OnboardingRules)
+local TravelRules = require(ReplicatedStorage.Shared.Util.TravelRules)
 local OnboardingConfig = require(Config.OnboardingConfig)
 local FeedbackConfig = require(Config.FeedbackConfig)
 local CollectionSecurityConfig = require(ServerStorage:WaitForChild("ServerOnlyConfig").CollectionSecurityConfig)
@@ -71,6 +76,7 @@ local SellSecurityConfig = require(ServerStorage:WaitForChild("ServerOnlyConfig"
 local EconomySecurityConfig = require(ServerStorage:WaitForChild("ServerOnlyConfig").EconomySecurityConfig)
 local MovementSecurityConfig = require(ServerStorage:WaitForChild("ServerOnlyConfig").MovementSecurityConfig)
 local SecurityLogConfig = require(ServerStorage:WaitForChild("ServerOnlyConfig").SecurityLogConfig)
+local TravelSecurityConfig = require(ServerStorage:WaitForChild("ServerOnlyConfig").TravelSecurityConfig)
 
 local totalFailures = 0
 
@@ -98,6 +104,10 @@ report(
 		SellSecurityConfig = SellSecurityConfig,
 		EconomySecurityConfig = EconomySecurityConfig,
 		Localization = Localization,
+		ResourceVisualConfig = ResourceVisualConfig,
+		TravelSecurityConfig = TravelSecurityConfig,
+		MovementSecurityConfig = MovementSecurityConfig,
+		Remotes = Remotes,
 	})
 )
 
@@ -333,6 +343,38 @@ report(
 		Remotes = Remotes,
 	})
 )
+
+report(
+	"WorldTravelServiceTests",
+	WorldTravelServiceTests.run({
+		WorldTravelService = WorldTravelService,
+		CollectionService = CollectionService,
+		InventoryService = InventoryService,
+		PlayerDataService = PlayerDataService,
+		RateLimitService = RateLimitService,
+		ResourceSpawner = ResourceSpawner,
+		MovementValidator = MovementValidator,
+		MemoryDataStore = MemoryDataStore,
+		DataSchema = DataSchema,
+		UpgradeConfig = UpgradeConfig,
+		TravelSecurityConfig = TravelSecurityConfig,
+		MovementSecurityConfig = MovementSecurityConfig,
+		CollectionSecurityConfig = CollectionSecurityConfig,
+		SecurityLog = SecurityLog,
+		Remotes = Remotes,
+	})
+)
+
+report(
+	"TravelRulesTests",
+	TravelRulesTests.run({
+		TravelRules = TravelRules,
+		Localization = Localization,
+		WorldConfig = WorldConfig,
+		Remotes = Remotes,
+	})
+)
+
 
 if totalFailures == 0 then
 	print("[Tests] TOUS LES TESTS : OK")

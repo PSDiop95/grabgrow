@@ -150,12 +150,18 @@ function MovementValidator.new(config: any)
 	-- Position imposée par le SERVEUR (apparition, téléportation légitime) :
 	-- nouvelle ancre. Ferme l'épisode ouvert sans effacer l'historique des
 	-- anomalies ni la suspension (une réapparition ne blanchit rien).
-	function validator.Reset(userId: number, position: Position?, now: number)
+	-- `graceSeconds` (T8, voyage serveur) : échantillons ignorés pendant
+	-- cette durée, comme après une correction ; absent = aucune grâce
+	-- (comportement T6 inchangé). Jamais plus que la grâce demandée : un
+	-- appel sans grâce annule une grâce en cours.
+	function validator.Reset(userId: number, position: Position?, now: number, graceSeconds: number?)
 		local state = stateOf(userId)
 		state.valid = {}
 		state.previous = nil
 		state.stationarySince = nil
-		state.graceUntil = -math.huge
+		state.graceUntil = if isFiniteNumber(graceSeconds) and (graceSeconds :: number) > 0
+			then now + (graceSeconds :: number)
+			else -math.huge
 		if state.episodeStart ~= nil then
 			state.episodeStart = nil
 			state.lastEpisodeEndAt = now

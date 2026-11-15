@@ -691,3 +691,78 @@ propriétaire), ACCEPTÉE, REMPLACÉE.
   `PlayTimeTracker`, `AchievementController`,
   `tools/simulate_progression.luau`, tests, Bible 1.0.2,
   `DATA_PERSISTENCE.md`, `PROGRESSION.md`, rapports T7.
+
+## D-021 — T8 : mondes et contenu (périmètre, voyage serveur, valeurs des ressources)
+
+- **Date :** 2026-11-14
+- **Statut :** ACCEPTÉE (propriétaire, 2026-11-14 : décisions D1 à D10 de
+  l'étape A de T8, `phases/T8_WORLD_AUDIT.md`). T8.0 et T8.1 autorisés ;
+  T8.2 et suivants soumis à validation.
+- **Contexte :** audit T8 : les mondes 2 à 4 n'existent que dans
+  `WorldConfig` (déblocage payé, aucun contenu) ; Green Valley est une carte
+  de test plate. La roadmap plaçait en T8 la préparation de publication et
+  `CLAUDE.md` §5.2 reportait les mondes après le MVP. Simulation : avec les
+  valeurs de la Bible 1.0 (× 9 par monde), l'arbre complet des améliorations
+  est acheté en ≈ 5 h par un joueur régulier.
+- **Décision :**
+  - **D1** : T8 = mondes et contenu. Préparation de publication et
+    `AnalyticsService` (D-020, D5) reportés en **T9**. `CLAUDE.md`,
+    `ROADMAP.md` et `PROJECT_STATUS.md` harmonisés.
+  - **D2** : un seul place, quatre îles ; voyage effectué exclusivement par
+    le serveur (`WorldTravelService`, RemoteEvent `TravelToWorld`) ; pas de
+    `TeleportService` (le verrou de session du profil resterait à
+    transférer entre places).
+  - **D3** : valeurs des ressources « option B » (Bible 1.1) : Golden
+    Desert 5 / 6 / 9 / 17 / 38 ; Frozen Peaks 18 / 24 / 34 / 62 / 140 ;
+    Mystic World 68 / 87 / 125 / 230 / 480. Coûts d'amélioration et de
+    déblocage inchangés.
+  - **D4** : Fruit sauvage (5) et Cristal vert (12), valeurs de la Bible,
+    dans la zone avancée de Green Valley.
+  - **D5** : apparition systématique dans le hub de Green Valley à chaque
+    connexion et à chaque réapparition ; position non sauvegardée.
+  - **D6** : journal de collection, schéma v3 et récompenses associées
+    NON retenus pour T8 ; aucune migration de données. À réévaluer après
+    les quatre mondes.
+  - **D7** : décors en primitives low-poly scriptées ; aucun asset Polyfork
+    avant validation de `assets/ASSET_MANIFEST.md`, puis asset par asset.
+  - **D8** (sous réserve) : environ 40 nœuds par monde, réapparition
+    2 à 4 s (Commune), 8 s (Peu commune), 20 s (Rare), 60 s (Épique) :
+    hypothèses, ajustées seulement sur mesures.
+  - **D9** : événements environnementaux reportés (ni Golden Rush ni
+    système d'événements en T8).
+  - **D10** : conditions de déblocage inchangées ; P2 non rouverte.
+- **Mise en œuvre T8.1 (architecture) :**
+  - collecte refusée (`WORLD_LOCKED`) si le monde de la ressource n'est pas
+    débloqué dans le profil serveur, quelle que soit la demande reçue ;
+  - voyage : le client n'envoie que `{ worldId }` ; le serveur vérifie le
+    monde, son déblocage et la présence d'un point d'arrivée
+    (`Workspace.WorldArrivals`, attribut `ArrivalWorldId`), puis déplace
+    lui-même le personnage ;
+  - après un voyage, nouvelle référence de déplacement au point d'arrivée
+    (`MovementValidator.Reset`, `CollectionService.ResetTravelReference`) et
+    courte période de grâce d'observation
+    (`MovementSecurityConfig.ServerTeleport.graceSeconds`), comme après une
+    correction T6 : les positions encore en transit ne créent pas de faux
+    positif. La suspension et l'historique des anomalies sont conservés ;
+    `CanAct` reste appliqué pendant la grâce.
+  - aucun champ `playable` dans `WorldConfig` (proposé à l'étape A) : un
+    monde est accessible dès qu'il est débloqué ET qu'un point d'arrivée
+    existe sur la carte ; aucune condition propre à un monde dans les
+    services.
+- **Justification :** contenu des mondes nécessaire pour résorber A-36
+  (plateau structurel) ; option B : arbre complet en ≈ 13,5 h (régulier,
+  projection) au lieu de ≈ 5 h ; un seul place garde le verrou de session
+  et les protections T6 sans transfert.
+- **Conséquences :** inventaire : nouvelles clés de ressources, aucune
+  migration (schéma v2 inchangé ; un serveur ancien conserve les clés
+  inconnues, D-008). Cibles de revenus de la Bible 4.2 révisées en
+  proportion. Le simulateur projette désormais les quatre mondes (variante
+  `t7` pour reproduire les chiffres de T7).
+- **Affecte :** `CLAUDE.md`, `ROADMAP.md`, `PROJECT_STATUS.md`, Bible 1.1,
+  `assets/ASSET_MANIFEST.md`, `ResourceConfig`, nouveau
+  `ResourceVisualConfig`, `WorldConfig` (commentaire), `ResourceNodes`,
+  `CollectionService`, nouveaux `WorldTravelService` et `WorldArrivals`,
+  `TravelSecurityConfig`, `MovementSecurityConfig`, `MovementValidator`,
+  `Remotes`, `Bootstrap`, `Localization`, `InventoryController`,
+  `CollectionController`, `tools/simulate_progression.luau`,
+  `tools/studio/build_test_map.luau`, tests.
