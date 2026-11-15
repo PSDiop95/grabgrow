@@ -37,6 +37,8 @@ local NEON_RARITIES = { Rare = true, Epic = true }
 -- Tailles lisibles sur mobile (studs, ResourceVisualConfig).
 local MIN_RESOURCE_SIZE = 1.2
 local MAX_RESOURCE_SIZE = 3
+-- T8.3 : débit maximal d'un émetteur de ressource (particules/s, mobile).
+local MAX_PARTICLE_RATE = 8
 -- T4 (D-015) : les cinq améliorations et les quatre mondes de la Bible.
 local MVP_UPGRADE_COUNT = 5
 local WORLD_COUNT = 4
@@ -191,6 +193,18 @@ function ConfigTests.run(configs: Configs): { string }
 					type(visual.orientation) == "table" and #visual.orientation == 3,
 					`{resourceId} : orientation à trois valeurs attendue`
 				)
+				-- T8.3 : particules facultatives, réservées à l'Épique (budget
+				-- audit T8 : 2 émetteurs par monde au plus).
+				local particles = visual.particles
+				if particles ~= nil then
+					check(resource.rarity == "Epic", `{resourceId} : particules réservées à la rareté Épique`)
+					check(
+						type(particles.rate) == "number" and particles.rate > 0 and particles.rate <= MAX_PARTICLE_RATE,
+						`{resourceId} : débit de particules hors de ]0, {MAX_PARTICLE_RATE}]`
+					)
+					local pcolor = particles.color
+					check(type(pcolor) == "table" and #pcolor == 3, `{resourceId} : couleur de particules RGB attendue`)
+				end
 			end
 		end
 		for resourceId in pairs(visuals) do

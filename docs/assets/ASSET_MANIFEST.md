@@ -1,6 +1,6 @@
 # Manifeste des assets 3D — GRAB & GROW
 
-Dernière mise à jour : 2026-11-14 (T8.0, D-021 D7). Sons : voir
+Dernière mise à jour : 2026-11-15 (T8.3, D-021 D7). Sons : voir
 `SOUND_MANIFEST.md` (manifeste distinct, inchangé).
 
 ## Statut du manifeste
@@ -18,6 +18,8 @@ par le code ou par des scripts de construction, avec des primitives Roblox
 |---|---|---|
 | Ressources collectables (formes, couleurs, matériaux) | Primitives, `Shared/Config/ResourceVisualConfig.lua` | Créées par `Systems/ResourceNodes` dans `Workspace.ResourceNodes` |
 | Île de Green Valley (hub, portails, zones, décor), station de vente, point d'arrivée (T8.2) | Primitives, `tools/studio/build_green_valley.luau` (remplace `build_test_map.luau`) | `Workspace.Map`, `Workspace.SellZones`, `Workspace.WorldArrivals` |
+| Île de Golden Desert (oasis, dunes, ruines et arche, crête, recoin secret), station de vente, point d'arrivée, portail de retour (T8.3) | Primitives (Part, WedgePart, Cylinder), `tools/studio/build_world_golden_desert.luau` | `Workspace.Map.GoldenDesert`, `Workspace.SellZones.GoldenDesert`, `Workspace.WorldArrivals.GoldenDesert` |
+| Particules du Cristal solaire (T8.3) | `ParticleEmitter` Roblox, texture par défaut, `ResourceVisualConfig.particles` | Enfant du nœud `sun_crystal_001` |
 | Interface (HUD, boutique) | Instances d'interface créées par les contrôleurs | `PlayerGui` |
 
 Les primitives Roblox ne demandent ni licence ni attribution : elles ne

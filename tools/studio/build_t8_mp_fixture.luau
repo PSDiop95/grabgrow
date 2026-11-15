@@ -9,6 +9,8 @@
 -- (MODE = "remove"). Ne touche qu'aux instances nommées « T8Fixture_* ».
 -- Ne pas enregistrer le place avec la fixture. Remplacée par les vraies
 -- îles (T8.2 pour Green Valley, T8.3 pour Golden Desert).
+-- OBSOLÈTE depuis T8.3 : l'île réelle occupe le même emplacement
+-- (3000 ; 0 ; 0). Ne plus construire cette fixture.
 
 local MODE = "build" -- "build" ou "remove"
 

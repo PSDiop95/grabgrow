@@ -19,7 +19,8 @@
 -- dossier du point de spawn. Créer un nœud ne le rend pas collectable par
 -- tous : CollectionService exige que le joueur ait débloqué ce monde.
 --
--- Modèles : formes simples provisoires (Shared/Config/ResourceVisualConfig),
+-- Modèles : formes simples provisoires (Shared/Config/ResourceVisualConfig,
+-- avec un ParticleEmitter facultatif pour l'Épique, T8.3),
 -- à remplacer par des assets contrôlés (ASSET_MANIFEST) sans toucher à la
 -- logique.
 
@@ -90,6 +91,21 @@ local function createPart(
 	part:SetAttribute("ResourceType", resourceType)
 	part:SetAttribute("WorldId", worldId)
 	part:SetAttribute("Available", true)
+	-- T8.3 : petit émetteur facultatif (Épique seulement, ConfigTests),
+	-- sans lumière dynamique.
+	local particles = visual.particles
+	if particles ~= nil then
+		local emitter = Instance.new("ParticleEmitter")
+		emitter.Name = "Sparkle"
+		emitter.Color = ColorSequence.new(Color3.fromRGB(particles.color[1], particles.color[2], particles.color[3]))
+		emitter.Rate = particles.rate
+		emitter.Lifetime = NumberRange.new(0.8, 1.4)
+		emitter.Speed = NumberRange.new(1, 2)
+		emitter.SpreadAngle = Vector2.new(180, 180)
+		emitter.Size = NumberSequence.new(0.25, 0)
+		emitter.LightEmission = 0.6
+		emitter.Parent = part
+	end
 	return part
 end
 
@@ -103,6 +119,10 @@ function ResourceNodes.applyState(nodeId: string, state: string)
 	part.Transparency = if available then 0 else 1
 	part.CanQuery = available
 	part:SetAttribute("Available", available)
+	local emitter = part:FindFirstChildOfClass("ParticleEmitter")
+	if emitter ~= nil then
+		emitter.Enabled = available
+	end
 end
 
 -- Crée les nœuds à partir des points de spawn et les enregistre.

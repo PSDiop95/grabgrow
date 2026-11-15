@@ -11,10 +11,15 @@
 --   color       : RGB 0..255
 --   orientation : degrés, appliqués après l'orientation du point de spawn
 --   material    : nom d'Enum.Material
+--   particles   : facultatif (T8.3) ; { color = RGB, rate = particules/s }.
+--                 Un petit ParticleEmitter sur le nœud, coupé quand le nœud
+--                 est collecté. Réservé à la rareté Épique (un nœud par
+--                 monde : budget audit T8 de 2 émetteurs par monde).
 --
 -- Règles (GDD 13, D-021) : silhouette ou couleur distincte au sein d'un monde,
 -- tailles lisibles sur mobile (1,2 à 3 studs), Neon réservé aux raretés
--- Rare et Épique ; aucune lumière ni particule (budget de performance).
+-- Rare et Épique ; aucune lumière dynamique ; particules seulement pour
+-- l'Épique (budget de performance).
 -- Formes primitives provisoires : à remplacer par des assets contrôlés
 -- (docs/assets/ASSET_MANIFEST.md) sans toucher à la logique.
 
@@ -28,6 +33,7 @@ export type ResourceVisual = {
 	color: Triple,
 	orientation: Triple,
 	material: string,
+	particles: { color: Triple, rate: number }?,
 }
 
 local ResourceVisualConfig: { [string]: ResourceVisual } = {
@@ -43,7 +49,7 @@ local ResourceVisualConfig: { [string]: ResourceVisual } = {
 	copper_ore = { shape = "Block", size = { 1.8, 1.6, 1.8 }, color = { 196, 110, 60 }, orientation = { 10, 30, 10 }, material = "SmoothPlastic" },
 	fossil = { shape = "Cylinder", size = { 2.4, 1.2, 1.2 }, color = { 232, 222, 196 }, orientation = { 0, 60, 0 }, material = "SmoothPlastic" },
 	gold_nugget = { shape = "Ball", size = { 1.6, 1.6, 1.6 }, color = { 255, 196, 40 }, orientation = { 0, 0, 0 }, material = "Neon" },
-	sun_crystal = { shape = "Block", size = { 1.4, 3, 1.4 }, color = { 255, 150, 30 }, orientation = { 0, 45, 15 }, material = "Neon" },
+	sun_crystal = { shape = "Block", size = { 1.4, 3, 1.4 }, color = { 255, 150, 30 }, orientation = { 0, 45, 15 }, material = "Neon", particles = { color = { 255, 210, 90 }, rate = 4 } },
 
 	-- Frozen Peaks
 	ice_shard = { shape = "Wedge", size = { 1.4, 2, 2 }, color = { 170, 225, 255 }, orientation = { 0, 25, 0 }, material = "SmoothPlastic" },

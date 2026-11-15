@@ -1,6 +1,6 @@
 # GRAB & GROW — État du projet
 
-Dernière mise à jour : 2026-11-15 (T8 en cours : T8.0 à T8.2 validées ; T8.3 en attente d'autorisation)
+Dernière mise à jour : 2026-11-15 (T8 en cours : T8.0 à T8.3 validées)
 
 ## Résumé
 
@@ -12,7 +12,9 @@ autorisés ; rapport intermédiaire : `phases/T8_IMPLEMENTATION_REPORT.md`.
 T8.0 et T8.1 validées (2026-11-14) sous réserve du test multijoueur, réussi
 le jour même (Local Server, 2 joueurs). T8.2 (carte de Green Valley,
 portails, interface de voyage) validée le 2026-11-15 ; T8.3 (Golden
-Desert) non commencée, en attente d'autorisation. Aucun commit.
+Desert) autorisée et construite le 2026-11-15, testée en Studio à un
+joueur et en Local Server à 2 joueurs, **validée** par le propriétaire le 2026-11-15 (`phases/T8_3_GOLDEN_DESERT_REPORT.md`). T8.0 à
+T8.2 commitées (dd806ef) ; T8.3 commitée.
 
 **T7 (progression et équilibrage) : VALIDÉE et CLÔTURÉE** (propriétaire,
 2026-11-14, après test réel, D-020 ; commit 0b821a2, poussé). Backpack 2 à
@@ -1017,6 +1019,20 @@ Détail : `phases/T8_IMPLEMENTATION_REPORT.md`, section T8.2.
 | Rendu visuel de l'île | Manuel | NON VÉRIFIÉ (capture Studio vide) |
 | Téléphone réel | Manuel | NON EXÉCUTÉ |
 
+## Vérifications T8.3 — Golden Desert (2026-11-15, VALIDÉE par le propriétaire)
+
+Détail : `phases/T8_3_GOLDEN_DESERT_REPORT.md`.
+
+| Vérification | Type | Résultat |
+|---|---|---|
+| 19 suites Lune ; mutation « particules hors Épique » détectée | Automatisé | PASS |
+| `luau-lsp analyze`, `rojo build` | Automatisé | PASS (0 erreur ; réussi) |
+| Construction (`build_world_golden_desert.luau`, mode Edit) | Studio | 40 points (16/12/7/4/1), 442 parts de décor (budget 1 200), 1 émetteur, 0 lumière ; Green Valley intact |
+| Play Studio, magasin en mémoire : refus avant déblocage, déblocage, voyage, collecte des 5 ressources à pied, double collecte refusée, réapparitions (8,02 s ; 60,00 s), vente +80, portail de retour, mort → hub, payloads falsifiés | Studio, un joueur | PASS ; aucune anomalie de déplacement |
+| Appui réel au portail, captures, rendu visuel | Manuel | NOT TESTED |
+| Local Server à 2 joueurs (lancé par le propriétaire) : refus verrouillé, voyages, collecte du même nœud, ventes simultanées, déconnexion | Studio, multijoueur | PASS ; aucune anomalie de déplacement, aucune erreur |
+| Téléphone réel | Manuel | NOT TESTED |
+
 ## Décisions en attente
 
 1. Push GitHub des commits T1 à T7 : autorisé et effectué le 2026-11-14.
@@ -1028,5 +1044,7 @@ Détail : `phases/T8_IMPLEMENTATION_REPORT.md`, section T8.2.
 1. Vérifier dans Studio que `IncomingReplicationLag` = 0.
 2. T8.2 validée (2026-11-15). Vérifier que le place est enregistré avec la
    carte de Green Valley.
-3. T8.3 (Golden Desert) : en attente d'autorisation.
-4. Commit T8.0 à T8.2 : non autorisé à ce stade.
+3. T8.3 (Golden Desert) validée le 2026-11-15. Vérifier que le place est
+   enregistré avec les deux îles. T8.4 (Frozen Peaks) : en attente
+   d'autorisation.
+4. Commits : T8.0 à T8.2 (dd806ef), T8.3 (autorisé le 2026-11-15) ; push non autorisé.
