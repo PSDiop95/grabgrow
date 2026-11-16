@@ -175,6 +175,13 @@ Mystic World, Wild Fruit et Green Crystal y sont développés, lot par lot
 et après validation. La préparation de publication et `AnalyticsService`
 passent en T9.
 
+T9 (D-024) : l'analytics passe uniquement par
+`ServerScriptService/Services/AnalyticsService` (règles) et
+`Systems/AnalyticsSinks` (API Roblox), appelés côté serveur après une
+opération confirmée. Ne jamais ajouter de RemoteEvent analytics, de service
+tiers ni de donnée personnelle dans les champs ; noms d'événements stables
+(`AnalyticsConfig`). T9 validée ne vaut pas autorisation de publier.
+
 Ne pas commencer ces systèmes avant validation du MVP :
 -   Gems et Stars comme économies complètes.
 -   Pets et œufs.

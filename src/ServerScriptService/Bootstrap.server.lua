@@ -6,6 +6,7 @@
 -- contrôle de cohérence au chargement (D-019).
 -- T7 : temps de jeu (A-21) et succès permanents (D-020).
 -- T8 : voyage entre mondes fait par le serveur (D-021).
+-- T9 : analytics après chaque opération confirmée (AnalyticsService).
 
 local DataStoreService = game:GetService("DataStoreService")
 local HttpService = game:GetService("HttpService")
@@ -22,7 +23,9 @@ local EconomySecurityConfig = require(ServerStorage.ServerOnlyConfig.EconomySecu
 local MovementSecurityConfig = require(ServerStorage.ServerOnlyConfig.MovementSecurityConfig)
 local SecurityLogConfig = require(ServerStorage.ServerOnlyConfig.SecurityLogConfig)
 local TravelSecurityConfig = require(ServerStorage.ServerOnlyConfig.TravelSecurityConfig)
+local AnalyticsConfig = require(ServerStorage.ServerOnlyConfig.AnalyticsConfig)
 local AchievementService = require(script.Parent.Services.AchievementService)
+local AnalyticsService = require(script.Parent.Services.AnalyticsService)
 local CollectionService = require(script.Parent.Services.CollectionService)
 local InventoryService = require(script.Parent.Services.InventoryService)
 local PlayerDataService = require(script.Parent.Services.PlayerDataService)
@@ -32,6 +35,7 @@ local SellService = require(script.Parent.Services.SellService)
 local UpgradeService = require(script.Parent.Services.UpgradeService)
 local WorldTravelService = require(script.Parent.Services.WorldTravelService)
 local WorldUnlockService = require(script.Parent.Services.WorldUnlockService)
+local AnalyticsSinks = require(script.Parent.Systems.AnalyticsSinks)
 local MemoryDataStore = require(script.Parent.Systems.MemoryDataStore)
 local MovementValidator = require(script.Parent.Systems.MovementValidator)
 local ProfileAudit = require(script.Parent.Systems.ProfileAudit)
@@ -87,6 +91,42 @@ local playerDataService = PlayerDataService.new({
 	-- T7 (A-21) : temps de jeu compté avec une horloge monotone.
 	playClock = os.clock,
 })
+
+-- Analytics (T9) ------------------------------------------------------------
+-- Appelé uniquement après une opération confirmée par un service. Lecture
+-- seule du profil ; jamais une condition de réussite d'une opération.
+
+local function createAnalyticsSink(): AnalyticsService.Sink
+	if not RunService:IsStudio() then
+		return AnalyticsSinks.roblox()
+	end
+	local mode = AnalyticsConfig.Studio.sink
+	if mode == "roblox" then
+		return AnalyticsSinks.roblox()
+	elseif mode == "log" then
+		return AnalyticsSinks.log()
+	end
+	return AnalyticsSinks.off()
+end
+
+local analyticsService = AnalyticsService.new({
+	config = AnalyticsConfig,
+	sink = createAnalyticsSink(),
+	clock = os.clock,
+	getProfile = playerDataService.GetData,
+	getPlayerCount = function(): number
+		return #Players:GetPlayers()
+	end,
+})
+
+-- Double protection : même un défaut du module analytics ne doit pas
+-- interrompre la suite du traitement (succès, état, sauvegarde).
+local function track(method: string, ...: any)
+	local ok, err = pcall((analyticsService :: any)[method], ...)
+	if not ok then
+		warn(`[Analytics] {method} : {tostring(err)}`)
+	end
+end
 
 -- Sécurité (T6) -------------------------------------------------------------
 
@@ -252,6 +292,7 @@ local achievementService = AchievementService.new({ playerData = playerDataServi
 -- solde transmis inclut donc les récompenses).
 local function grantAchievements(player: Player)
 	for _, grant in ipairs(achievementService.Evaluate(player.UserId)) do
+		track("AchievementGranted", player, grant)
 		actionResult:FireClient(player, {
 			action = Remotes.Action.Achievement,
 			ok = true,
@@ -274,6 +315,11 @@ end
 -- par CollectionService.
 remotes[Remotes.Name.RequestCollect].OnServerEvent:Connect(function(player: Player, payload: any, ...: any)
 	local result = collectionService.HandleRequest(player.UserId, payload, select("#", ...))
+	if result.ok then
+		track("CollectSucceeded", player, result)
+	else
+		track("CollectRejected", player, result.code)
+	end
 	if result.silent then
 		return
 	end
@@ -297,6 +343,9 @@ end)
 -- SellService à partir du profil serveur.
 remotes[Remotes.Name.RequestSell].OnServerEvent:Connect(function(player: Player, payload: any, ...: any)
 	local result = sellService.HandleRequest(player.UserId, payload, select("#", ...))
+	if result.ok then
+		track("SaleSucceeded", player, result)
+	end
 	if result.silent then
 		return
 	end
@@ -318,6 +367,9 @@ end)
 -- par UpgradeService à partir du profil serveur et d'UpgradeConfig.
 remotes[Remotes.Name.RequestUpgrade].OnServerEvent:Connect(function(player: Player, payload: any, ...: any)
 	local result = upgradeService.HandleRequest(player.UserId, payload, select("#", ...))
+	if result.ok then
+		track("UpgradeSucceeded", player, result)
+	end
 	if result.silent then
 		return
 	end
@@ -340,6 +392,9 @@ end)
 -- Seul le premier argument est lu ; conditions et coût viennent de WorldConfig.
 remotes[Remotes.Name.RequestUnlockWorld].OnServerEvent:Connect(function(player: Player, payload: any, ...: any)
 	local result = worldUnlockService.HandleRequest(player.UserId, payload, select("#", ...))
+	if result.ok then
+		track("WorldUnlocked", player, result)
+	end
 	if result.silent then
 		return
 	end
@@ -362,6 +417,9 @@ end)
 -- serveur (WorldConfig, profil, carte).
 remotes[Remotes.Name.TravelToWorld].OnServerEvent:Connect(function(player: Player, payload: any, ...: any)
 	local result = worldTravelService.HandleRequest(player.UserId, payload, select("#", ...))
+	if result.ok then
+		track("TravelSucceeded", player, result)
+	end
 	if result.silent then
 		return
 	end
@@ -484,8 +542,19 @@ task.spawn(function()
 	end
 end)
 
+-- Lots de collecte analytics (T9) : vérification périodique ; chaque
+-- joueur envoie son lot à AnalyticsConfig.Collection.flushIntervalSeconds.
+task.spawn(function()
+	while true do
+		task.wait(AnalyticsConfig.Collection.tickSeconds)
+		track("Tick", Players:GetPlayers())
+	end
+end)
+
 PlayerSession.start(playerDataService, {
 	onProfileLoaded = function(player: Player)
+		-- T9 : session ouverte avant tout succès accordé au chargement.
+		track("SessionStarted", player)
 		applyWalkSpeed(player)
 		-- T7 : succès déjà atteints (profil v1 migré, par exemple).
 		grantAchievements(player)
@@ -501,6 +570,7 @@ PlayerSession.start(playerDataService, {
 		end
 	end,
 	onPlayerRemoving = function(player: Player)
+		track("SessionEnded", player)
 		collectionService.RemovePlayer(player.UserId)
 		sellService.RemovePlayer(player.UserId)
 		upgradeService.RemovePlayer(player.UserId)

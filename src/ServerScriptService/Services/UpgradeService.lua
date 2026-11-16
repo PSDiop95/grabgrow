@@ -47,6 +47,8 @@ export type Result = {
 	level: number?,
 	-- Coins débités (0 en cas de refus).
 	coinsSpent: number,
+	-- T9 : solde de Coins après le débit (succès uniquement, analytics).
+	balanceAfter: number?,
 	-- true : ne pas répondre au client (rejets en rafale déjà signalés).
 	silent: boolean,
 }
@@ -160,6 +162,7 @@ function UpgradeService.new(dependencies: Dependencies)
 				upgradeId = upgradeId,
 				level = level,
 				coinsSpent = entry.amount,
+				balanceAfter = entry.balanceAfter,
 				silent = false,
 			}
 		end

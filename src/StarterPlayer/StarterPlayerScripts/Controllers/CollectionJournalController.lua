@@ -571,12 +571,17 @@ local function followShopPanel()
 	end
 	shopPanel:GetPropertyChangedSignal("Position"):Connect(mirror)
 	shopPanel:GetPropertyChangedSignal("Size"):Connect(mirror)
-	shopPanel:GetPropertyChangedSignal("Visible"):Connect(function()
+	-- T9 : le bouton Journal, placé près de « Boutique », recouvrait le
+	-- panneau de la Boutique sur mobile ; il est masqué tant qu'elle est ouverte.
+	local function syncWithShop()
+		journalButton.Visible = not shopPanel.Visible
 		if shopPanel.Visible and panel.Visible then
 			setOpen(false)
 		end
-	end)
+	end
+	shopPanel:GetPropertyChangedSignal("Visible"):Connect(syncWithShop)
 	mirror()
+	syncWithShop()
 end
 
 function CollectionJournalController.start()

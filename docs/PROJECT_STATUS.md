@@ -1,8 +1,22 @@
 # GRAB & GROW — État du projet
 
-Dernière mise à jour : 2026-11-16 (T8 : T8.0 à T8.7 validées)
+Dernière mise à jour : 2026-11-16 (T8 clôturée ; T9 étape B construite)
 
 ## Résumé
+
+**T9 (analytics et préparation à la publication) : VALIDÉE avec réserves** par le propriétaire le 2026-11-16 (« Valider en l'état », D-024). Réserves : onboarding, progression `Worlds`, dépense `World:*`, succès, `WorldEntered` et `BackpackFull` non observés dans Roblox (validés en Lune et Studio) ; Local Server analytics non testé ; correctif T9-UI-01 non contrôlé sur téléphone. La validation de T9 n'autorise pas la publication publique.
+Étape A (audit) validée le 2026-11-16 avec D1 à D5 ; T8 clôturée avec
+réserves (D1). Étape B construite le 2026-11-16 : `AnalyticsService`
+centralisé (règles) et `AnalyticsSinks` (API Roblox), appelés par
+`Bootstrap` après chaque opération confirmée ; `balanceAfter` dans les
+résultats économiques ; documents `analytics/` et `publication/`. Lune 429
+cas OK, LSP strict OK, Rojo OK, Studio solo OK (événements vérifiés dans
+l'Output). Publication privée autorisée (D5) et faite le 2026-11-16 :
+événements économiques et personnalisés reçus par Roblox, conformes
+(PARTIAL : onboarding, progression et autres non encore observés). NOT
+TESTED : Local Server analytics. Correction T9-UI-01 (bouton Journal
+masqué quand la Boutique est ouverte). Aucun commit
+(`phases/T9_ANALYTICS_PUBLICATION_REPORT.md`).
 
 **T8 (mondes et contenu) : EN COURS** (D-021). Étape A validée par le
 propriétaire le 2026-11-14 (`phases/T8_WORLD_AUDIT.md`). T8.0
@@ -28,7 +42,7 @@ un joueur, DataStore de test, Local Server à 2 joueurs) ; **validée** par le
 propriétaire le 2026-11-16 ; commit local autorisé, sans push (`phases/T8_6_COLLECTION_JOURNAL_REPORT.md`,
 `phases/T8_6_MIGRATION_TEST_REPORT.md`).
 
-**T8.7 (stabilisation et validation globale) : VALIDÉE** par le propriétaire le 2026-11-16. Étape A (audit) validée le 2026-11-16 : aucun P0 ni P1. Étape B autorisée « avec P2-02 » : sauvegarde différée de 5 s après achat d'amélioration et déblocage de monde (D-023). Lune 401 cas OK, LSP strict OK, Rojo OK, simulation inchangée, Studio solo OK (quatre mondes), Local Server à 2 joueurs OK (11 scénarios, dont collecte et ventes simultanées), DataStore de test OK (12 cas : v3, D-023, reconnexion, migration v2, verrou, interruption, pannes). Réserves acceptées : contrôle visuel mobile, performance non mesurée (`phases/T8_7_STABILIZATION_REPORT.md`). Aucun commit.
+**T8.7 (stabilisation et validation globale) : VALIDÉE** par le propriétaire le 2026-11-16. Étape A (audit) validée le 2026-11-16 : aucun P0 ni P1. Étape B autorisée « avec P2-02 » : sauvegarde différée de 5 s après achat d'amélioration et déblocage de monde (D-023). Lune 401 cas OK, LSP strict OK, Rojo OK, simulation inchangée, Studio solo OK (quatre mondes), Local Server à 2 joueurs OK (11 scénarios, dont collecte et ventes simultanées), DataStore de test OK (12 cas : v3, D-023, reconnexion, migration v2, verrou, interruption, pannes). Réserves acceptées : contrôle visuel mobile, performance non mesurée (`phases/T8_7_STABILIZATION_REPORT.md`). Commit 5f63900, poussé (`main` = `origin/main`, vérifié le 2026-11-16). **T8 clôturée** par le propriétaire le 2026-11-16 (D-024 D1).
 
 **T7 (progression et équilibrage) : VALIDÉE et CLÔTURÉE** (propriétaire,
 2026-11-14, après test réel, D-020 ; commit 0b821a2, poussé). Backpack 2 à

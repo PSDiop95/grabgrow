@@ -37,6 +37,8 @@ export type Result = {
 	code: string,
 	worldId: string?,
 	coinsSpent: number,
+	-- T9 : solde de Coins après le débit (succès uniquement, analytics).
+	balanceAfter: number?,
 	silent: boolean,
 }
 
@@ -153,15 +155,24 @@ function WorldUnlockService.new(dependencies: Dependencies)
 		if result.ok then
 			operationCount += 1
 			local spent = 0
+			local balanceAfter: number? = nil
 			if debited ~= nil then
 				local entry = debited :: EconomyService.Entry
 				spent = entry.amount
+				balanceAfter = entry.balanceAfter
 				local operationId = `UnlockWorld-{operationCount}`
 				log("info", `{EconomyService.describe(userId, operationId, entry)} ; monde {worldId} débloqué`)
 			else
 				log("info", `joueur {userId} : monde {worldId} débloqué (gratuit)`)
 			end
-			return { ok = true, code = ResultCode.Success, worldId = worldId, coinsSpent = spent, silent = false }
+			return {
+				ok = true,
+				code = ResultCode.Success,
+				worldId = worldId,
+				coinsSpent = spent,
+				balanceAfter = balanceAfter,
+				silent = false,
+			}
 		end
 		if result.code == PlayerDataService.Code.NotLoaded then
 			return reject(ResultCode.ProfileNotLoaded, worldId)

@@ -851,3 +851,41 @@ propriétaire), ACCEPTÉE, REMPLACÉE.
   test DataStore de T8.7 n'est pas fait.
 - **Affecte :** `PlayerDataService`, `DataConfig`, `Bootstrap`,
   `PlayerDataServiceTests`, `DATA_PERSISTENCE.md`.
+
+## D-024 — T9 : instrumentation analytics et préparation à la publication
+
+- **Date :** 2026-11-16
+- **Statut :** ACCEPTÉE (propriétaire, 2026-11-16 : étape B de T9
+  autorisée « Oui, D1 à D5 » ; publication privée D5 autorisée et faite ;
+  T9 validée avec réserves le 2026-11-16).
+- **Contexte :** audit T9-A. Roblox n'envoie aucun événement depuis Studio
+  ni depuis le client ; débit limité (120 + 20 × CCU par minute) ;
+  cardinalités bornées (100 noms, 3 champs, 20 types, 100 SKU). Les succès
+  (T7) sont une source de Coins absente du prompt T9.
+- **Décisions :**
+  - **D1** : T8 clôturée formellement avec ses réserves (performance mobile
+    non mesurée, contrôle visuel mobile).
+  - **D2** : pas de funnel boutique en T9 (étapes purement client, non
+    confirmables par le serveur).
+  - **D3** : `balanceAfter` ajouté aux résultats de vente, d'amélioration,
+    de déblocage et aux succès accordés (additif, aucune règle modifiée).
+  - **D4** : collectes agrégées par lots (par joueur et par monde) ; funnel
+    d'onboarding à 5 étapes, dont `FirstWorldUnlocked`, au-delà des 3
+    étapes de l'onboarding du jeu.
+  - **D5** : vérification dans Roblox par publication **privée** de
+    l'expérience de test, à autoriser séparément ; d'ici là `NOT TESTED`.
+  - Architecture : `AnalyticsService` (règles, sans API Roblox) +
+    `AnalyticsSinks` (seuls appels Roblox), appelés par `Bootstrap` après
+    `result.ok` ; onboarding déduit de l'état persistant, sans champ de
+    profil ; budget à 50 % de la limite, priorité aux événements économiques
+    et de progression ; `AnalyticsConfig.enabled` pour désactiver.
+- **Justification :** une seule source d'appels ; aucune dépendance du jeu
+  envers l'analytics ; aucune donnée client prise pour preuve ; schéma v3
+  intact ; testable sous Lune.
+- **Conséquences :** 6 événements personnalisés, 24 SKU, 3 types de
+  transaction. Pas de mesure par ressource ni du temps par monde. Noms
+  figés (Dashboard).
+- **Affecte :** `AnalyticsConfig`, `AnalyticsService`, `AnalyticsSinks`,
+  `Bootstrap`, `SellService`, `UpgradeService`, `WorldUnlockService`,
+  `AchievementService`, `AnalyticsTests`, `RunTests`, `docs/analytics/`,
+  `docs/publication/`.

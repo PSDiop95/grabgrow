@@ -27,6 +27,8 @@ local AchievementService = {}
 export type Grant = {
 	achievementId: string,
 	reward: number,
+	-- T9 : solde de Coins après ce crédit (analytics).
+	balanceAfter: number,
 }
 
 export type Dependencies = {
@@ -80,7 +82,10 @@ function AchievementService.new(dependencies: Dependencies)
 						return false
 					end
 					draft.achievements[achievementId] = true
-					table.insert(granted, { achievementId = achievementId, reward = reward })
+					table.insert(
+						granted,
+						{ achievementId = achievementId, reward = reward, balanceAfter = entry.balanceAfter }
+					)
 					table.insert(entries, entry)
 				end
 			end

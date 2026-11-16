@@ -34,6 +34,7 @@ local AchievementTests = require(script.Parent.AchievementTests)
 local WorldTravelServiceTests = require(script.Parent.WorldTravelServiceTests)
 local TravelRulesTests = require(script.Parent.TravelRulesTests)
 local CollectionJournalTests = require(script.Parent.CollectionJournalTests)
+local AnalyticsTests = require(script.Parent.AnalyticsTests)
 
 local GameConfig = require(Config.GameConfig)
 local ResourceConfig = require(Config.ResourceConfig)
@@ -60,6 +61,7 @@ local ProfileAudit = require(ServerScriptService.Systems.ProfileAudit)
 local SecurityLog = require(ServerScriptService.Services.SecurityLog)
 local PlayTimeTracker = require(ServerScriptService.Systems.PlayTimeTracker)
 local AchievementService = require(ServerScriptService.Services.AchievementService)
+local AnalyticsService = require(ServerScriptService.Services.AnalyticsService)
 local AchievementRules = require(ReplicatedStorage.Shared.Util.AchievementRules)
 local AchievementConfig = require(Config.AchievementConfig)
 local Remotes = require(ReplicatedStorage.Shared.Remotes.Remotes)
@@ -79,6 +81,7 @@ local EconomySecurityConfig = require(ServerStorage:WaitForChild("ServerOnlyConf
 local MovementSecurityConfig = require(ServerStorage:WaitForChild("ServerOnlyConfig").MovementSecurityConfig)
 local SecurityLogConfig = require(ServerStorage:WaitForChild("ServerOnlyConfig").SecurityLogConfig)
 local TravelSecurityConfig = require(ServerStorage:WaitForChild("ServerOnlyConfig").TravelSecurityConfig)
+local AnalyticsConfig = require(ServerStorage:WaitForChild("ServerOnlyConfig").AnalyticsConfig)
 
 local totalFailures = 0
 
@@ -401,6 +404,28 @@ report(
 	})
 )
 
+report(
+	"AnalyticsTests",
+	AnalyticsTests.run({
+		AnalyticsService = AnalyticsService,
+		AnalyticsConfig = AnalyticsConfig,
+		AchievementService = AchievementService,
+		PlayerDataService = PlayerDataService,
+		InventoryService = InventoryService,
+		CollectionService = CollectionService,
+		SellService = SellService,
+		UpgradeService = UpgradeService,
+		WorldUnlockService = WorldUnlockService,
+		ResourceSpawner = ResourceSpawner,
+		MemoryDataStore = MemoryDataStore,
+		UpgradeMath = UpgradeMath,
+		UpgradeConfig = UpgradeConfig,
+		WorldConfig = WorldConfig,
+		ResourceConfig = ResourceConfig,
+		DataSchema = DataSchema,
+		Remotes = Remotes,
+	})
+)
 
 if totalFailures == 0 then
 	print("[Tests] TOUS LES TESTS : OK")

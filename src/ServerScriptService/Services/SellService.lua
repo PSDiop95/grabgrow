@@ -63,6 +63,8 @@ export type Result = {
 	sellZoneId: string?,
 	-- Coins réellement crédités, Multiplier compris (0 en cas de refus).
 	coinsEarned: number,
+	-- T9 : solde de Coins après le crédit (succès uniquement, analytics).
+	balanceAfter: number?,
 	-- Valeur avant Multiplier (0 en cas de refus).
 	baseValue: number,
 	-- Multiplicateur appliqué (1 en cas de refus).
@@ -224,6 +226,7 @@ function SellService.new(dependencies: Dependencies)
 				code = ResultCode.Success,
 				sellZoneId = zoneId,
 				coinsEarned = entry.amount,
+				balanceAfter = entry.balanceAfter,
 				baseValue = quote.total,
 				multiplier = multiplier,
 				quantitySold = quote.quantity,

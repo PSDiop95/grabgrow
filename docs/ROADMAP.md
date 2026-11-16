@@ -1,6 +1,6 @@
 # GRAB & GROW — Roadmap
 
-Dernière mise à jour : 2026-11-15
+Dernière mise à jour : 2026-11-16
 
 Phasage du MVP repris de l'architecture technique (section 20, T0 à T8),
 modifié par D-021 (2026-11-14) : T8 = mondes et contenu ; la préparation
@@ -24,8 +24,8 @@ réellement exécuté. État détaillé : `PROJECT_STATUS.md`.
 | T5 | HUD et feedback mobile | Boucle complète utilisable sur téléphone | **Terminé** (clôturé le 2026-11-13, D-018, avec réserves : manette, tablette réelle, performance non chiffrée) — T5.1 HUD **terminé** (clôturé le 2026-11-12 : tests automatisés, Studio, téléphone réel OK ; commit local 5d4f339) ; T5.2 feedback **terminé** (clôturé le 2026-11-12 : tests automatisés, Studio, téléphone réel OK) ; T5.3 première session **terminé** (2026-11-13 : tests automatisés, Studio et émulateur OK ; D-017 acceptée ; commit local) ; T5.4 textes EN/FR **terminé** (2026-11-13 : validé ; commit local) ; T5.5 validation **terminée avec réserves** (2026-11-13 : technique, émulateur, téléphone réel et PC validés par le propriétaire ; manette reportée, tablette réelle non testée)  |
 | T6 | Tests multijoueurs et anti-exploit | Aucun exploit simple, aucune fuite de données | **Terminé** (clôturé le 2026-11-14, D-019, `phases/T6_SECURITY_REPORT.md`) — tests automatisés, Studio un joueur, Local Server 2 joueurs (propriétaire) OK ; commit local c199d85, non poussé. Réserves : A-27 (mobile réel), A-42, seuils R4 à calibrer |
 | T7 | Équilibrage MVP | Première session compréhensible et satisfaisante | **Terminé** (clôturé le 2026-11-14, test réel du propriétaire) — D-020 : Backpack 2 à 75, temps de jeu, schéma v2, succès permanents, simulateur ; `phases/T7_IMPLEMENTATION_REPORT.md` ; tests automatisés et Studio OK ; commit et push autorisés le 2026-11-14 |
-| T8 | Mondes et contenu (D-021) : quatre îles, ressources par monde, voyage serveur | Quatre mondes jouables, collecte et vente par monde, multijoueur et performance mobile vérifiés | **En cours** — T8.0 à T8.7 validées (2026-11-16) ; clôture formelle de T8 à prononcer par le propriétaire (réserves : performance mobile non mesurée, contrôle visuel mobile) |
-| T9 | Préparation publication, `AnalyticsService` (D-020 D5, D-021) | Tests privés concluants | À faire (ne pas commencer avant validation de T8) |
+| T8 | Mondes et contenu (D-021) : quatre îles, ressources par monde, voyage serveur | Quatre mondes jouables, collecte et vente par monde, multijoueur et performance mobile vérifiés | **Terminé** — T8.0 à T8.7 validées ; T8 clôturée par le propriétaire le 2026-11-16 (D-024 D1) avec réserves : performance mobile non mesurée, contrôle visuel mobile |
+| T9 | Préparation publication, `AnalyticsService` (D-020 D5, D-021, D-024) | Tests privés concluants | **Validé avec réserves** par le propriétaire le 2026-11-16 (« Valider en l'état ») — Lune 429 cas, LSP, Rojo, Studio solo OK ; événements économiques et personnalisés reçus par Roblox (expérience privée). Réserves : onboarding, progression `Worlds`, dépense `World:*`, succès, `WorldEntered` et `BackpackFull` non observés dans Roblox (validés en Lune et Studio) ; Local Server analytics non testé ; correctif T9-UI-01 non contrôlé sur téléphone. Validation ≠ autorisation de publier (`phases/T9_ANALYTICS_PUBLICATION_REPORT.md`) |
 
 ## Phases terminées : T2, T3, T4, T5, T6
 

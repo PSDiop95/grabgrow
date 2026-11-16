@@ -1,6 +1,6 @@
 # GRAB & GROW — Stratégie de tests
 
-Dernière mise à jour : 2026-11-12 (T4)
+Dernière mise à jour : 2026-11-16 (T9)
 
 Règle : un test n'est « réussi » que s'il a été exécuté. Chaque rapport de
 lot distingue tests automatisés, tests manuels et vérifications non faites.
@@ -422,3 +422,17 @@ déplacement, économie concurrente, journal, audit). Rapport :
   reproduites par un DataStore simulé.
 - L'émulateur d'appareils ne mesure pas les performances d'un vrai
   téléphone.
+
+## Analytics (T9, D-024)
+
+- Suite `Tests/AnalyticsTests.lua` : `AnalyticsService` avec un sink
+  simulé (jamais l'API Roblox) ; cas unitaires (validation, doublons,
+  sessions, panne, désactivation, budget, lots) et d'intégration (services
+  réels câblés comme `Bootstrap`, deux joueurs, reconnexion, aucune donnée
+  personnelle).
+- Studio : `AnalyticsConfig.Studio.sink = "log"` écrit chaque événement dans
+  l'Output (`[Analytics] ...`) ; Roblox n'envoie rien depuis Studio.
+- Réception réelle : seulement dans l'expérience de test publiée en privé,
+  jamais la production ; « View Events » d'abord, graphiques après 24 h.
+- Règle : un événement codé mais non vu dans Roblox reste `NOT TESTED`.
+- Détail et procédures : `docs/analytics/ANALYTICS_TEST_REPORT.md`.
