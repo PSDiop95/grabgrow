@@ -33,6 +33,9 @@ local LENGTH_LIMITS: { { prefix: string, max: number } } = {
 	{ prefix = "settings.on", max = 10 },
 	{ prefix = "settings.off", max = 10 },
 	{ prefix = "onboarding.show", max = 10 },
+	-- T8.6 : bouton du journal (même gabarit que la Boutique).
+	{ prefix = "journal.open", max = 10 },
+	{ prefix = "rarity.", max = 12 },
 	-- Noms affichés sur les cartes et billboards.
 	{ prefix = "resource.", max = 16 },
 	{ prefix = "world.green_valley", max = 16 },
@@ -65,6 +68,10 @@ local SAME_IN_BOTH: { [string]: boolean } = {
 	["world.frozen_peaks"] = true,
 	["world.mystic_world"] = true,
 	["onboarding.show"] = true,
+	-- T8.6 : mot identique, unité, rareté identique.
+	["journal.open"] = true,
+	["journal.value"] = true,
+	["rarity.rare"] = true,
 	["unit.seconds"] = true,
 	["unit.studs"] = true,
 	["unit.speed"] = true,

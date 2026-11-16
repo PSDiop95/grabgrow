@@ -1,5 +1,6 @@
 --!strict
--- Préréglages de profil pour les tests manuels T4 (U1 à U10) et T5.3 (O_*).
+-- Préréglages de profil pour les tests manuels T4 (U1 à U10), T5.3 (O_*)
+-- et T8.6 (J_*, journal de collection).
 -- OUTIL DE TEST, STUDIO UNIQUEMENT : Bootstrap ne le branche que si
 -- RunService:IsStudio() est vrai, via une BindableFunction placée dans
 -- ServerStorage (jamais répliquée, inaccessible au client). Aucun effet sur
@@ -15,6 +16,7 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local UpgradeConfig = require(ReplicatedStorage.Shared.Config.UpgradeConfig)
+local ResourceConfig = require(ReplicatedStorage.Shared.Config.ResourceConfig)
 local PlayerDataService = require(script.Parent.Parent.Services.PlayerDataService)
 local DataSchema = require(script.Parent.DataSchema)
 
@@ -31,14 +33,26 @@ export type Preset = {
 	resources: { [string]: number }?,
 	-- T5.3 : statistiques (clés de profile.stats) ; absentes = 0.
 	stats: { [string]: number }?,
+	-- T8.6 : journal remplacé par cette liste (identifiants de
+	-- ResourceConfig seulement). Absent = journal inchangé : les découvertes
+	-- faites en jeu restent, comme en production (aucune vente ni remise du
+	-- sac ne retire une découverte).
+	discovered: { string }?,
 }
+
+-- Les 20 ressources (préréglage J_full), triées : dérivé de ResourceConfig.
+local ALL_RESOURCES: { string } = {}
+for resourceId in pairs(ResourceConfig) do
+	table.insert(ALL_RESOURCES, resourceId)
+end
+table.sort(ALL_RESOURCES)
 
 -- Chaque préréglage remet d'abord le profil à l'état d'un nouveau joueur
 -- (statistiques comprises), puis applique ses valeurs.
 -- Profils de test uniquement : la remise à zéro vide aussi le sac, y compris
 -- d'éventuelles ressources inconnues (règle D-008 non applicable ici).
 StudioTestPresets.Presets = table.freeze({
-	reset = { description = "Nouveau joueur", coins = 0 },
+	reset = { description = "Nouveau joueur (journal vide compris)", coins = 0, discovered = {} },
 	U1 = { description = "Backpack 2 tout juste payable", coins = 75 },
 	U2 = { description = "Grabber 2 tout juste payable", coins = 150 },
 	U3 = { description = "Magnet 1 tout juste payable", coins = 200 },
@@ -120,6 +134,28 @@ StudioTestPresets.Presets = table.freeze({
 		upgrades = { Backpack = 2 },
 		stats = { totalResourcesCollected = 60, totalSales = 2, totalCoinsEarned = 120, totalCoinsSpent = 100 },
 	},
+	-- T8.6 : journal de collection (D-022). Profils de test seulement.
+	J_partial = {
+		description = "Journal : 3/5 Green Valley, 1/5 Golden Desert (débloqué), sac vide",
+		coins = 0,
+		upgrades = { Backpack = 5 },
+		worlds = { "GoldenDesert" },
+		discovered = { "green_leaf", "wood", "stone", "sandstone" },
+	},
+	J_full = {
+		description = "Journal complet : 20/20, quatre mondes débloqués",
+		coins = 0,
+		upgrades = { Backpack = 10 },
+		worlds = { "GoldenDesert", "FrozenPeaks", "MysticWorld" },
+		discovered = ALL_RESOURCES,
+	},
+	J_world4 = {
+		description = "Journal vide, quatre mondes débloqués (découvertes en jeu)",
+		coins = 0,
+		upgrades = { Backpack = 10 },
+		worlds = { "GoldenDesert", "FrozenPeaks", "MysticWorld" },
+		discovered = {},
+	},
 })
 
 -- Applique le préréglage `name` au profil chargé de `userId`.
@@ -159,6 +195,16 @@ function StudioTestPresets.apply(
 				return false
 			end
 			draft.stats[statId] = value
+		end
+		if preset.discovered ~= nil then
+			local discovered = {}
+			for _, resourceId in ipairs(preset.discovered) do
+				if ResourceConfig[resourceId] == nil then
+					return false
+				end
+				discovered[resourceId] = true
+			end
+			draft.collection.discoveredResources = discovered
 		end
 		return nil
 	end)

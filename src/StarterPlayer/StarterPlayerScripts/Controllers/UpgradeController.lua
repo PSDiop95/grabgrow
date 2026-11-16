@@ -224,6 +224,14 @@ local function setOpen(open: boolean)
 	end
 end
 
+-- T8.6 : fermeture demandée par un autre panneau (Journal) ; un seul
+-- panneau ouvert à la fois.
+function UpgradeController.close()
+	if started and panel.Visible then
+		setOpen(false)
+	end
+end
+
 local function isPending(id: string): boolean
 	return os.clock() < (pendingUntil[id] or 0)
 end

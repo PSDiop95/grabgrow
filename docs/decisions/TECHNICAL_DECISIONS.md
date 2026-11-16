@@ -722,7 +722,8 @@ propriétaire), ACCEPTÉE, REMPLACÉE.
     connexion et à chaque réapparition ; position non sauvegardée.
   - **D6** : journal de collection, schéma v3 et récompenses associées
     NON retenus pour T8 ; aucune migration de données. À réévaluer après
-    les quatre mondes.
+    les quatre mondes. *Journal et schéma v3 rouverts par D-022
+    (2026-11-16) ; récompenses toujours écartées.*
   - **D7** : décors en primitives low-poly scriptées ; aucun asset Polyfork
     avant validation de `assets/ASSET_MANIFEST.md`, puis asset par asset.
   - **D8** (sous réserve) : environ 40 nœuds par monde, réapparition
@@ -766,3 +767,58 @@ propriétaire), ACCEPTÉE, REMPLACÉE.
   `Remotes`, `Bootstrap`, `Localization`, `InventoryController`,
   `CollectionController`, `tools/simulate_progression.luau`,
   `tools/studio/build_test_map.luau`, tests.
+
+## D-022 — T8.6 : journal de collection et schéma v3 (réouverture de D-021 D6)
+
+- **Date :** 2026-11-16
+- **Statut :** ACCEPTÉE (propriétaire, 2026-11-16 : recommandations D1 à D7
+  de l'étape A de T8.6 validées, étape B autorisée). Rouvre D-021 D6 pour
+  le journal et le schéma v3 seulement ; les récompenses associées restent
+  écartées.
+- **Contexte :** les quatre mondes existent (T8.2 à T8.5 validées). D-021 D6
+  avait reporté le journal et le schéma v3 « après les quatre mondes ».
+  Audit de l'étape A : une seule attribution de ressource
+  (`InventoryService.AddResource`, dans `PlayerDataService.Update`), un
+  seul canal d'état serveur -> client (`StateUpdated`), mécanisme de
+  migration et copie de récupération D-008 déjà en place.
+- **Décision :**
+  - **D1** : COLLECTION JOURNAL réouvert, sans aucune récompense (ni
+    Coins, Gems, Stars, multiplicateur, bonus ni coffre). Une récompense de
+    collection complète exigera une décision distincte.
+  - **D2** : schéma v3, section `collection = { discoveredResources =
+    { [identifiant de ResourceConfig] = true } }`. Totaux et pourcentages
+    jamais stockés.
+  - **D3** : migration v2 -> v3 avec un journal VIDE ; aucun historique
+    reconstitué, même depuis l'inventaire.
+  - **D4** : pas de `CollectionJournalService` ; module pur partagé
+    `Shared/Util/CollectionJournalRules` (catalogue dérivé de
+    `ResourceConfig` et `WorldConfig`, résumé, marquage). Le marquage a lieu
+    dans le mutateur de `InventoryService.AddResource`, dans la même
+    transaction que l'ajout.
+  - **D5** : aucun nouveau RemoteEvent ; `StateUpdated` porte `discovered`
+    (lecture seule, identifiants inconnus filtrés) ; `ActionResult`
+    (Collect) porte `firstDiscovery`, calculé par le serveur.
+  - **D6** : bandeau « Nouvelle découverte : X ! » à la première collecte,
+    dans la file des succès (`AchievementController`), sans nouveau son.
+  - **D7** : bouton « Journal » sous la Boutique, touches J et DPadDown ;
+    préréglages Studio `J_partial`, `J_full`, `J_world4` (et `reset` vide
+    le journal).
+- **Justification :** le marquage dans la mutation de l'ajout rend
+  impossible une ressource sans découverte (ou l'inverse) et réutilise tous
+  les refus existants (monde verrouillé, distance, cadence, sac plein) sans
+  les dupliquer. Sans requête client, rien à falsifier ni à limiter.
+- **Conséquences :** un serveur v2 refuse les profils v3
+  (`UnsupportedVersion`, rien d'écrasé) : redémarrer tous les serveurs à la
+  publication. Un profil migré écrit sa copie `Recovery_` avant sa première
+  sauvegarde (D-008). Les joueurs v2 (profils de test seulement à ce jour)
+  repartent d'un journal vide. `StateUpdated` grossit d'au plus 20
+  identifiants. Aucune valeur économique, condition de déblocage ni
+  protection T6 modifiée.
+- **Affecte :** `DataConfig`, `DataSchema`, nouveau `CollectionJournalRules`,
+  `InventoryService`, `CollectionService`, `Bootstrap`, `Remotes`
+  (commentaires), `StudioTestPresets`, `Localization`, nouveau
+  `CollectionJournalController`, `UpgradeController` (`close`),
+  `AchievementController`, `InventoryController` (type), `ClientBootstrap`,
+  tests (`CollectionJournalTests`, `DataSchemaTests`, `AchievementTests`,
+  `LocalizationTests`), `DATA_PERSISTENCE.md`, `ROADMAP.md`,
+  `PROJECT_STATUS.md`, `TEST_STRATEGY.md`, rapports T8.6.

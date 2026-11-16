@@ -43,6 +43,9 @@ export type State = {
 	-- T5.3 : statistiques persistantes pour le guidage (lecture seule).
 	-- Facultatif : absent, le guidage reste masqué.
 	progress: { resourcesCollected: number, sales: number, coinsSpent: number }?,
+	-- T8.6 : journal de collection, ressources découvertes (lecture seule).
+	-- Facultatif : absent, le journal s'affiche vide.
+	discovered: { [string]: boolean }?,
 }
 
 local COLOR_PANEL = Color3.fromRGB(24, 28, 36)

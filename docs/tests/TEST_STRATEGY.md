@@ -342,6 +342,26 @@ de relire le résultat depuis le terminal après exécution.
 | T4 | Achat de chaque amélioration ; débit exact ; fonds insuffisants ; niveau maximum ; effets réels (capacité, cadence, portée, vitesse et contrôle de trajet, Multiplier) ; état client ; achats répétés et coût cumulé ; achats concurrents ; deux joueurs ; statistiques avec ventes ; persistance et reconnexion ; payloads falsifiés ; profil en chargement, libéré, en fermeture ; limite de fréquence ; déblocage autorisé, refusé (niveau, fonds, ordre, déjà débloqué, inconnu) ; crédit et débit invalides ou en dépassement ; arrondi du Multiplier |
 | T5.4 | Mêmes clés EN/FR ; mêmes motifs ; textes traduits ; vouvoiement ; accents ; espace insécable FR ; apostrophes ; longueurs par usage ; clés construites par le code ; expulsions ; replis de langue |
 | T6 | Remote à cadence excessive ; arguments de type invalide ; valeurs falsifiées ; arguments et champs supplémentaires ; isolation entre joueurs ; marche, sauts, chute, pente, gel réseau sans faux positif ; téléportation, speed hack, montée anormale détectés ; correction graduelle sans boucle ; réapparition ; NaN / infini ; double vente, double achat ; journal limité et protégé ; audit au chargement en lecture seule |
+| T8.6 | Première collecte, deuxième collecte, vente, ressource non possédée, refus (distance, nœud inconnu, payload falsifié, cadence, nœud pris, rafale), sac plein, monde verrouillé, ressource inconnue, atomicité, résumé par monde et global, pourcentages ; migration v2 valide, v3 valide, profil neuf, répétée, sections conservées, corrompu, incomplet, version future, verrou actif, sauvegarde, reconnexion, conflit et échec `Recovery_` ; deux joueurs indépendants ; préréglages J_* ; localisation ; aucun son ajouté |
+
+## Journal de collection (T8.6, D-022)
+
+Suite : `CollectionJournalTests` (35 cas ; vrais services, magasin en
+mémoire). Rapports : `phases/T8_6_COLLECTION_JOURNAL_REPORT.md`,
+`phases/T8_6_MIGRATION_TEST_REPORT.md`.
+
+- Contrôle négatif : marquage retiré, historique reconstitué depuis
+  l'inventaire, découverte marquée avant les contrôles de collecte :
+  chaque défaut fait échouer la suite.
+- Studio (Play, un joueur, préréglages `J_partial`, `J_full`, `J_world4`,
+  `reset`) : collecte à pied, `firstDiscovery`, bandeau, payload falsifié,
+  monde verrouillé, vente, vues du Journal, exclusion Boutique / Journal,
+  touches J, DPadDown, ButtonB.
+- DataStore réel : uniquement `GrabAndGrow_PlayerData_v1_Studio` de
+  l'expérience de test, clés `Player_<UserId négatif>` ; contrôle
+  `RunService:IsStudio()`, `PlaceId` de test et nom `_Studio` dans le script.
+- Local Server à 2 joueurs : lancé par le propriétaire (le MCP ne lance
+  qu'un Play à un joueur).
 
 ## Sécurité multijoueur (T6, D-019)
 

@@ -284,6 +284,8 @@ remotes[Remotes.Name.RequestCollect].OnServerEvent:Connect(function(player: Play
 		resourceId = result.resourceId,
 		resourceType = result.resourceType,
 		amount = result.amount,
+		-- T8.6 (D-022) : première découverte (journal), calculée par le serveur.
+		firstDiscovery = result.firstDiscovery,
 	})
 	if result.ok then
 		grantAchievements(player)

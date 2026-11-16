@@ -1,5 +1,5 @@
 --!strict
--- Schéma versionné du profil joueur (v1 D-006, v2 D-020) : profil par
+-- Schéma versionné du profil joueur (v1 D-006, v2 D-020, v3 D-022) : profil par
 -- défaut, contrôle d'intégrité et migrations.
 --
 -- Règles d'intégrité (décision D-008) :
@@ -66,6 +66,8 @@ local SETTING_DEFAULTS: { [string]: boolean } = {
 
 -- Longueur maximale d'un identifiant de succès persisté.
 local MAX_ACHIEVEMENT_ID_LENGTH = 64
+-- Longueur maximale d'un identifiant de ressource du journal (v3).
+local MAX_DISCOVERY_ID_LENGTH = 64
 
 -- Migrations : Migrations[n] transforme un profil de version n en profil de
 -- version n + 1 (et fixe son schemaVersion).
@@ -78,6 +80,24 @@ DataSchema.Migrations = {
 			profile.achievements = {}
 		end
 		profile.schemaVersion = 2
+		return profile
+	end,
+
+	-- v2 -> v3 (T8.6, D-022) : journal de collection VIDE (D-022 D3 : aucun
+	-- historique reconstitué, même depuis l'inventaire). Aucune autre donnée
+	-- modifiée. Une section `collection` déjà présente (clé inconnue d'un v2)
+	-- est conservée telle quelle et contrôlée ensuite ; une sous-section
+	-- `discoveredResources` absente est ajoutée. Idempotente.
+	[2] = function(profile: any): any
+		local collection = profile.collection
+		if collection == nil then
+			profile.collection = { discoveredResources = {} }
+		elseif type(collection) == "table" and collection.discoveredResources == nil then
+			collection.discoveredResources = {}
+		end
+		-- Section non table : laissée telle quelle, refusée par le contrôle
+		-- (CorruptData), jamais réécrite.
+		profile.schemaVersion = 3
 		return profile
 	end,
 } :: { [number]: (profile: any) -> any }
@@ -115,6 +135,10 @@ function DataSchema.newProfile(): any
 		stats = stats,
 		-- Succès obtenus (T7, v2) : { [identifiant] = true }.
 		achievements = {},
+		-- Journal de collection (T8.6, v3) : ressources découvertes,
+		-- { [identifiant de ResourceConfig] = true }. Historique : jamais
+		-- retiré par une vente. Totaux et pourcentages dérivés, non stockés.
+		collection = { discoveredResources = {} },
 		settings = TableUtil.deepCopy(SETTING_DEFAULTS),
 		lastSaveAt = 0,
 	}
@@ -262,6 +286,26 @@ local function checkProfile(profile: any, repair: boolean): CheckContext
 				fail(context, `achievements : clé invalide ({tostring(achievementId)})`)
 			elseif earned ~= true then
 				fail(context, `achievements.{achievementId} : true attendu, reçu {tostring(earned)} ({type(earned)})`)
+			end
+		end
+	end
+
+	-- Journal (v3) : identifiants inconnus de ResourceConfig conservés
+	-- (ressource retirée puis rétablie) mais jamais comptés ; seule la
+	-- valeur `true` est valide.
+	local collection = getSection(context, profile, "", "collection")
+	if collection then
+		local discovered = getSection(context, collection, "collection.", "discoveredResources")
+		if discovered then
+			for resourceId, found in pairs(discovered) do
+				if type(resourceId) ~= "string" or resourceId == "" or #resourceId > MAX_DISCOVERY_ID_LENGTH then
+					fail(context, `collection.discoveredResources : clé invalide ({tostring(resourceId)})`)
+				elseif found ~= true then
+					fail(
+						context,
+						`collection.discoveredResources.{resourceId} : true attendu, reçu {tostring(found)} ({type(found)})`
+					)
+				end
 			end
 		end
 	end

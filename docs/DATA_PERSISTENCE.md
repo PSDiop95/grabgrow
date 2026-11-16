@@ -1,9 +1,9 @@
 # GRAB & GROW — Persistance des profils joueurs
 
-Dernière mise à jour : 2026-11-14 (T7 : schéma v2, temps de jeu, D-020)
+Dernière mise à jour : 2026-11-16 (T8.6 : schéma v3, journal de collection, D-022)
 
 Références : architecture technique section 7 ; décisions D-006, D-008,
-D-009, D-020. Réglages : `Shared/Config/DataConfig.lua`.
+D-009, D-020, D-022. Réglages : `Shared/Config/DataConfig.lua`.
 
 ## Modules
 
@@ -21,7 +21,7 @@ D-009, D-020. Réglages : `Shared/Config/DataConfig.lua`.
 
 - DataStore : `GrabAndGrow_PlayerData_v1` (production).
 - Clé : `Player_<UserId>`.
-- Valeur : `{ profile = <profil v2>, session = { id, expiresAt } | nil }`.
+- Valeur : `{ profile = <profil v3>, session = { id, expiresAt } | nil }`.
   Les autres champs de premier niveau éventuels sont conservés.
 - Copies de récupération (D-008) : même DataStore, clé
   `Recovery_<UserId>_<heure Unix du chargement>`, jamais écrasées ni
@@ -190,6 +190,56 @@ copie.
 - Tests : `DataSchemaTests` (v1 -> v2, conservation de toutes les
   sections, valeurs invalides), `AchievementTests` (profil v1 chargé puis
   évalué).
+
+### v2 -> v3 (T8.6, D-022, 2026-11-16)
+
+Structure ajoutée :
+
+```lua
+collection = {
+    -- Ressources découvertes : identifiant de ResourceConfig -> true.
+    discoveredResources = { green_leaf = true, wood = true },
+}
+```
+
+- **Migration** (`DataSchema.Migrations[2]`) : ajoute
+  `collection = { discoveredResources = {} }` si la section est absente ;
+  une section `collection` déjà présente (clé inconnue d'un v2) est
+  conservée, sa sous-section manquante ajoutée ; toute autre forme est
+  laissée telle quelle puis refusée (`CorruptData`). Aucune autre donnée
+  modifiée (monnaies, inventaire, améliorations, mondes, statistiques,
+  succès, réglages, `lastSaveAt`, clés inconnues). Idempotente : rejouée,
+  elle ne réinitialise jamais un journal.
+- **Politique historique (D-022 D3)** : journal **vide** après migration.
+  Les données v2 ne disent pas quelles ressources ont été collectées puis
+  vendues ; l'inventaire n'est pas converti en découvertes. Un joueur v2
+  redécouvre les ressources à sa prochaine collecte de chacune.
+- **Contrôle** : section et sous-section tables ; clé texte de 1 à 64
+  caractères ; valeur `true` seulement ; sinon `CorruptData` (jamais
+  réparé). Identifiants inconnus de `ResourceConfig` conservés mais jamais
+  comptés. Section absente d'un profil v3 : ajoutée (réparation journalisée).
+- **Règles de découverte** : une ressource est découverte quand le serveur
+  confirme sa première attribution (`InventoryService.AddResource`, même
+  `Update` que l'ajout). Refus (monde verrouillé, distance, cadence, sac
+  plein, ressource inconnue, profil absent) : aucune découverte. Vente,
+  retrait ou consommation : la découverte reste. Aucune écriture DataStore
+  supplémentaire : la découverte part avec la sauvegarde suivante (60 s,
+  sortie, fermeture).
+- **Récupération** : un profil migré est un profil normalisé ; sa copie
+  `Recovery_<UserId>_<heure>` (profil v2 d'origine) est écrite avant sa
+  première sauvegarde. Clé déjà occupée par un autre contenu ou écriture
+  impossible : sauvegarde refusée (`BackupFailed`), original v2 intact,
+  copie existante jamais écrasée.
+- **Tests** : `CollectionJournalTests` (Lune et Studio : v2, v3, profil
+  neuf, migration répétée, conservation de chaque section, corrompu,
+  incomplet, verrou actif, sauvegarde, reconnexion, conflit `Recovery_`),
+  `DataSchemaTests` (v1 -> v3 enchaînées). DataStore de test réel
+  (`GrabAndGrow_PlayerData_v1_Studio`, expérience de test) : rapport
+  `phases/T8_6_MIGRATION_TEST_REPORT.md`.
+
+Attention : après publication de la v3, un serveur v2 encore actif refuse
+les profils migrés (`UnsupportedVersion`, joueur expulsé, rien d'écrasé) :
+redémarrer tous les serveurs à la publication.
 
 Attention : après publication de la v2, un serveur v1 encore actif refuse
 les profils déjà migrés (`UnsupportedVersion`, joueur expulsé, rien

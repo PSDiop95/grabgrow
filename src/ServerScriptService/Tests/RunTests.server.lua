@@ -33,6 +33,7 @@ local PlayTimeTests = require(script.Parent.PlayTimeTests)
 local AchievementTests = require(script.Parent.AchievementTests)
 local WorldTravelServiceTests = require(script.Parent.WorldTravelServiceTests)
 local TravelRulesTests = require(script.Parent.TravelRulesTests)
+local CollectionJournalTests = require(script.Parent.CollectionJournalTests)
 
 local GameConfig = require(Config.GameConfig)
 local ResourceConfig = require(Config.ResourceConfig)
@@ -69,6 +70,7 @@ local BagDisplay = require(ReplicatedStorage.Shared.Util.BagDisplay)
 local FeedbackRules = require(ReplicatedStorage.Shared.Util.FeedbackRules)
 local OnboardingRules = require(ReplicatedStorage.Shared.Util.OnboardingRules)
 local TravelRules = require(ReplicatedStorage.Shared.Util.TravelRules)
+local CollectionJournalRules = require(ReplicatedStorage.Shared.Util.CollectionJournalRules)
 local OnboardingConfig = require(Config.OnboardingConfig)
 local FeedbackConfig = require(Config.FeedbackConfig)
 local CollectionSecurityConfig = require(ServerStorage:WaitForChild("ServerOnlyConfig").CollectionSecurityConfig)
@@ -372,6 +374,30 @@ report(
 		Localization = Localization,
 		WorldConfig = WorldConfig,
 		Remotes = Remotes,
+	})
+)
+
+report(
+	"CollectionJournalTests",
+	CollectionJournalTests.run({
+		CollectionJournalRules = CollectionJournalRules,
+		DataSchema = DataSchema,
+		DataConfig = DataConfig,
+		PlayerDataService = PlayerDataService,
+		MemoryDataStore = MemoryDataStore,
+		InventoryService = InventoryService,
+		CollectionService = CollectionService,
+		SellService = SellService,
+		ResourceSpawner = ResourceSpawner,
+		RateLimitService = RateLimitService,
+		ResourceConfig = ResourceConfig,
+		WorldConfig = WorldConfig,
+		UpgradeConfig = UpgradeConfig,
+		CollectionSecurityConfig = CollectionSecurityConfig,
+		Remotes = Remotes,
+		StudioTestPresets = StudioTestPresets,
+		Localization = Localization,
+		FeedbackRules = FeedbackRules,
 	})
 )
 

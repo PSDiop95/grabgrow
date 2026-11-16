@@ -11,7 +11,8 @@ local DataConfig = {
 	-- Version courante du schéma de profil. Toute hausse exige une
 	-- migration dans DataSchema.Migrations et des tests.
 	-- v2 (T7, D-020) : section `achievements` (succès permanents).
-	SchemaVersion = 2,
+	-- v3 (T8.6, D-022) : section `collection` (journal de collection).
+	SchemaVersion = 3,
 
 	Store = {
 		-- DataStore de production (architecture 7.2).

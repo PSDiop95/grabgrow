@@ -31,6 +31,7 @@ local ResourceConfig = require(Config.ResourceConfig)
 local UpgradeConfig = require(Config.UpgradeConfig)
 local Remotes = require(ReplicatedStorage.Shared.Remotes.Remotes)
 local UpgradeMath = require(ReplicatedStorage.Shared.Util.UpgradeMath)
+local CollectionJournalRules = require(ReplicatedStorage.Shared.Util.CollectionJournalRules)
 local SecurityConfig = require(ServerStorage.ServerOnlyConfig.CollectionSecurityConfig)
 local InventoryService = require(script.Parent.InventoryService)
 local ResourceSpawner = require(script.Parent.Parent.Systems.ResourceSpawner)
@@ -73,6 +74,9 @@ export type Result = {
 	-- Renseignés en cas de succès uniquement.
 	resourceType: string?,
 	amount: number,
+	-- T8.6 : première découverte de la ressource (journal), calculée par le
+	-- serveur dans la mutation de l'ajout. false en cas de refus.
+	firstDiscovery: boolean,
 	-- true : ne pas répondre au client (rejets en rafale déjà signalés).
 	silent: boolean,
 }
@@ -95,6 +99,10 @@ export type ClientState = {
 	-- session (copie en lecture seule de profile.stats). Affichage seulement :
 	-- le client ne les renvoie jamais et rien ne les lit côté serveur.
 	progress: Progress,
+	-- T8.6 (D-022) : journal de collection, ressources découvertes
+	-- { [identifiant de ResourceConfig] = true } (identifiants inconnus
+	-- filtrés). Lecture seule : aucune demande client ne le modifie.
+	discovered: { [string]: boolean },
 }
 
 export type Progress = {
@@ -188,6 +196,7 @@ function CollectionService.new(dependencies: Dependencies)
 			resourceId = nodeId,
 			resourceType = nil,
 			amount = 0,
+			firstDiscovery = false,
 			silent = silent == true,
 		}
 	end
@@ -326,6 +335,7 @@ function CollectionService.new(dependencies: Dependencies)
 			resourceId = nodeId,
 			resourceType = node.resourceType,
 			amount = added.granted,
+			firstDiscovery = added.firstDiscovery == true,
 			silent = false,
 		}
 	end
@@ -369,6 +379,9 @@ function CollectionService.new(dependencies: Dependencies)
 				sales = statOf(profile, "totalSales"),
 				coinsSpent = statOf(profile, "totalCoinsSpent"),
 			},
+			discovered = CollectionJournalRules.publicView(
+				if type(profile.collection) == "table" then profile.collection.discoveredResources else nil
+			),
 		}
 	end
 

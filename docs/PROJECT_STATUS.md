@@ -1,6 +1,6 @@
 # GRAB & GROW — État du projet
 
-Dernière mise à jour : 2026-11-15 (T8 en cours : T8.0 à T8.5 validées)
+Dernière mise à jour : 2026-11-16 (T8 en cours : T8.0 à T8.6 validées)
 
 ## Résumé
 
@@ -19,7 +19,14 @@ construite et testée en Studio à un joueur et en Local Server à 2 joueurs
 le 2026-11-15, **validée** par le propriétaire le 2026-11-15 (`phases/T8_4_FROZEN_PEAKS_REPORT.md`) ; commitée (628e9a2).
 T8.5 (Mystic World) construite et testée en Studio à un joueur et en
 Local Server à 2 joueurs le 2026-11-15 (`phases/T8_5_MYSTIC_WORLD_REPORT.md`) ;
-**validée** par le propriétaire le 2026-11-15 ; non commitée.
+**validée** par le propriétaire le 2026-11-15 ; commitée (17e38ea) et
+poussée le 2026-11-15 (vérifié le 2026-11-16 : `main` = `origin/main`).
+T8.6 (Collection Journal, D-022) : étape A validée le 2026-11-16 ; schéma v3
+et migration v2 -> v3, découverte atomique à la collecte, interface Journal
+FR/EN, sans récompense ; construite et testée le 2026-11-16 (Lune, Studio à
+un joueur, DataStore de test, Local Server à 2 joueurs) ; **validée** par le
+propriétaire le 2026-11-16 ; commit local autorisé, sans push (`phases/T8_6_COLLECTION_JOURNAL_REPORT.md`,
+`phases/T8_6_MIGRATION_TEST_REPORT.md`).
 
 **T7 (progression et équilibrage) : VALIDÉE et CLÔTURÉE** (propriétaire,
 2026-11-14, après test réel, D-020 ; commit 0b821a2, poussé). Backpack 2 à
@@ -1065,6 +1072,19 @@ Détail : `phases/T8_5_MYSTIC_WORLD_REPORT.md`.
 | Local Server à 2 joueurs (lancé par le propriétaire) : refus verrouillé, voyages simultanés, collecte du même nœud (un seul succès), nœuds distincts, ventes simultanées (+136 / +68), déconnexion | Studio, multijoueur | PASS ; aucune anomalie de déplacement, aucune erreur |
 | Appui réel au portail, rendu en jeu, téléphone réel | Manuel | NOT TESTED |
 
+## Vérifications T8.6 — Collection Journal (2026-11-16, validée)
+
+Détail : `phases/T8_6_COLLECTION_JOURNAL_REPORT.md`,
+`phases/T8_6_MIGRATION_TEST_REPORT.md`.
+
+| Vérification | Type | Résultat |
+|---|---|---|
+| 20 suites Lune (dont `CollectionJournalTests`, 35 cas), 3 mutations détectées, `luau-lsp analyze`, `rojo build` | Automatisé | PASS |
+| Play Studio : 20 suites au démarrage ; collecte à pied (`firstDiscovery` true puis false), payload falsifié, monde verrouillé, bandeau, vente (découvertes conservées), vues du Journal, préréglages `J_partial` / `J_full`, exclusion Boutique / Journal, J, croix bas, B | Studio, un joueur | PASS (manette : touches émulées seulement) |
+| Migration v2 -> v3 sur `GrabAndGrow_PlayerData_v1_Studio` (expérience de test) : v2, v3, neuf, sauvegarde, reconnexion, conflit `Recovery_`, verrou actif, corrompu | DataStore de test | PASS |
+| Local Server à 2 joueurs (lancé par le propriétaire, 2026-11-16) : découvertes indépendantes, même nœud à 1 ms (un seul succès, une seule découverte), journaux séparés 1/20 et 2/20, bandeau, sauvegardes auto | Studio, multijoueur | PASS |
+| Tactile, manette réelle, téléphone réel, capture en anglais | Manuel | NOT TESTED |
+
 ## Décisions en attente
 
 1. Push GitHub des commits T1 à T7 : autorisé et effectué le 2026-11-14.
@@ -1085,6 +1105,10 @@ Détail : `phases/T8_5_MYSTIC_WORLD_REPORT.md`.
    2026-11-15) ; **validée** par le propriétaire le 2026-11-15. Place
    enregistré avec les quatre îles (version 90, non publié). T8.6 : en
    attente d'autorisation. Enregistrer le place avec les quatre îles.
+   T8.6 autorisée le 2026-11-16 (D-022), construite et testée (Local
+   Server à 2 joueurs compris) ; **validée** le 2026-11-16 ; commit local
+   autorisé, push non autorisé.
+   T8.7 non commencée.
 6. Commits : T8.0 à T8.2 (dd806ef), T8.3 (33830ca), T8.4 (628e9a2),
    T8.5 (`feat(worlds): T8.5 Mystic World archipelago`) ; push de T8.0 à
    T8.5 autorisé et effectué le 2026-11-15.

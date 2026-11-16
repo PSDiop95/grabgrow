@@ -11,13 +11,17 @@
 -- Occupation = somme de toutes les quantités, y compris les ressources
 -- inconnues de ResourceConfig conservées par D-008.
 --
--- Pas de retrait dans ce lot : la vente arrive en T3.
+-- T8.6 (D-022) : la première attribution d'une ressource la marque
+-- découverte dans le journal (CollectionJournalRules), dans la même mutation
+-- que l'ajout : jamais de ressource sans découverte, ni l'inverse. Un refus
+-- (sac plein, ressource inconnue, profil absent) ne marque rien.
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Config = ReplicatedStorage.Shared.Config
 local ResourceConfig = require(Config.ResourceConfig)
 local UpgradeConfig = require(Config.UpgradeConfig)
+local CollectionJournalRules = require(ReplicatedStorage.Shared.Util.CollectionJournalRules)
 local PlayerDataService = require(script.Parent.PlayerDataService)
 
 local InventoryService = {}
@@ -45,6 +49,9 @@ export type AddResult = {
 	granted: number,
 	-- État après l'ajout (nil en cas de refus).
 	state: State?,
+	-- T8.6 : true si cet ajout est la première découverte de la ressource
+	-- par ce joueur (false en cas de refus).
+	firstDiscovery: boolean,
 }
 
 -- Sous-ensemble de PlayerDataService utilisé par ce service.
@@ -88,7 +95,7 @@ function InventoryService.describe(profile: any): State?
 end
 
 local function refusal(code: string): AddResult
-	return { ok = false, code = code, granted = 0, state = nil }
+	return { ok = false, code = code, granted = 0, state = nil, firstDiscovery = false }
 end
 
 function InventoryService.new(dependencies: Dependencies)
@@ -131,6 +138,7 @@ function InventoryService.new(dependencies: Dependencies)
 
 		local granted = 0
 		local full = false
+		local firstDiscovery = false
 		local after: State? = nil
 		local result = playerData.Update(userId, function(draft: any): boolean?
 			local before = InventoryService.describe(draft)
@@ -145,12 +153,13 @@ function InventoryService.new(dependencies: Dependencies)
 			local resources = draft.inventory.resources
 			resources[resourceId] = (resources[resourceId] or 0) + granted
 			draft.stats.totalResourcesCollected += granted
+			firstDiscovery = CollectionJournalRules.markDiscovered(draft, resourceId)
 			after = InventoryService.describe(draft)
 			return nil
 		end)
 
 		if result.ok then
-			return { ok = true, code = nil, granted = granted, state = after }
+			return { ok = true, code = nil, granted = granted, state = after, firstDiscovery = firstDiscovery }
 		end
 		if result.code == PlayerDataService.Code.NotLoaded then
 			return refusal(InventoryService.Code.NotLoaded)

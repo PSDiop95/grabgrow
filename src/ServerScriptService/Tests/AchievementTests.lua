@@ -319,7 +319,7 @@ function AchievementTests.run(modules: Modules): ({ string }, number)
 		seed.stats.totalCoinsEarned = 700
 		local env = newEnv({ USER_A }, { [USER_A] = seed })
 		local loaded = env.profile(USER_A)
-		check(loaded.schemaVersion == 2 and next(loaded.achievements) == nil, "migration non appliquée")
+		check(loaded.schemaVersion == 3 and next(loaded.achievements) == nil, "migration non appliquée")
 		check(loaded.currencies.coins == 700, "Coins perdus à la migration")
 		local granted = env.service.Evaluate(USER_A)
 		check(#granted == 2, `2 succès attendus, trouvé {#granted}`)

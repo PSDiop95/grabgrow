@@ -59,10 +59,10 @@ function DataSchemaTests.run(modules: Modules): ({ string }, number)
 		return profile
 	end
 
-	case("nouveau profil conforme à v2", function(check)
+	case("nouveau profil conforme à v3", function(check)
 		local profile = DataSchema.newProfile()
-		check(profile.schemaVersion == 2, "schemaVersion ~= 2")
-		check(DataConfig.SchemaVersion == 2, "DataConfig.SchemaVersion ~= 2")
+		check(profile.schemaVersion == 3, "schemaVersion ~= 3")
+		check(DataConfig.SchemaVersion == 3, "DataConfig.SchemaVersion ~= 3")
 		local valid, message = DataSchema.validate(profile)
 		check(valid, `profil par défaut refusé : {tostring(message)}`)
 		local normalized, _, _, repairs = DataSchema.normalize(profile)
@@ -70,10 +70,10 @@ function DataSchemaTests.run(modules: Modules): ({ string }, number)
 		check(deepEqual(normalized, profile), "normalize modifie le profil par défaut")
 	end)
 
-	case("valeurs par défaut (D-006, D-020)", function(check)
+	case("valeurs par défaut (D-006, D-020, D-022)", function(check)
 		local profile = DataSchema.newProfile()
 		local expected = {
-			schemaVersion = 2,
+			schemaVersion = 3,
 			currencies = { coins = 0, gems = 0, stars = 0 },
 			inventory = { resources = {} },
 			upgrades = {
@@ -97,10 +97,11 @@ function DataSchemaTests.run(modules: Modules): ({ string }, number)
 				playTimeSeconds = 0,
 			},
 			achievements = {},
+			collection = { discoveredResources = {} },
 			settings = { musicEnabled = true, sfxEnabled = true },
 			lastSaveAt = 0,
 		}
-		check(deepEqual(profile, expected), "le profil par défaut diffère du schéma v2 de référence")
+		check(deepEqual(profile, expected), "le profil par défaut diffère du schéma v3 de référence")
 	end)
 
 	case("valeurs par défaut cohérentes avec les configurations", function(check)
@@ -305,13 +306,13 @@ function DataSchemaTests.run(modules: Modules): ({ string }, number)
 
 	-- MIGRATION RÉELLE v1 -> v2 (T7, D-020) ------------------------------
 
-	case("migrations réelles : seulement v1 -> v2", function(check)
+	case("migrations réelles : v1 -> v2 et v2 -> v3", function(check)
 		local count = 0
 		for version in pairs(DataSchema.Migrations) do
 			count += 1
-			check(version == 1, `migration inattendue depuis v{tostring(version)}`)
+			check(version == 1 or version == 2, `migration inattendue depuis v{tostring(version)}`)
 		end
-		check(count == 1, `1 migration attendue, trouvé {count}`)
+		check(count == 2, `2 migrations attendues, trouvé {count}`)
 	end)
 
 	case("v1 -> v2 : succès vides, toutes les données conservées", function(check)
@@ -336,8 +337,10 @@ function DataSchemaTests.run(modules: Modules): ({ string }, number)
 		if profile == nil then
 			return
 		end
-		check(profile.schemaVersion == 2, "version finale incorrecte")
+		-- v1 -> v2 -> v3 enchaînées (T8.6).
+		check(profile.schemaVersion == 3, "version finale incorrecte")
 		check(type(profile.achievements) == "table" and next(profile.achievements) == nil, "succès non vides")
+		check(next(profile.collection.discoveredResources) == nil, "journal non vide")
 		check(#repairs == 0, `aucune réparation attendue, trouvé {#repairs}`)
 		check(raw.schemaVersion == 1 and raw.achievements == nil, "l'entrée a été modifiée")
 		-- Toutes les autres sections : identiques.

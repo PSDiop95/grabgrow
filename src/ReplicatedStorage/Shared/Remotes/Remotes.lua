@@ -25,7 +25,8 @@ Remotes.Name = table.freeze({
 	-- déplace lui-même le personnage ; jamais de position du client.
 	TravelToWorld = "TravelToWorld",
 	-- Serveur -> Client. Payload : { action, ok, code, ... }.
-	--   Collect : resourceId?, resourceType?, amount?
+	--   Collect : resourceId?, resourceType?, amount?, firstDiscovery
+	--             (T8.6 : première découverte du journal, calculée serveur)
 	--   Sell    : sellZoneId?, coinsEarned, quantitySold
 	--   Upgrade : upgradeId?, level?, coinsSpent
 	--   UnlockWorld : worldId?, coinsSpent
@@ -34,7 +35,8 @@ Remotes.Name = table.freeze({
 	--                 seul, après une action validée ; aucune demande client)
 	ActionResult = "ActionResult",
 	-- Serveur -> Client. Payload : état public du joueur (voir
-	-- CollectionService.GetClientState).
+	-- CollectionService.GetClientState ; T8.6 : `discovered`, journal de
+	-- collection en lecture seule, aucun RemoteEvent dédié).
 	StateUpdated = "StateUpdated",
 })
 
