@@ -332,6 +332,8 @@ remotes[Remotes.Name.RequestUpgrade].OnServerEvent:Connect(function(player: Play
 	if result.ok then
 		grantAchievements(player)
 		sendState(player)
+		-- T8.7 (D-023) : opération importante, sauvegarde différée et regroupée.
+		playerDataService.RequestSave(player.UserId, "amélioration")
 	end
 end)
 
@@ -351,6 +353,8 @@ remotes[Remotes.Name.RequestUnlockWorld].OnServerEvent:Connect(function(player: 
 	if result.ok then
 		grantAchievements(player)
 		sendState(player)
+		-- T8.7 (D-023) : opération importante, sauvegarde différée et regroupée.
+		playerDataService.RequestSave(player.UserId, "déblocage de monde")
 	end
 end)
 

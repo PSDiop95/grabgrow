@@ -141,7 +141,13 @@ copie.
   l'écriture renouvelle le verrou.
 - À la sortie du joueur (`ReleasePlayer`) et à l'arrêt du serveur
   (`BindToClose` → `Shutdown`, profils traités en parallèle).
-- Jamais à chaque modification.
+- Après une opération importante (T8.7, D-023) : achat d'amélioration ou
+  déblocage de monde réussi -> `PlayerDataService.RequestSave`. Sauvegarde
+  différée de `DataConfig.Save.importantSaveDelaySeconds` (5 s) ; les
+  demandes reçues pendant ce délai n'en font qu'une. Joueur parti avant
+  l'échéance : rien de plus, la sauvegarde de sortie suffit. Échec : les
+  données restent en mémoire (même règle que l'autosauvegarde).
+- Jamais à chaque collecte ni à chaque vente (autosauvegarde de 60 s).
 - Une seule écriture à la fois par profil. Une demande reçue pendant une
   écriture provoque une seconde écriture à la suite, qui contient les
   modifications faites entre-temps.

@@ -87,6 +87,8 @@ type Session = {
 	saving: boolean,
 	resaveRequested: boolean,
 	releaseRequested: boolean,
+	-- T8.7 (D-023) : sauvegarde différée déjà programmée par RequestSave.
+	saveScheduled: boolean,
 	lastSaveResult: Result,
 	-- Copie de récupération à écrire avant la première sauvegarde d'un
 	-- profil normalisé (D-008). nil une fois écrite, ou si inutile.
@@ -512,6 +514,7 @@ function PlayerDataService.new(dependencies: Dependencies)
 			saving = false,
 			resaveRequested = false,
 			releaseRequested = false,
+			saveScheduled = false,
 			lastSaveResult = OK,
 			pendingBackup = nil,
 		}
@@ -602,6 +605,33 @@ function PlayerDataService.new(dependencies: Dependencies)
 			return failure(PlayerDataService.Code.NotLoaded, "profil non chargé")
 		end
 		return saveSession(session, reason or "manuelle")
+	end
+
+	-- T8.7 (D-023) : demande une sauvegarde après une opération importante
+	-- (achat d'amélioration, déblocage de monde). Non bloquant : la
+	-- sauvegarde part après DataConfig.Save.importantSaveDelaySeconds, et
+	-- toutes les demandes reçues pendant ce délai n'en font qu'une (budget
+	-- d'écritures DataStore). Retourne OK si une sauvegarde est programmée
+	-- ou déjà prévue, NotLoaded sinon. Aucune règle de jeu ici.
+	function service.RequestSave(userId: number, reason: string?): Result
+		local session = sessions[userId]
+		if session == nil or session.state ~= "active" then
+			return failure(PlayerDataService.Code.NotLoaded, "profil non chargé")
+		end
+		if session.saveScheduled then
+			return OK
+		end
+		session.saveScheduled = true
+		local delaySeconds = config.Save.importantSaveDelaySeconds or DataConfig.Save.importantSaveDelaySeconds
+		spawn(function()
+			wait(delaySeconds)
+			session.saveScheduled = false
+			-- Joueur parti entre-temps : la sauvegarde de sortie s'en charge.
+			if sessions[userId] == session and session.state == "active" then
+				saveSession(session, reason or "opération importante")
+			end
+		end)
+		return OK
 	end
 
 	-- Sauvegarde finale, libération du verrou et retrait de la mémoire.

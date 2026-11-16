@@ -62,6 +62,11 @@ local DataConfig = {
 
 	Save = {
 		autosaveIntervalSeconds = 60,
+		-- T8.7 (D-023) : délai d'une sauvegarde demandée après un achat
+		-- d'amélioration ou un déblocage de monde. Les demandes reçues
+		-- pendant ce délai sont regroupées en une seule écriture. Réglage
+		-- technique de départ (budget d'écritures DataStore).
+		importantSaveDelaySeconds = 5,
 		-- Période d'attente quand une sauvegarde du même profil est en cours.
 		busyPollSeconds = 0.1,
 	},

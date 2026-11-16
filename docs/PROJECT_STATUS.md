@@ -1,6 +1,6 @@
 # GRAB & GROW — État du projet
 
-Dernière mise à jour : 2026-11-16 (T8 en cours : T8.0 à T8.6 validées)
+Dernière mise à jour : 2026-11-16 (T8 : T8.0 à T8.7 validées)
 
 ## Résumé
 
@@ -27,6 +27,8 @@ FR/EN, sans récompense ; construite et testée le 2026-11-16 (Lune, Studio à
 un joueur, DataStore de test, Local Server à 2 joueurs) ; **validée** par le
 propriétaire le 2026-11-16 ; commit local autorisé, sans push (`phases/T8_6_COLLECTION_JOURNAL_REPORT.md`,
 `phases/T8_6_MIGRATION_TEST_REPORT.md`).
+
+**T8.7 (stabilisation et validation globale) : VALIDÉE** par le propriétaire le 2026-11-16. Étape A (audit) validée le 2026-11-16 : aucun P0 ni P1. Étape B autorisée « avec P2-02 » : sauvegarde différée de 5 s après achat d'amélioration et déblocage de monde (D-023). Lune 401 cas OK, LSP strict OK, Rojo OK, simulation inchangée, Studio solo OK (quatre mondes), Local Server à 2 joueurs OK (11 scénarios, dont collecte et ventes simultanées), DataStore de test OK (12 cas : v3, D-023, reconnexion, migration v2, verrou, interruption, pannes). Réserves acceptées : contrôle visuel mobile, performance non mesurée (`phases/T8_7_STABILIZATION_REPORT.md`). Aucun commit.
 
 **T7 (progression et équilibrage) : VALIDÉE et CLÔTURÉE** (propriétaire,
 2026-11-14, après test réel, D-020 ; commit 0b821a2, poussé). Backpack 2 à

@@ -822,3 +822,32 @@ propriétaire), ACCEPTÉE, REMPLACÉE.
   tests (`CollectionJournalTests`, `DataSchemaTests`, `AchievementTests`,
   `LocalizationTests`), `DATA_PERSISTENCE.md`, `ROADMAP.md`,
   `PROJECT_STATUS.md`, `TEST_STRATEGY.md`, rapports T8.6.
+
+## D-023 — T8.7 : sauvegarde après achat d'amélioration et déblocage de monde
+
+- **Date :** 2026-11-16
+- **Statut :** ACCEPTÉE (propriétaire, 2026-11-16 : étape B de T8.7
+  autorisée « avec P2-02 »).
+- **Contexte :** audit T8.7-A, anomalie P2-02. `CLAUDE.md` §8 demande de
+  sauvegarder « après les opérations importantes » ; l'implémentation et
+  `DATA_PERSISTENCE.md` ne sauvegardaient qu'à la sortie, à l'arrêt et
+  toutes les 60 s. Un plantage serveur pouvait perdre jusqu'à 60 s de
+  progression, dont un déblocage de monde (jusqu'à 250 000 Coins). Perte
+  seulement, jamais duplication (verrou de session).
+- **Décision :** `PlayerDataService.RequestSave(userId, reason)`, appelé
+  par `Bootstrap` après un achat d'amélioration ou un déblocage de monde
+  réussi. Sauvegarde différée de `DataConfig.Save.importantSaveDelaySeconds`
+  (5 s, réglage technique de départ) ; toutes les demandes reçues pendant le
+  délai sont regroupées en une écriture. Collecte et vente restent couvertes
+  par l'autosauvegarde de 60 s.
+- **Justification :** les achats sont rares (54 sur toute la progression,
+  simulateur T8) mais coûteux ; le regroupement borne les écritures d'un
+  joueur qui enchaîne les achats (au plus une toutes les 5 s environ) et
+  ménage le budget d'écritures DataStore du serveur.
+- **Conséquences :** perte maximale après un achat ou un déblocage ramenée
+  d'environ 60 s à environ 5 s (plus la durée de l'écriture). Aucune valeur
+  économique, règle d'achat, schéma ni protection T6 modifiés. Sauvegarde
+  après opération importante non vérifiée sur DataStore réel tant que le
+  test DataStore de T8.7 n'est pas fait.
+- **Affecte :** `PlayerDataService`, `DataConfig`, `Bootstrap`,
+  `PlayerDataServiceTests`, `DATA_PERSISTENCE.md`.

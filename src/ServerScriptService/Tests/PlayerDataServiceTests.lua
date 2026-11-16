@@ -805,6 +805,108 @@ function PlayerDataServiceTests.run(modules: Modules): ({ string }, number)
 		check(world.store.peek(KEY_A).session.id == "A:2", "identifiant de verrou non renouvelé")
 	end)
 
+	-- SAUVEGARDE APRÈS OPÉRATION IMPORTANTE (T8.7, D-023) -----------------
+
+	-- Serveur dont `spawn` met les tâches en file : le test décide quand la
+	-- sauvegarde différée s'exécute.
+	local function newDeferredServer(world: any, serverId: string)
+		local server = { queue = {} :: { () -> () }, logs = {} :: { string } }
+		server.service = PlayerDataService.new({
+			store = world.store,
+			serverId = serverId,
+			clock = function(): number
+				return world.now
+			end,
+			wait = function(seconds: number)
+				world.now += seconds
+				world.waited += seconds
+			end,
+			spawn = function(callback: () -> ())
+				table.insert(server.queue, callback)
+			end,
+			log = function(level: string, message: string)
+				table.insert(server.logs, `{level} {message}`)
+			end,
+		})
+		function server.runQueue()
+			local pending = server.queue
+			server.queue = {}
+			for _, callback in ipairs(pending) do
+				callback()
+			end
+		end
+		return server
+	end
+
+	case("RequestSave : profil non chargé refusé, aucune écriture", function(check)
+		local world = newWorld()
+		local server = newDeferredServer(world, "A")
+		local before = world.store.getWriteCount()
+		check(server.service.RequestSave(USER_A, "test").code == Code.NotLoaded, "demande acceptée")
+		check(#server.queue == 0, "tâche programmée sans profil")
+		check(world.store.getWriteCount() == before, "écriture sans profil")
+	end)
+
+	case("RequestSave : une écriture différée, demandes regroupées", function(check)
+		local world = newWorld()
+		local server = newDeferredServer(world, "A")
+		server.service.LoadPlayer(USER_A)
+		server.service.Update(USER_A, addCoins(250))
+		local before = world.store.getWriteCount()
+		local startedAt = world.now
+		check(server.service.RequestSave(USER_A, "amélioration").ok, "première demande refusée")
+		check(server.service.RequestSave(USER_A, "déblocage").ok, "seconde demande refusée")
+		check(#server.queue == 1, `demandes non regroupées ({#server.queue} tâches)`)
+		check(world.store.getWriteCount() == before, "écriture immédiate au lieu de différée")
+		server.runQueue()
+		check(world.now - startedAt >= config.Save.importantSaveDelaySeconds, "délai non respecté")
+		check(world.store.getWriteCount() == before + 1, "nombre d'écritures différent de 1")
+		check(world.store.peek(KEY_A).profile.currencies.coins == 250, "modification non sauvegardée")
+		check(world.store.peek(KEY_A).session.id == "A:1", "verrou non conservé")
+	end)
+
+	case("RequestSave : nouvelle demande possible après la sauvegarde", function(check)
+		local world = newWorld()
+		local server = newDeferredServer(world, "A")
+		server.service.LoadPlayer(USER_A)
+		server.service.RequestSave(USER_A)
+		server.runQueue()
+		server.service.Update(USER_A, addCoins(7))
+		server.service.RequestSave(USER_A)
+		check(#server.queue == 1, "seconde demande non programmée")
+		server.runQueue()
+		check(world.store.peek(KEY_A).profile.currencies.coins == 7, "seconde sauvegarde absente")
+	end)
+
+	case("RequestSave : joueur parti avant le délai, rien d'écrit en plus", function(check)
+		local world = newWorld()
+		local server = newDeferredServer(world, "A")
+		server.service.LoadPlayer(USER_A)
+		server.service.Update(USER_A, addCoins(40))
+		server.service.RequestSave(USER_A)
+		check(server.service.ReleasePlayer(USER_A).ok, "sortie en échec")
+		local afterRelease = world.store.getWriteCount()
+		server.runQueue()
+		check(world.store.getWriteCount() == afterRelease, "écriture après la sortie")
+		check(world.store.peek(KEY_A).session == nil, "verrou repris après la sortie")
+		check(world.store.peek(KEY_A).profile.currencies.coins == 40, "sauvegarde de sortie incomplète")
+	end)
+
+	case("RequestSave : échec DataStore, données conservées en mémoire", function(check)
+		local world = newWorld()
+		local server = newDeferredServer(world, "A")
+		server.service.LoadPlayer(USER_A)
+		server.service.Update(USER_A, addCoins(90))
+		server.service.RequestSave(USER_A)
+		world.store.failNext(config.Retry.maxAttempts)
+		server.runQueue()
+		check(server.service.IsLoaded(USER_A), "profil retiré après un échec")
+		check(server.service.GetData(USER_A).currencies.coins == 90, "données perdues en mémoire")
+		check(world.store.peek(KEY_A).profile.currencies.coins == 0, "écriture malgré l'échec")
+		check(server.service.SavePlayer(USER_A).ok, "sauvegarde suivante impossible")
+		check(world.store.peek(KEY_A).profile.currencies.coins == 90, "reprise non sauvegardée")
+	end)
+
 	return failures, caseCount
 end
 

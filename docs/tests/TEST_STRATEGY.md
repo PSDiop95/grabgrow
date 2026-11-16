@@ -41,24 +41,42 @@ lune run tools/run_tests.luau
 Exécute `Tests/RunTests.server.lua` hors de Studio (Lune, épinglé dans
 `rokit.toml`, D-009). `tools/run_tests.luau` simule `game:GetService`,
 `script` et `require` pour les modules de logique pure. Code de sortie 0 :
-aucun échec. Résultat attendu :
+aucun échec. Résultat attendu au 2026-11-16 (T8.7, 401 cas) :
 
 ```text
 [Tests] ConfigTests : OK
-[Tests] DataSchemaTests : OK (18 cas)
-[Tests] PlayerDataServiceTests : OK (35 cas)
+[Tests] DataSchemaTests : OK (22 cas)
+[Tests] PlayerDataServiceTests : OK (40 cas)
 [Tests] InventoryServiceTests : OK (14 cas)
 [Tests] ResourceSpawnerTests : OK (9 cas)
-[Tests] CollectionServiceTests : OK (22 cas)
+[Tests] CollectionServiceTests : OK (27 cas)
 [Tests] SellServiceTests : OK (25 cas)
 [Tests] EconomyServiceTests : OK (10 cas)
-[Tests] UpgradeServiceTests : OK (22 cas)
+[Tests] UpgradeServiceTests : OK (23 cas)
+[Tests] HudTests : OK (10 cas)
+[Tests] FeedbackTests : OK (14 cas)
+[Tests] OnboardingTests : OK (21 cas)
+[Tests] LocalizationTests : OK (15 cas)
+[Tests] MovementValidatorTests : OK (30 cas)
+[Tests] SecurityTests : OK (42 cas)
+[Tests] PlayTimeTests : OK (15 cas)
+[Tests] AchievementTests : OK (16 cas)
+[Tests] WorldTravelServiceTests : OK (25 cas)
+[Tests] TravelRulesTests : OK (8 cas)
+[Tests] CollectionJournalTests : OK (35 cas)
 [Tests] TOUS LES TESTS : OK
 ```
 
 Non couvert par ce lanceur : `Bootstrap.server.lua`,
 `Systems/PlayerSession.lua`, `Systems/ResourceNodes.lua`, `Systems/SellZones.lua` (événements et
 instances Roblox) et les contrôleurs client, à vérifier dans Studio.
+
+T8.7 (D-023) : `PlayerDataServiceTests` couvre `RequestSave` (profil non
+chargé, écriture différée et regroupée, nouvelle demande après sauvegarde,
+joueur parti avant l'échéance, échec DataStore). Le branchement dans
+`Bootstrap` se vérifie dans Studio : ligne `sauvegarde (amélioration) OK`
+ou `sauvegarde (déblocage de monde) OK` environ 5 s après l'opération.
+Matrice de régression globale : `phases/T8_7_STABILIZATION_REPORT.md`.
 
 ## Carte de test (Studio)
 
