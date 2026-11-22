@@ -293,7 +293,16 @@ function GuardianTests.run(modules: Modules): ({ string }, number)
 				string.sub(achievementId, 1, #GuardianRules.VICTORY_PREFIX) ~= GuardianRules.VICTORY_PREFIX,
 				`succès {achievementId} : préfixe réservé`
 			)
+			-- T10.5a (U-A, D-037) : acquisitions des améliorations sacrées.
+			check(
+				string.sub(achievementId, 1, #SacredResourceConfig.UpgradePrefix) ~= SacredResourceConfig.UpgradePrefix,
+				`succès {achievementId} : préfixe sacred_upgrade_ réservé`
+			)
 		end
+		check(
+			string.sub(SacredResourceConfig.UpgradePrefix, 1, #GuardianRules.VICTORY_PREFIX) ~= GuardianRules.VICTORY_PREFIX,
+			"préfixes sanctuary_ et sacred_upgrade_ confondus"
+		)
 		for siteId in pairs(GuardianConfig.Sites) do
 			check(string.sub(siteId, 1, 7) ~= "reward_", `site {siteId} : préfixe réservé`)
 			check(#GuardianRules.rewardKey(siteId) <= 64, `{siteId} : clé trop longue`)
@@ -316,6 +325,27 @@ function GuardianTests.run(modules: Modules): ({ string }, number)
 			table.insert(keys, definition.nameKey)
 		end
 		for _, key in ipairs({ "sacred.reward_ready", "sacred.claim", "sacred.claimed", "sacred.already_claimed", "sacred.bag_full", "sacred.locked" }) do
+			table.insert(keys, key)
+		end
+		-- T10.5b : section « Reliques sacrées » de la Boutique.
+		for _, definition in pairs(SacredResourceConfig.Upgrades) do
+			table.insert(keys, definition.nameKey)
+			table.insert(keys, `{definition.nameKey}.desc`)
+		end
+		for _, key in ipairs({
+			"shop.sacred",
+			"sacred.none",
+			"sacred.have",
+			"sacred.sell",
+			"sacred.use",
+			"sacred.confirm",
+			"sacred.active",
+			"sacred.sold",
+			"sacred.upgraded",
+			"sacred.need",
+			"sacred.nothing",
+			"sacred.failed",
+		}) do
 			table.insert(keys, key)
 		end
 		for _, key in ipairs(keys) do

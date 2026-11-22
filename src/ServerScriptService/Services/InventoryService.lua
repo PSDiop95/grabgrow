@@ -7,7 +7,9 @@
 -- le schéma. Aucune écriture DataStore n'est déclenchée ici : la stratégie
 -- de sauvegarde reste celle de T1.
 --
--- Capacité = UpgradeConfig.Backpack.levels[backpackLevel].value.
+-- Capacité = UpgradeConfig.Backpack.levels[backpackLevel].value, puis
+-- amélioration sacrée `sacred_backpack` si acquise (T10.5a, D-038 : +10 %,
+-- arrondi inférieur ; SacredUpgradeRules).
 -- Occupation = somme de toutes les quantités, y compris les ressources
 -- inconnues de ResourceConfig conservées par D-008.
 --
@@ -22,6 +24,7 @@ local Config = ReplicatedStorage.Shared.Config
 local ResourceConfig = require(Config.ResourceConfig)
 local UpgradeConfig = require(Config.UpgradeConfig)
 local CollectionJournalRules = require(ReplicatedStorage.Shared.Util.CollectionJournalRules)
+local SacredUpgradeRules = require(ReplicatedStorage.Shared.Util.SacredUpgradeRules)
 local PlayerDataService = require(script.Parent.PlayerDataService)
 
 local InventoryService = {}
@@ -76,10 +79,11 @@ end
 -- État de l'inventaire d'un profil. Ne modifie pas `profile`.
 -- nil si le niveau de sac du profil est inconnu de UpgradeConfig.
 function InventoryService.describe(profile: any): State?
-	local capacity = InventoryService.capacityForLevel(profile.upgrades.backpackLevel)
-	if capacity == nil then
+	local baseCapacity = InventoryService.capacityForLevel(profile.upgrades.backpackLevel)
+	if baseCapacity == nil then
 		return nil
 	end
+	local capacity = SacredUpgradeRules.capacity(profile, baseCapacity)
 	local resources: { [string]: number } = {}
 	local used = 0
 	for resourceId, quantity in pairs(profile.inventory.resources) do

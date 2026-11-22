@@ -14,8 +14,13 @@
 -- la terrasse du site après la première victoire (régime R1). Chaque unité
 -- occupe `bagSlotsPerUnit` place(s) de sac (règle actuelle : 1).
 --
--- AUCUNE valeur de vente ni coût d'amélioration ici : hypothèse S2 (k = 2)
--- pour les tests seulement, non validée (T10_3_SACRED_ECONOMY_SIMULATION.md).
+-- Vente et améliorations spéciales (T10.5a, D-037, D-038) :
+--   * `sellValue` : Coins par unité, hypothèse S2 (k = 2) validée pour test
+--     le 2026-11-22 ; Multiplier NON appliqué ; stats.totalSales inchangé ;
+--   * `Upgrades` : régime R-1, une amélioration à un seul niveau par monde,
+--     coût = `cost` unités de la ressource du monde ; acquisition persistée
+--     dans achievements["sacred_upgrade_<id>"] (U-A, schéma v3).
+-- Valeurs = HYPOTHÈSES de départ, à confirmer en test réel.
 --
 -- Les identifiants sont persistés dans profile.inventory.resources : ne pas
 -- les renommer sans migration.
@@ -33,6 +38,21 @@ export type Definition = {
 	nameKey: string,
 	rewardUnits: number,
 	bagSlotsPerUnit: number,
+	sellValue: number,
+}
+
+-- Effet d'une amélioration spéciale (lu par SacredUpgradeRules) :
+--   add      : ajouté à la statistique ;
+--   multiply : facteur appliqué à la statistique ;
+--   display  : aucun effet de jeu côté serveur (affichage client).
+export type UpgradeDefinition = {
+	resourceId: string,
+	cost: number,
+	stat: string,
+	add: number?,
+	multiply: number?,
+	nameKey: string,
+	order: number,
 }
 
 local Resources: { [string]: Definition } = {
@@ -43,6 +63,7 @@ local Resources: { [string]: Definition } = {
 		nameKey = "sacred.heartwood_seed",
 		rewardUnits = 3,
 		bagSlotsPerUnit = 1,
+		sellValue = 198,
 	},
 	sacred_sun_relic = {
 		siteId = "SunTemple",
@@ -51,6 +72,7 @@ local Resources: { [string]: Definition } = {
 		nameKey = "sacred.sun_relic",
 		rewardUnits = 3,
 		bagSlotsPerUnit = 1,
+		sellValue = 868,
 	},
 	sacred_frost_heart = {
 		siteId = "FrostAltar",
@@ -59,6 +81,7 @@ local Resources: { [string]: Definition } = {
 		nameKey = "sacred.frost_heart",
 		rewardUnits = 3,
 		bagSlotsPerUnit = 1,
+		sellValue = 5840,
 	},
 	sacred_astral_essence = {
 		siteId = "AstralSanctuary",
@@ -67,6 +90,7 @@ local Resources: { [string]: Definition } = {
 		nameKey = "sacred.astral_essence",
 		rewardUnits = 3,
 		bagSlotsPerUnit = 1,
+		sellValue = 27992,
 	},
 }
 
@@ -84,9 +108,71 @@ local Order = {
 	"sacred_astral_essence",
 }
 
+-- Préfixe des clés d'acquisition dans profile.achievements (U-A, D-037).
+-- Ne pas renommer : clés persistées.
+local UPGRADE_PREFIX = "sacred_upgrade_"
+
+-- Statistiques reconnues par SacredUpgradeRules.
+local Stat = {
+	CollectRange = "collectRangeStuds",
+	CollectInterval = "collectIntervalSeconds",
+	Capacity = "capacity",
+	Compass = "compass",
+}
+
+local Upgrades: { [string]: UpgradeDefinition } = {
+	sacred_magnet = {
+		resourceId = "sacred_heartwood_seed",
+		cost = 3,
+		stat = Stat.CollectRange,
+		add = 2, -- studs, cumulable avec Magnet
+		nameKey = "sacred_upgrade.magnet",
+		order = 1,
+	},
+	sacred_grabber = {
+		resourceId = "sacred_sun_relic",
+		cost = 3,
+		stat = Stat.CollectInterval,
+		multiply = 0.95, -- −5 % d'intervalle
+		nameKey = "sacred_upgrade.grabber",
+		order = 2,
+	},
+	sacred_backpack = {
+		resourceId = "sacred_frost_heart",
+		cost = 3,
+		stat = Stat.Capacity,
+		multiply = 1.10, -- +10 % de la capacité courante, arrondi inférieur
+		nameKey = "sacred_upgrade.backpack",
+		order = 3,
+	},
+	sacred_compass = {
+		resourceId = "sacred_astral_essence",
+		cost = 3,
+		stat = Stat.Compass, -- ressources Rare/Epic proches signalées (client)
+		nameKey = "sacred_upgrade.compass",
+		order = 4,
+	},
+}
+
+local UpgradeOrder = { "sacred_magnet", "sacred_grabber", "sacred_backpack", "sacred_compass" }
+
+-- Boussole des sanctuaires (T10.5b) : affichage client seulement, aucun effet
+-- serveur. HYPOTHÈSES de départ, à vérifier sur mobile (lisibilité, coût).
+local Compass = {
+	radiusStuds = 150, -- nœuds signalés dans ce rayon
+	maxMarkers = 3, -- marqueurs affichés au plus
+	refreshSeconds = 0.5, -- recherche périodique, jamais à chaque image
+	rarities = { Rare = true, Epic = true },
+}
+
 return TableUtil.deepFreeze({
 	Rarity = RARITY,
 	Resources = Resources,
 	BySite = BySite,
 	Order = Order,
+	UpgradePrefix = UPGRADE_PREFIX,
+	Stat = Stat,
+	Upgrades = Upgrades,
+	UpgradeOrder = UpgradeOrder,
+	Compass = Compass,
 })

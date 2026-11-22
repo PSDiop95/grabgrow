@@ -1,8 +1,39 @@
 # GRAB & GROW — État du projet
 
-Dernière mise à jour : 2026-11-22 (T10.3 gardiens et sites sacrés VALIDÉE, D-034, D-035)
+Dernière mise à jour : 2026-11-22 (T10.4 validation globale : statut proposé PARTIAL, D-036)
 
 ## Résumé
+
+**T10.5b (interface reliques sacrées, Boussole) : faite en Studio solo**
+(`phases/T10_5B_SACRED_UI_REPORT.md`) ; clic réel, mobile et Local Server
+non testés.
+
+**T10.5a (vente et améliorations sacrées, serveur) : faite**, D-037 et
+D-038 validées ; `SacredTransactionTests` 18 cas OK, LSP et Rojo OK ;
+interface client (T10.5b), Studio et mobile non faits
+(`phases/T10_5A_SACRED_TRANSACTIONS_REPORT.md`).
+
+**Règles complémentaires T10.3 (A à G, 2026-11-22)** : audit et propositions
+dans `phases/T10_3_SACRED_TRANSACTIONS_PROPOSAL.md`, en attente
+d'approbation partielle. A, B, C (identifiants) conformes ; vente,
+améliorations sacrées et leurs tests non implémentés. **R-1 et U-A
+validées (D-037)** ; restent à valider : valeurs de vente, effets des
+améliorations, `stats.totalSales`. Anomalie A-3 du simulateur corrigée.
+
+**T10.4 (validation globale World Enrichment) : exécutée, statut proposé
+PARTIAL**, en attente de la validation officielle (D-036,
+`phases/T10_4_FINAL_VALIDATION_REPORT.md`). Aucune régression détectée :
+Lune 24 suites (ConfigTests + 496 cas) OK, Play Studio OK, LSP strict OK,
+Rojo OK, simulateur inchangé. 20/20 ressources, 4 gardiens, 4 sites
+contrôlés dans le place de test ; sondes de sécurité client toutes
+refusées. Addendum T10-D01 à T10-D03 utilisé comme grille de conformité :
+D01 et D02 conformes ; D03 vente et consommation **non implémentées**
+(valeurs non validées). Local Server à 2 joueurs (piloté par MCP) :
+M1–M7, M9, M11–M14 OK, collecte simultanée OK, mort en combat OK, aucun
+KO. NOT TESTED : arrivée pendant un combat, M8, M10 en réel ; mobile et
+Galaxy A23 (aucune base de référence avant/après), DataStore réel,
+captures. Crédits CC BY absents (avant publication). Aucun code ni
+`GrabAndGrow.rbxl` modifié ; aucun commit.
 
 **T10.3 (gardiens et sites sacrés) : VALIDÉE** par le propriétaire le
 2026-11-22. Résultats des tests manuels M1-M14 et L1-L7 non transmis à ce

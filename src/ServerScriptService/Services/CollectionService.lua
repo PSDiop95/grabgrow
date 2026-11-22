@@ -31,6 +31,7 @@ local ResourceConfig = require(Config.ResourceConfig)
 local UpgradeConfig = require(Config.UpgradeConfig)
 local Remotes = require(ReplicatedStorage.Shared.Remotes.Remotes)
 local UpgradeMath = require(ReplicatedStorage.Shared.Util.UpgradeMath)
+local SacredUpgradeRules = require(ReplicatedStorage.Shared.Util.SacredUpgradeRules)
 local CollectionJournalRules = require(ReplicatedStorage.Shared.Util.CollectionJournalRules)
 local SecurityConfig = require(ServerStorage.ServerOnlyConfig.CollectionSecurityConfig)
 local InventoryService = require(script.Parent.InventoryService)
@@ -103,6 +104,9 @@ export type ClientState = {
 	-- { [identifiant de ResourceConfig] = true } (identifiants inconnus
 	-- filtrés). Lecture seule : aucune demande client ne le modifie.
 	discovered: { [string]: boolean },
+	-- T10.5a (D-038) : améliorations sacrées acquises { [upgradeId] = true }.
+	-- Portée et intervalle ci-dessus les incluent déjà. Affichage seulement.
+	sacredUpgrades: { [string]: boolean },
 }
 
 export type Progress = {
@@ -274,7 +278,8 @@ function CollectionService.new(dependencies: Dependencies)
 			log("error", `joueur {userId} : magnetLevel ou bootsLevel inconnu`)
 			return reject(ResultCode.InternalError, nodeId)
 		end
-		local maxDistance = range + SecurityConfig.Distance.toleranceStuds
+		-- T10.5a (D-038) : Magnet sacré, portée ajoutée si acquis.
+		local maxDistance = SacredUpgradeRules.collectRange(profile, range) + SecurityConfig.Distance.toleranceStuds
 		if not (distanceBetween(position, node.position) <= maxDistance) then
 			security.Record(userId, Event.ActionRefused, { action = ACTION, code = ResultCode.TooFar })
 			return reject(ResultCode.TooFar, nodeId)
@@ -325,7 +330,9 @@ function CollectionService.new(dependencies: Dependencies)
 
 		-- Échéance calée sur l'intervalle nominal : une demande arrivée en
 		-- avance (gigue) ne raccourcit pas la suivante.
-		state.nextCollectAt = math.max(now, state.nextCollectAt) + grabber.value
+		-- T10.5a (D-038) : Grabber sacré, intervalle réduit si acquis.
+		state.nextCollectAt = math.max(now, state.nextCollectAt)
+			+ SacredUpgradeRules.collectInterval(profile, grabber.value)
 		state.lastPosition = position
 		state.lastCollectAt = now
 
@@ -368,8 +375,10 @@ function CollectionService.new(dependencies: Dependencies)
 		return {
 			inventory = inventoryState,
 			coins = profile.currencies.coins,
-			collectIntervalSeconds = interval,
-			collectRangeStuds = range,
+			collectIntervalSeconds = SacredUpgradeRules.collectInterval(profile, interval),
+			collectRangeStuds = SacredUpgradeRules.collectRange(profile, range),
+			-- T10.5a : améliorations sacrées acquises (affichage, boussole).
+			sacredUpgrades = SacredUpgradeRules.owned(profile),
 			upgrades = upgrades,
 			worlds = worlds,
 			sellMultiplier = multiplier,

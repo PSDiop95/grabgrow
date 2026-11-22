@@ -47,6 +47,8 @@ export type State = {
 	-- T8.6 : journal de collection, ressources découvertes (lecture seule).
 	-- Facultatif : absent, le journal s'affiche vide.
 	discovered: { [string]: boolean }?,
+	-- T10.5b : améliorations sacrées acquises (lecture seule). Facultatif.
+	sacredUpgrades: { [string]: boolean }?,
 }
 
 local COLOR_PANEL = Color3.fromRGB(24, 28, 36)
@@ -560,6 +562,11 @@ end
 
 function InventoryController.showMessage(key: string)
 	showToast(translate(key), COLOR_WARNING)
+end
+
+-- Même avertissement, texte déjà localisé et mis en forme par l'appelant.
+function InventoryController.showWarningText(text: string)
+	showToast(text, COLOR_WARNING)
 end
 
 -- Message positif (achat ou déblocage confirmé par le serveur).

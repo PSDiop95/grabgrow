@@ -182,6 +182,14 @@ opération confirmée. Ne jamais ajouter de RemoteEvent analytics, de service
 tiers ni de donnée personnelle dans les champs ; noms d'événements stables
 (`AnalyticsConfig`). T9 validée ne vaut pas autorisation de publier.
 
+T10 (D-025 à D-036) : l'addendum T10-D01 à T10-D03 prime sur les prompts
+T10. Combats de gardien strictement individuels (état par joueur, gardien
+visuellement commun, aucun PvP ni perte de sac) ; déblocage des sites
+persistant via `achievements["sanctuary_*"]` en schéma v3 ; ressources
+sacrées hors `ResourceConfig`, jamais vendues avec le sac. Aucune valeur de
+vente ni coût d'amélioration sacré sans validation explicite ; aucune
+modification de `DataSchema` sans autorisation.
+
 Ne pas commencer ces systèmes avant validation du MVP :
 -   Gems et Stars comme économies complètes.
 -   Pets et œufs.

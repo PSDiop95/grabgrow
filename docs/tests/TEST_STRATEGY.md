@@ -436,3 +436,21 @@ déplacement, économie concurrente, journal, audit). Rapport :
   jamais la production ; « View Events » d'abord, graphiques après 24 h.
 - Règle : un événement codé mais non vu dans Roblox reste `NOT TESTED`.
 - Détail et procédures : `docs/analytics/ANALYTICS_TEST_REPORT.md`.
+
+## T10 — Validation globale (T10.4, 2026-11-22)
+
+- Régression : `lune run tools/run_tests.luau` (24 suites, ConfigTests +
+  496 cas), LSP strict, `rojo build`, simulateur de progression ; résultats
+  dans `docs/phases/T10_4_FINAL_VALIDATION_REPORT.md`.
+- Conformité à l'addendum T10-D01 à T10-D03 : grille du rapport T10.4 §3.
+- Sécurité gardiens en Studio : sondes client (`damage`, `victory`,
+  `amount`, argument en trop, site inconnu, monde verrouillé) ; réponse
+  attendue : refus serveur et ligne `[Security]`.
+- Multijoueur réel : `T10_3_TEST_PLAN.md` M1–M14 (Local Server, 2 joueurs).
+  Le combat coopératif n'est pas testé : exclu par T10-D02.
+- Performance : mesures sur appareil réel seulement (Galaxy A23 de
+  référence). Les temps de frame de Studio en arrière-plan ne comptent pas.
+- Vente et consommation sacrées : `SacredTransactionTests` (T10.5a,
+  18 cas : atomicité, double vente / achat, ressources insuffisantes, sac
+  plein, deux joueurs, reconnexion, sauvegarde en échec). Studio et
+  Local Server : à faire avec l'interface (T10.5b).

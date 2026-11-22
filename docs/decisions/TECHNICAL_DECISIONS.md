@@ -1110,9 +1110,11 @@ propriétaire), ACCEPTÉE, REMPLACÉE.
     magasin persistant injectable après autorisation.
 - **Justification :** isolation logique simple à tester, coût réseau et
   serveur borné, aucune donnée persistante ni économique modifiée.
-- **Conséquences :** l'accès permanent est perdu à la déconnexion tant que
-  la persistance (option A en v3, préférée par le propriétaire le 2026-11-22 ; v4 exclue) n'est pas implémentée ; deux joueurs au
-  même site voient chacun le gardien tourné vers eux.
+- **Conséquences :** persistance option A (v3) implémentée depuis (D-035) :
+  l'accès permanent survit à la reconnexion (Lune, Studio MemoryDataStore ;
+  DataStore réel non testé) ; deux joueurs au même site voient chacun le
+  gardien tourné vers eux. Addendum reconfirmé par le propriétaire pour
+  T10.4 (D-036).
 - **Affecte :** `GuardianConfig`, `GuardianRules`, `GuardianSecurityConfig`,
   `GuardianCombatService`, `SacredSiteService`, `SacredResourceService`,
   `Systems/SacredSites`, `GuardianController`, `CollectionController`,
@@ -1150,3 +1152,65 @@ propriétaire), ACCEPTÉE, REMPLACÉE.
   `GuardianController`, `InventoryController`, `Localization`,
   `GuardianTests`, `GuardianPersistenceTests` (nouveau), `RunTests`,
   `DATA_PERSISTENCE.md`.
+
+## D-036 — T10.4 : validation globale et addendum T10-D01 à T10-D03
+
+- **Date :** 2026-11-22
+- **Statut :** PROPOSÉE (statut T10.4 proposé : PARTIAL) ; attend la
+  validation officielle du propriétaire.
+- **Contexte :** le propriétaire a rappelé pendant T10.4 l'addendum
+  T10-D01 à T10-D03 (déjà en D-034), prioritaire sur les anciens prompts
+  T10 et à intégrer aux tests de validation et de régression.
+- **Décision :** l'addendum sert de grille de conformité de T10.4. Aucune
+  fonctionnalité ajoutée ; le combat coopératif demandé par le prompt T10.4
+  est sans objet (T10-D02). Vente et consommation des ressources sacrées
+  restent non implémentées tant que valeurs et coûts ne sont pas validés.
+- **Justification :** l'addendum interdit de fixer une valeur sans
+  validation et tout développement contradictoire.
+- **Conséquences :** T10 ne peut pas être clôturée en PASS avant la vente
+  et la consommation atomiques, les tests multijoueur réels et la mesure
+  Galaxy A23.
+- **Affecte :** `phases/T10_4_FINAL_VALIDATION_REPORT.md`,
+  `PROJECT_STATUS.md`, `ROADMAP.md`, `tests/TEST_STRATEGY.md`, `CLAUDE.md`.
+
+## D-037 — Ressources sacrées : R-1 et persistance U-A
+
+- **Date :** 2026-11-22
+- **Statut :** ACCEPTÉE (propriétaire, 2026-11-22) ; non implémentée.
+- **Contexte :** règles complémentaires T10.3 (A à G). L'offre D-035
+  (3 unités par site, une fois) ne permet pas de payer les coûts
+  d'amélioration du rapport T10.3 §8 (5, 6 et 8 unités d'un même monde).
+- **Décision :** R-1 : une amélioration spéciale à un seul niveau par
+  monde, coût = les 3 unités sacrées du monde ; aucune source renouvelable.
+  U-A : acquisition persistée par `achievements["sacred_upgrade_<id>"] = true`
+  en schéma v3, sans migration ni modification de `DataSchema`.
+- **Justification :** choix net vendre / améliorer par monde, aucun risque
+  de ferme ; même mécanisme que l'option A (D-035), déjà testé.
+- **Conséquences :** nouveau préfixe réservé `sacred_upgrade_` à ajouter au
+  test des préfixes. Restent à valider avant toute intégration : valeurs de
+  vente (S2 proposé), effets des quatre améliorations, `stats.totalSales`
+  lors d'une vente sacrée.
+- **Affecte :** `phases/T10_3_SACRED_TRANSACTIONS_PROPOSAL.md`,
+  `tools/simulate_sacred_economy.luau` (A-3 corrigée, section R-1),
+  futurs `SacredResourceConfig`, `SacredResourceService`, tests.
+
+## D-038 — Ressources sacrées : valeurs S2, effets, statistiques
+
+- **Date :** 2026-11-22
+- **Statut :** ACCEPTÉE (propriétaire, 2026-11-22). Valeurs = hypothèses de
+  test, à confirmer en jeu réel.
+- **Décision :**
+  - Vente (S2, k = 2) : 198 / 868 / 5 840 / 27 992 Coins par unité
+    (Heartwood Seed, Sun Relic, Frost Heart, Astral Essence).
+  - Améliorations (R-1, 3 unités du monde, un seul niveau) :
+    `sacred_magnet` +2 studs de portée ; `sacred_grabber` −5 % d'intervalle
+    de collecte ; `sacred_backpack` +10 % de capacité courante (arrondi
+    inférieur) ; `sacred_compass` signale les ressources Rare/Epic proches
+    (affichage seul).
+  - `stats.totalSales` inchangé par une vente sacrée ; Coins crédités par
+    `EconomyService.credit` (`totalCoinsEarned`).
+- **Conséquences :** lot serveur T10.5a (configuration, transactions,
+  effets, tests) ; interface client (vente, achat, boussole) en lot T10.5b.
+- **Affecte :** `SacredResourceConfig`, `SacredUpgradeRules` (nouveau),
+  `SacredTransactionService` (nouveau), `InventoryService`,
+  `CollectionService`, `Remotes`, `Bootstrap`, `SacredTransactionTests`.
