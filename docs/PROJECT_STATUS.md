@@ -1,8 +1,24 @@
 # GRAB & GROW — État du projet
 
-Dernière mise à jour : 2026-11-22 (prototype T10.1 validé, D-031)
+Dernière mise à jour : 2026-11-22 (T10.2 et import des 20 ressources validés, D-032, D-033)
 
 ## Résumé
+
+**T10.2 (VFX et animations des ressources) : VALIDÉE** le 2026-11-22
+avec réserves (mobile, A23, deux joueurs réels non testés) (`phases/T10_2_VFX_REPORT.md`, D-032). Système VFX commun
+aux 20 ressources (visuel local par nœud, présence par rareté, particules
+et auras prêtées par pools, collecte orientée vers le joueur,
+disparition et reconstruction pilotées par le serveur). Lune 447 cas OK,
+LSP OK, tests Studio OK (solo). Non testés : deux joueurs réels, qualité
+basse réelle, mobile, captures. Aucun import, économie, schéma ni
+`GrabAndGrow.rbxl` modifié ; commit autorisé. T10.3 non commencée
+(autorisation distincte requise).
+
+**Import des 16 autres ressources : fait** le 2026-11-22 sur demande du
+propriétaire (D-033) : 20/20 ressources en modèle Polyfork (GLB corrigés,
+import manuel, `ServerStorage.ResourceTemplates` du place de test).
+Contrôle visuel Studio fait (captures `performance/T10_2_captures/`) ;
+mobile et Galaxy A23 non testés.
 
 **T10.1 (prototype ressources, imports, V-01) : prototype VALIDÉ** le
 2026-11-22 sur la base du test iPhone 12 Pro (D-031 ; réserve : mesure

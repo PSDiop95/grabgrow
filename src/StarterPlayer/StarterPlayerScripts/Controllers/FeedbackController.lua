@@ -10,8 +10,8 @@
 -- montant de vente affiché est `coinsEarned` reçu du serveur.
 --
 -- Effets temporaires uniquement, détruits après usage : éclat de collecte
--- (copie de toutes les pièces du nœud via NodeVisuals, T10.1 V-01, et
--- particules), pièces vers le solde, anneau autour de l'icône
+-- (copie de toutes les pièces du nœud via NodeVisuals, T10.1 V-01 ;
+-- particules prêtées par ResourceVFXController, T10.2), pièces vers le solde, anneau autour de l'icône
 -- d'amélioration, confettis de déblocage. Le Magnet garde son
 -- anneau de portée (RangeRing, A-40) : aucun second anneau ici.
 --
@@ -37,6 +37,7 @@ local BagDisplay = require(Shared:WaitForChild("Util"):WaitForChild("BagDisplay"
 local FeedbackRules = require(Shared:WaitForChild("Util"):WaitForChild("FeedbackRules"))
 local InventoryController = require(script.Parent:WaitForChild("InventoryController"))
 local NodeVisuals = require(script.Parent:WaitForChild("NodeVisuals"))
+local ResourceVFXController = require(script.Parent:WaitForChild("ResourceVFXController"))
 
 local FeedbackController = {}
 
@@ -45,8 +46,6 @@ local EFFECTS_FOLDER_NAME = "ClientFeedbackEffects"
 local NODE_FOLDER_NAME = "ResourceNodes"
 local SHOP_GUI_NAME = "ShopUI"
 local SHOP_WAIT_SECONDS = 15
--- Durée de vie maximale des particules de collecte (s).
-local PARTICLE_LIFETIME = 0.45
 local SETTINGS_ORDER = 1000
 
 local COLOR_TEXT = Color3.fromRGB(255, 255, 255)
@@ -215,21 +214,9 @@ local function collectEffect(cue: FeedbackRules.Cue)
 		return
 	end
 
-	local attachment = Instance.new("Attachment")
-	attachment.Parent = flash.parts[1]
-	local emitter = Instance.new("ParticleEmitter")
-	emitter.Enabled = false
-	emitter.Rate = 0
-	emitter.Color = ColorSequence.new(node.Color:Lerp(COLOR_TEXT, 0.5))
-	emitter.LightEmission = 0.5
-	emitter.Size = NumberSequence.new(0.35, 0)
-	emitter.Transparency = NumberSequence.new(0, 1)
-	emitter.Lifetime = NumberRange.new(0.3, PARTICLE_LIFETIME)
-	emitter.Speed = NumberRange.new(5, 9)
-	emitter.SpreadAngle = Vector2.new(180, 180)
-	emitter.Drag = 4
-	emitter.Parent = attachment
-	emitter:Emit(FeedbackRules.pick(settings.particles, settings.reducedParticles, current))
+	-- Particules : éclat réutilisé (pool), dimensionné par rareté et orienté
+	-- vers le joueur (T10.2, ResourceVFXController).
+	ResourceVFXController.playCollect(node, flash.center, flash.color)
 
 	-- Mouvement vers le joueur (GDD 13.4), absent en effets réduits.
 	local startCFrame = flash.center
@@ -249,7 +236,7 @@ local function collectEffect(cue: FeedbackRules.Cue)
 	}):Play()
 	bump("Visual_collect")
 
-	task.delay(math.max(seconds, PARTICLE_LIFETIME) + 0.05, function()
+	task.delay(seconds + 0.05, function()
 		driver:Destroy()
 		flash.destroy()
 		collectBudget:release()

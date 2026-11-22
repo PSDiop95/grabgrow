@@ -8,6 +8,7 @@
 local Controllers = script.Parent:WaitForChild("Controllers")
 local InventoryController = require(Controllers:WaitForChild("InventoryController"))
 local NodeVisuals = require(Controllers:WaitForChild("NodeVisuals"))
+local ResourceVFXController = require(Controllers:WaitForChild("ResourceVFXController"))
 local CollectionController = require(Controllers:WaitForChild("CollectionController"))
 local SellController = require(Controllers:WaitForChild("SellController"))
 local TravelController = require(Controllers:WaitForChild("TravelController"))
@@ -20,6 +21,8 @@ local CollectionJournalController = require(Controllers:WaitForChild("Collection
 InventoryController.start()
 -- T10.1 : visuels des ressources (modèles importés, V-01, attente).
 NodeVisuals.start()
+-- T10.2 : effets de rareté, de collecte et de réapparition (pools).
+ResourceVFXController.start()
 CollectionController.start()
 SellController.start()
 -- T8.2 : voyage (portails) ; avant la boutique, qui affiche son état.

@@ -12,9 +12,10 @@
 --   orientation : degrés, appliqués après l'orientation du point de spawn
 --   material    : nom d'Enum.Material
 --   particles   : facultatif (T8.3) ; { color = RGB, rate = particules/s }.
---                 Un petit ParticleEmitter sur le nœud, coupé quand le nœud
---                 est collecté. Réservé à la rareté Épique (un nœud par
---                 monde : budget audit T8 de 2 émetteurs par monde).
+--                 Réservé à la rareté Épique. Depuis T10.2 : couleur de
+--                 l'aura et des particules jouées côté client
+--                 (ResourceVFXController) ; `rate` n'est plus lu (débit :
+--                 ResourceVFXConfig).
 --   details     : facultatif (T8.4) ; 4 petites pièces au plus, posées
 --                 relativement au centre du nœud (orientation du nœud non
 --                 appliquée) : { shape, size, offset, orientation, color,
@@ -61,13 +62,14 @@ export type ResourceVisual = {
 --                (exactement une des deux sources)
 --   targetSize : plus grande dimension visée (studs)
 --   parts      : facultatif ; surcharge par nom de pièce { color, material,
---                scale } ; `scale` agrandit la pièce autour de son centre
---                (]0, 2]) avant l'ajustement à `targetSize`
+--                scale, exclude } ; `scale` agrandit la pièce autour de son
+--                centre (]0, 2]) avant l'ajustement à `targetSize` ;
+--                `exclude = true` retire la pièce du gabarit
 export type ResourceModel = {
 	template: string?,
 	assetId: number?,
 	targetSize: number,
-	parts: { [string]: { color: Triple?, material: string?, scale: number? } }?,
+	parts: { [string]: { color: Triple?, material: string?, scale: number?, exclude: boolean? } }?,
 }
 
 local ResourceVisualConfig: { [string]: ResourceVisual } = {
@@ -216,5 +218,72 @@ ResourceVisualConfig.purple_crystal.model = {
 		["amethyst-ore-deposit-mesh2"] = { color = { 160, 60, 255 }, material = "Neon", scale = 1.6 },
 	},
 }
+
+-- Import des 16 autres ressources (2026-11-22, autorisé par le
+-- propriétaire) : même chaîne que le prototype (GLB corrigés, import
+-- manuel, gabarits ServerStorage.ResourceTemplates). Manifeste :
+-- res_<ressource>. Neon seulement pour Rare et Épique (cristaux, diamant,
+-- orbe). `exclude` : pièces retirées du gabarit (touffes d'herbe
+-- du tas de rochers, petites pièces de l'orbe ; budget ≤ 3 pièces par
+-- nœud). Tailles et couleurs : hypothèses visuelles à valider.
+local function plain(...: string): { [string]: { color: Triple?, material: string?, scale: number?, exclude: boolean? } }
+	local parts = {}
+	for _, name in ipairs({ ... }) do
+		parts[name] = { color = WHITE, material = "SmoothPlastic" }
+	end
+	return parts
+end
+local function model(template: string, targetSize: number, parts: { [string]: any }): ResourceModel
+	return { template = template, targetSize = targetSize, parts = parts }
+end
+
+-- Green Valley
+ResourceVisualConfig.wood.model = model("wood", 2.6, plain("log"))
+ResourceVisualConfig.stone.model = model("stone", 2, plain("rock"))
+ResourceVisualConfig.wild_fruit.model = model("wild_fruit", 1.6, plain("Node1"))
+ResourceVisualConfig.green_crystal.model = model("green_crystal", 2.4, {
+	rock = { color = WHITE, material = "SmoothPlastic" },
+	gem = { color = { 60, 230, 140 }, material = "Neon" },
+})
+
+-- Golden Desert
+ResourceVisualConfig.sandstone.model = model("sandstone", 2.2, plain("outcrop"))
+ResourceVisualConfig.fossil.model = model("fossil", 2.4, plain("ribcage"))
+-- Pépite : couleurs de sommets (or) sans Neon : le Neon l'aplatissait en
+-- tache jaune (contrôle visuel Studio) ; la rareté reste lisible par ses
+-- effets (ResourceVFXConfig).
+ResourceVisualConfig.gold_nugget.model = model("gold_nugget", 1.6, plain("nugget"))
+ResourceVisualConfig.sun_crystal.model = model("sun_crystal", 2.6, {
+	rock = { color = WHITE, material = "SmoothPlastic" },
+	["crystal-cores"] = { color = WHITE, material = "SmoothPlastic" },
+	["crystal-shells"] = { color = { 255, 150, 30 }, material = "Neon" },
+})
+
+-- Frozen Peaks
+ResourceVisualConfig.ice_shard.model = model("ice_shard", 2, plain("crystal-shard-body"))
+local frozenParts = plain("boulders")
+for index = 1, 5 do
+	frozenParts[`tuft-{index}-blades`] = { exclude = true }
+end
+ResourceVisualConfig.frozen_stone.model = model("frozen_stone", 2.2, frozenParts)
+ResourceVisualConfig.blue_crystal.model = model("blue_crystal", 2.4, {
+	rock = { color = WHITE, material = "SmoothPlastic" },
+	["sapphire-crystals"] = { color = { 60, 140, 255 }, material = "Neon", scale = 1.4 },
+})
+ResourceVisualConfig.ice_diamond.model = model("ice_diamond", 1.8, {
+	diamond = { color = { 190, 250, 255 }, material = "Neon" },
+})
+
+-- Mystic World
+ResourceVisualConfig.mystic_dust.model = model("mystic_dust", 1.8, plain("chips"))
+ResourceVisualConfig.star_fragment.model = model("star_fragment", 1.8, plain("meteorite-body"))
+ResourceVisualConfig.spectral_ore.model = model("spectral_ore", 2.2, plain("shell", "crystals"))
+ResourceVisualConfig.mystic_core.model = model("mystic_core", 2.2, {
+	cradle = { color = WHITE, material = "SmoothPlastic" },
+	["orb-crystal"] = { color = { 230, 120, 255 }, material = "Neon" },
+	shards = { color = { 255, 120, 230 }, material = "Neon" },
+	fittings = { exclude = true },
+	gems = { exclude = true },
+})
 
 return TableUtil.deepFreeze(ResourceVisualConfig)

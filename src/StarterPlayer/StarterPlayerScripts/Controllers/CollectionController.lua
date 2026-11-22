@@ -136,6 +136,8 @@ local function request(part: BasePart)
 	pendingUntil = now + RESPONSE_TIMEOUT_SECONDS
 	nextSendAt = now + collectInterval() + SEND_MARGIN_SECONDS
 	requestCollect:FireServer({ resourceId = nodeId })
+	-- Retour immédiat, après l'envoi (rien n'est retardé) ; purement visuel.
+	NodeVisuals.notifyLocalRequest(part)
 end
 
 local function requestTarget()
@@ -159,7 +161,8 @@ local function onAvailableChanged(part: BasePart)
 	end
 	local available = part:GetAttribute("Available") == true
 	node.available = available
-	-- Rebond de réapparition : NodeVisuals (T10.1, V-01 : toutes les pièces).
+	-- Disparition, réapparition et effets : NodeVisuals et
+	-- ResourceVFXController (T10.2).
 	if not available and target == part then
 		setTarget(nil)
 	end

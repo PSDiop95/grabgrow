@@ -66,9 +66,8 @@ local FeedbackConfig = {
 	-- Effets de collecte simultanés au maximum (au-delà : son seul).
 	MaxCollectEffects = 6,
 
+	-- Particules de collecte : par rareté, ResourceVFXConfig (T10.2).
 	Collect = {
-		particles = 8,
-		reducedParticles = 3,
 		seconds = 0.3,
 		reducedSeconds = 0.18,
 		-- Part de la distance nœud -> joueur parcourue par l'éclat.

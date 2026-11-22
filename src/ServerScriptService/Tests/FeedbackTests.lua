@@ -180,8 +180,7 @@ function FeedbackTests.run(modules: Modules): ({ string }, number)
 			check(reduced > 0 and reduced < normal, `{key} : volume plus faible mais audible`)
 		end
 		local c = Config.Collect
-		check(Rules.pick(c.particles, c.reducedParticles, REDUCED) < Rules.pick(c.particles, c.reducedParticles, ON), "moins de particules")
-		check(Rules.pick(c.particles, c.reducedParticles, REDUCED) >= 1, "éclat toujours visible")
+		-- Particules de collecte par rareté : ResourceFxTests (T10.2).
 		check(Rules.pick(Config.Sell.coins, Config.Sell.reducedCoins, REDUCED) >= 1, "au moins une pièce")
 		check(Rules.pick(Config.World.confetti, Config.World.reducedConfetti, REDUCED) >= 1, "au moins un confetti")
 		check(Rules.pick(c.seconds, c.reducedSeconds, REDUCED) < c.seconds, "animation plus courte")

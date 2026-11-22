@@ -112,5 +112,7 @@ réduits (flottement et rotation coupés, pas d'émetteur d'attente).
 1. T10.1 : mesure de référence A23, tests d'import Polyfork (GLB et FBX),
    prototype du contrôleur visuel sur **une** ressource par monde (4),
    **correction et tests de V-01**, mesures après.
-2. T10.2 : 16 autres ressources, `RarityVisualConfig` complet, tests.
+2. T10.2 (redéfinie le 2026-11-22, D-032) : VFX et animations des 20
+   ressources (`ResourceVFXConfig`, `ResourceVFXController`) ; import des 16
+   autres ressources : lot distinct, à planifier.
 3. Gardiens et sites sacrés : phases distinctes (voir `gameplay/`).

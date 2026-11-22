@@ -15,11 +15,18 @@
 -- partage le sien entre deux primitives).
 --
 -- Recoloration (modification documentée dans ASSET_MANIFEST.md, CC BY 4.0
--- « modifié ») : la feuille, rousse à l'origine, passe au vert de Green
--- Valley. Correspondance par couleur source (linéaire, arrondie à 0,01) ->
--- couleur cible sRGB 0..255. Palette contrastée avec l'herbe de Green
--- Valley (116, 178, 92) : limbe vert-jaune clair, bord vert très foncé
--- (décision du propriétaire, 2026-11-22 ; hypothèse visuelle à valider).
+-- « modifié ») : correspondance par couleur source (linéaire, arrondie à
+-- 0,01) -> couleur cible sRGB 0..255 ; les couleurs absentes de la table
+-- sont seulement converties. Fichiers « stricts » : toute couleur doit
+-- avoir une cible (échec sinon).
+--   * Feuille (T10.1) : rousse -> vert contrasté avec l'herbe de Green
+--     Valley (116, 178, 92) (décision du propriétaire, 2026-11-22).
+--   * Import des 16 autres ressources (2026-11-22) : couleurs alignées sur
+--     les primitives de ResourceVisualConfig et sur
+--     T10_RESOURCE_ASSET_SELECTION.md (grès ocre clair, éclat de glace pâle,
+--     poussière lavande, fragment bleu nuit et cyan, cristaux solaires
+--     orange, géode cyan et violette, orbe magenta). Hypothèses visuelles
+--     à valider.
 
 local fs = require("@lune/fs")
 local serde = require("@lune/serde")
@@ -34,6 +41,47 @@ local RECOLOR = {
 		["0.55,0.36,0.17"] = { 250, 250, 196 }, -- beige -> nervures
 		["0.18,0.21,0.07"] = { 40, 98, 30 }, -- olive -> bord
 	},
+	["sandstone-outcrop-75800b"] = {
+		["0.53,0.19,0.07"] = { 222, 180, 112 },
+		["0.6,0.42,0.24"] = { 240, 214, 160 },
+		["0.35,0.1,0.06"] = { 190, 140, 90 },
+		["0.72,0.35,0.12"] = { 236, 196, 120 },
+	},
+	["lair-crystal-column-877d1a"] = {
+		["0.54,0.33,0.11"] = { 255, 214, 110 }, -- cœurs
+		["0.8,0.02,0.02"] = { 255, 150, 30 }, -- coques rouges -> orange
+	},
+	["crystal-shard-9e0a83"] = {
+		["0.12,0.21,0.3"] = { 150, 205, 235 },
+		["0.25,0.53,0.67"] = { 190, 235, 255 },
+		["0.42,0.76,0.85"] = { 230, 250, 255 },
+	},
+	["gem-chip-heap-573355"] = {
+		["0.35,0.66,0.72"] = { 225, 200, 255 },
+		["0.08,0.36,0.08"] = { 180, 140, 240 },
+		["0.36,0.02,0.03"] = { 150, 90, 220 },
+		["0.09,0.14,0.4"] = { 205, 165, 255 },
+		["0.25,0.12,0.4"] = { 170, 110, 235 },
+	},
+	["meteorite-c400d9"] = {
+		["0.05,0.05,0.06"] = { 30, 40, 90 },
+		["0.11,0.13,0.16"] = { 50, 70, 140 },
+		["0.17,0.18,0.23"] = { 70, 100, 170 },
+		["0.45,0.14,0.07"] = { 90, 220, 255 },
+		["0.31,0.1,0.06"] = { 60, 180, 230 },
+	},
+	["geode-boulder-e8091d"] = {
+		["0.75,0.75,0.78"] = { 190, 110, 255 }, -- cristaux blancs -> violet
+	},
+	["divination-orb-115d77"] = {
+		["0.12,0.03,0.42"] = { 200, 60, 220 },
+		["0.37,0.71,0.87"] = { 255, 170, 240 },
+		["0.11,0.82,1"] = { 255, 120, 230 },
+	},
+}
+
+local STRICT = {
+	["fallen-oak-leaf-5b15fe"] = true,
 }
 
 local FILES = {
@@ -41,6 +89,23 @@ local FILES = {
 	"copper-ore-deposit-d5e58b",
 	"silver-ore-deposit-57f7c3",
 	"amethyst-ore-deposit-02d55d",
+	-- 16 autres ressources (2026-11-22)
+	"fallen-log-1685fb",
+	"medium-rock-e08405",
+	"apple-b15012",
+	"emerald-ore-deposit-4f0566",
+	"sandstone-outcrop-75800b",
+	"fossil-ribcage-b243c5",
+	"gold-nugget-ccd143",
+	"lair-crystal-column-877d1a",
+	"crystal-shard-9e0a83",
+	"boulder-field-cluster-08e364",
+	"sapphire-ore-deposit-f8a71a",
+	"rough-diamond-fecf28",
+	"gem-chip-heap-573355",
+	"meteorite-c400d9",
+	"geode-boulder-e8091d",
+	"divination-orb-115d77",
 }
 
 local GLB_MAGIC = 0x46546C67 -- "glTF"
@@ -127,7 +192,7 @@ local function fixFile(id: string)
 					out = { target[1] / 255, target[2] / 255, target[3] / 255 }
 					recolored += 1
 				else
-					if recolor then
+					if recolor and STRICT[id] then
 						unmatched[key(r, g, b)] = true
 					end
 					out = { linearToSrgb(r), linearToSrgb(g), linearToSrgb(b) }

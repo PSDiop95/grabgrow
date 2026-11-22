@@ -1033,3 +1033,55 @@ propriétaire), ACCEPTÉE, REMPLACÉE.
     distincte. Aucun commit sans autorisation.
 - **Affecte :** `ResourceVisualConfig`, `ResourceModelLoader`,
   `NodeVisuals`, `ASSET_MANIFEST.md`, `T10_1_REPORT.md`.
+
+## D-032 — T10.2 : VFX et animations des ressources
+
+- **Date :** 2026-11-22
+- **Statut :** ACCEPTÉE (propriétaire, 2026-11-22 : « Je valide T10.2 ») ;
+  réserves : mobile, Galaxy A23, deux joueurs réels non testés.
+- **Contexte :** demande du propriétaire « T10.2 — Resource VFX &
+  Animations ». Le découpage T10.0 prévoyait pour T10.2 l'import des 16
+  autres ressources ; le budget T10 limitait les émetteurs d'attente à
+  l'Épique (≤ 1 par monde).
+- **Décision :**
+  - T10.2 = système VFX commun aux 20 ressources, sans import : chaque
+    nœud a un visuel local (modèle ou copie de sa primitive).
+  - `RarityVisualConfig` renommé et étendu en `ResourceVFXConfig` ;
+    nouveau `Controllers/ResourceVFXController` (pools d'émetteurs,
+    d'auras et d'éclats) ; règles pures dans `ResourceFxRules`.
+  - Émetteur Épique serveur supprimé : toutes les particules sont jouées
+    côté client, dans un budget global (8 émetteurs d'attente, 3 auras,
+    6 éclats ; 0 émetteur en « Effets réduits »).
+  - Retour immédiat à l'envoi (écrasement), disparition et
+    reconstruction déclenchées uniquement par l'état serveur.
+- **Justification :** effets par joueur, sans coût réseau ni serveur ;
+  préférences et qualité respectées ; budget borné et testé.
+- **Conséquences :** budget VFX révisé (`T10_PERFORMANCE_BUDGET.md`) ;
+  +283 parts client (copies des primitives) ; import des 16 ressources à
+  replanifier (lot distinct) ; mesures mobiles toujours dues.
+- **Affecte :** `ResourceVFXConfig`, `ResourceFxRules`, `NodeVisuals`,
+  `ResourceVFXController`, `FeedbackController`, `CollectionController`,
+  `ResourceNodes`, `FeedbackConfig`, `T10_2_VFX_REPORT.md`.
+
+## D-033 — T10 : import des 16 autres ressources
+
+- **Date :** 2026-11-22
+- **Statut :** ACCEPTÉE (exécutée sur demande du propriétaire, validée avec
+  T10.2 le 2026-11-22) ; contrôle mobile et A23 en attente.
+- **Contexte :** D-031 réservait l'import des 16 ressources à une
+  autorisation distincte ; T10.2 (D-032) les traitait encore en
+  primitives.
+- **Décision :** les 16 ressources suivent la chaîne du prototype : GLB
+  Polyfork CC BY 4.0 corrigés (`tools/fix_glb_colors.luau`, recolorations
+  documentées), import manuel dans le place de test, gabarits
+  `ServerStorage.ResourceTemplates`, `ResourceVisualConfig.model`.
+  Surcharge `exclude` pour respecter ≤ 3 pièces par nœud ; pièces
+  invisibles de la source ignorées par le chargeur ; pépite d'or sans
+  Neon (lisibilité).
+- **Conséquences :** 20/20 ressources en modèle ; +132 MeshParts et
+  ≈ +3 Mo `GraphicsMeshParts` (Studio) ; mesure Galaxy A23 prioritaire
+  avant publication ; crédits CC BY des 20 modèles à publier avant toute
+  publication publique (D-026).
+- **Affecte :** `ResourceVisualConfig`, `ResourceModelLoader`,
+  `ConfigTests`, `tools/fix_glb_colors.luau`, `ASSET_MANIFEST.md`,
+  `T10_2_VFX_REPORT.md`, place de test 93404872714886.

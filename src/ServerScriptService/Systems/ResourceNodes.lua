@@ -20,7 +20,8 @@
 -- tous : CollectionService exige que le joueur ait débloqué ce monde.
 --
 -- Modèles : formes simples provisoires (Shared/Config/ResourceVisualConfig,
--- avec un ParticleEmitter facultatif pour l'Épique, T8.3, et des pièces de
+-- couleur de particules facultative pour l'Épique, jouée côté client
+-- depuis T10.2, et des pièces de
 -- détail facultatives, T8.4 : enfants du Part du nœud, sans collision ni
 -- requête, masquées avec lui),
 -- à remplacer par des assets contrôlés (ASSET_MANIFEST) sans toucher à la
@@ -126,21 +127,10 @@ local function createPart(
 			* CFrame.Angles(math.rad(turn.X), math.rad(turn.Y), math.rad(turn.Z))
 		d.Parent = part
 	end
-	-- T8.3 : petit émetteur facultatif (Épique seulement, ConfigTests),
-	-- sans lumière dynamique.
-	local particles = visual.particles
-	if particles ~= nil then
-		local emitter = Instance.new("ParticleEmitter")
-		emitter.Name = "Sparkle"
-		emitter.Color = ColorSequence.new(Color3.fromRGB(particles.color[1], particles.color[2], particles.color[3]))
-		emitter.Rate = particles.rate
-		emitter.Lifetime = NumberRange.new(0.8, 1.4)
-		emitter.Speed = NumberRange.new(1, 2)
-		emitter.SpreadAngle = Vector2.new(180, 180)
-		emitter.Size = NumberSequence.new(0.25, 0)
-		emitter.LightEmission = 0.6
-		emitter.Parent = part
-	end
+	-- T10.2 (D-032) : plus d'émetteur serveur. Les particules (dont la
+	-- couleur `particles` des Épiques) sont jouées par chaque client
+	-- (Controllers/ResourceVFXController), dans son budget et selon ses
+	-- préférences.
 	return part
 end
 
@@ -154,10 +144,6 @@ function ResourceNodes.applyState(nodeId: string, state: string)
 	part.Transparency = if available then 0 else 1
 	part.CanQuery = available
 	part:SetAttribute("Available", available)
-	local emitter = part:FindFirstChildOfClass("ParticleEmitter")
-	if emitter ~= nil then
-		emitter.Enabled = available
-	end
 	for _, child in ipairs(part:GetChildren()) do
 		if child:IsA("BasePart") then
 			child.Transparency = part.Transparency

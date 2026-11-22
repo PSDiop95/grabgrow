@@ -46,9 +46,10 @@ testé en T5 n'a pas été communiqué (`tests/T5_DEVICE_MATRIX.md`).
 
 | Poste | Cible |
 |---|---|
-| Émetteurs d'attente | ≤ 1 par monde (Épique), 4 particules/s |
+| Émetteurs d'attente | Pool client ≤ 8 (Peu commun et plus, rayon 45 studs) ; ≤ 3 en qualité basse (Épique) ; 0 en Effets réduits (révisé T10.2, D-032) |
+| Auras (disques opaques, Épique) | ≤ 3, rayon 90 studs |
 | Nœuds animés simultanément | ≤ 24, rayon 60 studs, mise à jour 30 Hz |
-| Éclats de collecte simultanés | ≤ 6 (existant) |
+| Éclats (collecte, réapparition) | Pool de 6 ; copies Neon de collecte ≤ 6 (existant) |
 | Particules visibles au total | ≤ 150 |
 | Lumières dynamiques, `Beam`, ombres | 0 |
 

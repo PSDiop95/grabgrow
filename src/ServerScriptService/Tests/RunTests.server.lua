@@ -75,7 +75,7 @@ local OnboardingRules = require(ReplicatedStorage.Shared.Util.OnboardingRules)
 local TravelRules = require(ReplicatedStorage.Shared.Util.TravelRules)
 local CollectionJournalRules = require(ReplicatedStorage.Shared.Util.CollectionJournalRules)
 local ResourceFxRules = require(ReplicatedStorage.Shared.Util.ResourceFxRules)
-local RarityVisualConfig = require(Config.RarityVisualConfig)
+local ResourceVFXConfig = require(Config.ResourceVFXConfig)
 local OnboardingConfig = require(Config.OnboardingConfig)
 local FeedbackConfig = require(Config.FeedbackConfig)
 local CollectionSecurityConfig = require(ServerStorage:WaitForChild("ServerOnlyConfig").CollectionSecurityConfig)
@@ -434,7 +434,7 @@ report(
 	"ResourceFxTests",
 	ResourceFxTests.run({
 		ResourceFxRules = ResourceFxRules,
-		RarityVisualConfig = RarityVisualConfig,
+		ResourceVFXConfig = ResourceVFXConfig,
 		ResourceConfig = ResourceConfig,
 	})
 )

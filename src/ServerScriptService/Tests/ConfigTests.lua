@@ -287,6 +287,13 @@ function ConfigTests.run(configs: Configs): { string }
 						if override.color ~= nil then
 							check(type(override.color) == "table" and #override.color == 3, `{label}.parts.{partName} : couleur RGB attendue`)
 						end
+						if override.exclude ~= nil then
+							check(override.exclude == true, `{label}.parts.{partName}.exclude : true attendu`)
+							check(
+								override.color == nil and override.material == nil and override.scale == nil,
+								`{label}.parts.{partName} : pièce exclue avec surcharge`
+							)
+						end
 					end
 				end
 			end

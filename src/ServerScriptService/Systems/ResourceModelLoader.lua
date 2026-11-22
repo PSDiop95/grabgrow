@@ -17,8 +17,8 @@
 -- Normalisation : pièces ancrées, sans collision, requête, contact ni
 -- ombre ; échelle uniforme pour que la plus grande dimension vaille
 -- `model.targetSize` studs ; pivot au centre du bas de la boîte
--- englobante ; couleurs et matériaux facultatifs par nom de pièce
--- (`model.parts`). Provenance et licence : docs/assets/ASSET_MANIFEST.md.
+-- englobante ; couleurs, matériaux, agrandissement et exclusion
+-- facultatifs par nom de pièce (`model.parts`). Provenance et licence : docs/assets/ASSET_MANIFEST.md.
 
 local InsertService = game:GetService("InsertService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -75,7 +75,11 @@ local function normalize(resourceType: string, container: Instance, model: any):
 	template.Name = resourceType
 	local count = 0
 	for _, descendant in ipairs(container:GetDescendants()) do
-		if descendant:IsA("BasePart") then
+		local override = if model.parts then model.parts[descendant.Name] else nil
+		-- Pièces invisibles de la source (ex. RootPart ajouté par l'importeur
+		-- 3D) et pièces exclues par la config : ignorées.
+		local excluded = override ~= nil and override.exclude == true
+		if descendant:IsA("BasePart") and descendant.Transparency < 1 and not excluded then
 			local part = descendant:Clone()
 			-- Pas de scripts, sons ni effets hérités de l'asset.
 			for _, child in ipairs(part:GetChildren()) do
@@ -89,7 +93,6 @@ local function normalize(resourceType: string, container: Instance, model: any):
 			part.CanTouch = false
 			part.CastShadow = false
 			part.CFrame = descendant.CFrame
-			local override = if model.parts then model.parts[descendant.Name] else nil
 			if override then
 				if override.color then
 					part.Color = Color3.fromRGB(override.color[1], override.color[2], override.color[3])
