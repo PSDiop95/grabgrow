@@ -7,6 +7,7 @@
 
 local Controllers = script.Parent:WaitForChild("Controllers")
 local InventoryController = require(Controllers:WaitForChild("InventoryController"))
+local NodeVisuals = require(Controllers:WaitForChild("NodeVisuals"))
 local CollectionController = require(Controllers:WaitForChild("CollectionController"))
 local SellController = require(Controllers:WaitForChild("SellController"))
 local TravelController = require(Controllers:WaitForChild("TravelController"))
@@ -17,6 +18,8 @@ local AchievementController = require(Controllers:WaitForChild("AchievementContr
 local CollectionJournalController = require(Controllers:WaitForChild("CollectionJournalController"))
 
 InventoryController.start()
+-- T10.1 : visuels des ressources (modèles importés, V-01, attente).
+NodeVisuals.start()
 CollectionController.start()
 SellController.start()
 -- T8.2 : voyage (portails) ; avant la boutique, qui affiche son état.

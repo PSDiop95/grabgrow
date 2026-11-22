@@ -1,8 +1,38 @@
 # GRAB & GROW — État du projet
 
-Dernière mise à jour : 2026-11-16 (T8 clôturée ; T9 étape B construite)
+Dernière mise à jour : 2026-11-22 (prototype T10.1 validé, D-031)
 
 ## Résumé
+
+**T10.1 (prototype ressources, imports, V-01) : prototype VALIDÉ** le
+2026-11-22 sur la base du test iPhone 12 Pro (D-031 ; réserve : mesure
+Galaxy A23 non faite) (`phases/T10_1_REPORT.md`). V-01 corrigé et vérifié dans Studio
+(primitives et modèles) ; prototype 4 ressources en jeu (gabarits
+`ServerStorage.ResourceTemplates` du place de test, import manuel :
+l'upload Open Cloud reste refusé). GLB corrigés par
+`tools/fix_glb_colors.luau` (couleurs de sommets linéaire → sRGB) et
+réimportés : 4 ressources en 1–2 pièces (72 MeshParts client). Feuille
+recolorée en palette contrastée (visible sur l'herbe). Cristaux
+d'améthyste agrandis (×1,6). Place sauvegardé dans
+`places/T10_1_prototype.rbxl` ; `GrabAndGrow.rbxl`, écrasé par une
+sauvegarde Studio, restauré depuis la version cloud 105 (identique au
+commit T9). Reste : mesure A23 avant/après
+(`performance/T10_1_BASELINE_A23.md`). Lune 440 cas OK, LSP OK, Rojo OK. Mesure A23 : NOT TESTED.
+Schéma v3, économie, `StreamingEnabled` inchangés ; aucun commit.
+
+**T10.0 (audit et conception World Enrichment) : VALIDÉE** par le
+propriétaire le 2026-11-22, avec les décisions D-025 à D-030 : refonte des
+20 ressources sur bases Polyfork personnalisées, licence CC BY 4.0, quatre
+gardiens et quatre sites sacrés en combats **strictement individuels**,
+accès permanent après victoire, ressources sacrées à double usage (vente
+ou améliorations), **schéma v3 conservé**, aucune valeur économique avant
+simulation. Documents : `phases/T10_0_AUDIT.md` (matrice finale §5),
+`assets/T10_*`, `gameplay/T10_*`, `performance/T10_PERFORMANCE_BUDGET.md`.
+Aucun code, schéma, économie, asset ni `GrabAndGrow.rbxl` modifié ; aucun
+commit. **T10.1 non commencée** (mesure de référence Galaxy A23, tests
+d'import GLB/FBX, prototype sur 4 ressources, correction V-01) : attend
+l'autorisation du propriétaire. T10.2 à T10.4 interdites d'ici là.
+
 
 **T9 (analytics et préparation à la publication) : VALIDÉE avec réserves** par le propriétaire le 2026-11-16 (« Valider en l'état », D-024). Réserves : onboarding, progression `Worlds`, dépense `World:*`, succès, `WorldEntered` et `BackpackFull` non observés dans Roblox (validés en Lune et Studio) ; Local Server analytics non testé ; correctif T9-UI-01 non contrôlé sur téléphone. La validation de T9 n'autorise pas la publication publique.
 Étape A (audit) validée le 2026-11-16 avec D1 à D5 ; T8 clôturée avec

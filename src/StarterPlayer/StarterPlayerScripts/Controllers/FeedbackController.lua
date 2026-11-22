@@ -10,8 +10,9 @@
 -- montant de vente affiché est `coinsEarned` reçu du serveur.
 --
 -- Effets temporaires uniquement, détruits après usage : éclat de collecte
--- (copie du nœud + particules), pièces vers le solde, anneau autour de
--- l'icône d'amélioration, confettis de déblocage. Le Magnet garde son
+-- (copie de toutes les pièces du nœud via NodeVisuals, T10.1 V-01, et
+-- particules), pièces vers le solde, anneau autour de l'icône
+-- d'amélioration, confettis de déblocage. Le Magnet garde son
 -- anneau de portée (RangeRing, A-40) : aucun second anneau ici.
 --
 -- Préférences (D-6) : « Son » et « Effets réduits », dans la boutique
@@ -35,6 +36,7 @@ local Localization = require(Shared:WaitForChild("Util"):WaitForChild("Localizat
 local BagDisplay = require(Shared:WaitForChild("Util"):WaitForChild("BagDisplay"))
 local FeedbackRules = require(Shared:WaitForChild("Util"):WaitForChild("FeedbackRules"))
 local InventoryController = require(script.Parent:WaitForChild("InventoryController"))
+local NodeVisuals = require(script.Parent:WaitForChild("NodeVisuals"))
 
 local FeedbackController = {}
 
@@ -203,24 +205,18 @@ local function collectEffect(cue: FeedbackRules.Cue)
 	local settings = FeedbackConfig.Collect
 	local seconds = FeedbackRules.pick(settings.seconds, settings.reducedSeconds, current)
 
-	-- Copie locale du nœud (le serveur l'a déjà rendu invisible).
-	local flash = Instance.new("Part")
-	flash.Name = "CollectFlash"
-	if node:IsA("Part") then
-		flash.Shape = node.Shape
+	-- Copie locale de toutes les pièces visibles du nœud (Part + détails, ou
+	-- modèle importé : T10.1, V-01) ; le serveur a déjà masqué le nœud.
+	local flash = NodeVisuals.createFlash(node, effectsFolder, function(color: Color3): Color3
+		return color:Lerp(COLOR_TEXT, 0.3)
+	end)
+	if flash == nil then
+		collectBudget:release()
+		return
 	end
-	flash.Size = node.Size
-	flash.Color = node.Color:Lerp(COLOR_TEXT, 0.3)
-	flash.Material = Enum.Material.Neon
-	flash.Anchored = true
-	flash.CanCollide = false
-	flash.CanQuery = false
-	flash.CanTouch = false
-	flash.CastShadow = false
-	flash.CFrame = node.CFrame
 
 	local attachment = Instance.new("Attachment")
-	attachment.Parent = flash
+	attachment.Parent = flash.parts[1]
 	local emitter = Instance.new("ParticleEmitter")
 	emitter.Enabled = false
 	emitter.Rate = 0
@@ -233,26 +229,29 @@ local function collectEffect(cue: FeedbackRules.Cue)
 	emitter.SpreadAngle = Vector2.new(180, 180)
 	emitter.Drag = 4
 	emitter.Parent = attachment
-	flash.Parent = effectsFolder
 	emitter:Emit(FeedbackRules.pick(settings.particles, settings.reducedParticles, current))
 
 	-- Mouvement vers le joueur (GDD 13.4), absent en effets réduits.
-	local goalCFrame = node.CFrame
+	local startCFrame = flash.center
+	local goalCFrame = startCFrame
 	local root = characterRoot()
 	if root and not current.reducedEffects then
-		local target = node.Position:Lerp(root.Position + Vector3.new(0, 1.5, 0), settings.travelFraction)
-		goalCFrame = CFrame.new(target) * node.CFrame.Rotation
+		local goal = startCFrame.Position:Lerp(root.Position + Vector3.new(0, 1.5, 0), settings.travelFraction)
+		goalCFrame = CFrame.new(goal) * startCFrame.Rotation
 	end
 	local shrink = if current.reducedEffects then 0.5 else 0.2
-	TweenService:Create(flash, TweenInfo.new(seconds, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
-		CFrame = goalCFrame,
-		Size = node.Size * shrink,
-		Transparency = 1,
+	local driver = Instance.new("NumberValue")
+	driver.Changed:Connect(function(alpha: number)
+		flash.setPose(startCFrame:Lerp(goalCFrame, alpha), 1 + (shrink - 1) * alpha, alpha)
+	end)
+	TweenService:Create(driver, TweenInfo.new(seconds, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
+		Value = 1,
 	}):Play()
 	bump("Visual_collect")
 
 	task.delay(math.max(seconds, PARTICLE_LIFETIME) + 0.05, function()
-		flash:Destroy()
+		driver:Destroy()
+		flash.destroy()
 		collectBudget:release()
 	end)
 end

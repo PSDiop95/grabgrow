@@ -889,3 +889,147 @@ propriétaire), ACCEPTÉE, REMPLACÉE.
   `Bootstrap`, `SellService`, `UpgradeService`, `WorldUnlockService`,
   `AchievementService`, `AnalyticsTests`, `RunTests`, `docs/analytics/`,
   `docs/publication/`.
+
+## D-025 — T10 : refonte artistique des 20 ressources
+
+- **Date :** 2026-11-22
+- **Statut :** ACCEPTÉE (propriétaire, 2026-11-22, validation de T10.0,
+  décision 1).
+- **Contexte :** audit T10.0 (`phases/T10_0_AUDIT.md`) : 20 ressources en
+  primitives, silhouettes répétées d'un monde à l'autre. Écart E-04 : le
+  GDD 14.8 prévoit des ressources emblématiques sur mesure « si
+  nécessaire ».
+- **Décision :** refaire les 20 ressources avec les modèles Polyfork
+  sélectionnés (`assets/T10_RESOURCE_ASSET_SELECTION.md`), **personnalisés**
+  (couleurs de monde, échelle, matériaux) pour garder l'identité de
+  GRAB & GROW. Un mesh par ressource ; Neon réservé à Rare et Épique ;
+  aucune transparence ; aucun texte ni logo. Les primitives actuelles
+  restent le repli. E-04 résolu par cette décision du propriétaire
+  (priorité 1 sur le GDD).
+- **Conséquences :** aucun import avant les contrôles de T10.1 (D-026) ;
+  20 imports seulement après validation de T10.1.
+- **Affecte :** `ResourceVisualConfig`, `ASSET_MANIFEST.md`, lots T10.1 et
+  T10.2.
+
+## D-026 — T10 : intégration Polyfork, licence CC BY 4.0
+
+- **Date :** 2026-11-22
+- **Statut :** ACCEPTÉE (propriétaire, 2026-11-22, décision 2).
+- **Contexte :** fichiers mesh Polyfork sous CC BY 4.0 **ou** licence
+  Polyfork au choix ; un mesh téléversé sur Roblox est extractible.
+- **Décision :** licence **CC BY 4.0** pour tous les meshes Polyfork.
+  Ligne de crédit fournie par chaque fiche (« <Titre> by Polyfork
+  (<URL>), CC BY 4.0 ») + mention des modifications. Licence **vérifiée
+  fichier par fichier** au téléchargement (date notée). Ligne
+  `ASSET_MANIFEST` remplie **avant** chaque import. Pipeline : GLB, ou FBX
+  si les couleurs ne passent pas → Importer Studio → contrôle couleurs,
+  matériaux, pivots, dimensions, collisions. Tests d'import GLB et FBX
+  avant tout lot de ressources.
+- **Conséquences :** crédits à publier avant toute publication publique
+  (description de l'expérience ; écran Crédits à planifier) ; fichiers
+  source hors Git, emplacement noté.
+- **Affecte :** `ASSET_MANIFEST.md`, `publication/PUBLICATION_READINESS_CHECKLIST.md`
+  (à compléter au moment de la publication).
+
+## D-027 — T10 : effets visuels des ressources
+
+- **Date :** 2026-11-22
+- **Statut :** ACCEPTÉE (propriétaire, 2026-11-22, validation de
+  `assets/T10_VFX_DESIGN.md`).
+- **Décision :** serveur = Part hitbox avec les attributs et la position
+  actuels (aucune règle de collecte modifiée) ; client = modèle visuel et
+  animations (flottement, rotation, pulsation, collecte, disparition,
+  réapparition) pilotés par `ResourceVisualConfig` (champs facultatifs) et
+  `RarityVisualConfig`. Plafonds : 24 nœuds animés, 60 studs, 30 Hz ;
+  émetteur d'attente pour l'Épique seulement ; « Effets réduits » coupe
+  flottement et rotation. **Correction du défaut V-01** (pièces de détail
+  ignorées par la collecte et la réapparition) **dans T10.1**, avec tests.
+  `StreamingEnabled` inchangé sans mesures et validation.
+- **Affecte :** `CollectionController`, `FeedbackController`,
+  `ResourceVisualConfig`, nouveau `ResourceVisualController`.
+
+## D-028 — T10 : gardiens et sites sacrés, combats individuels
+
+- **Date :** 2026-11-22
+- **Statut :** ACCEPTÉE (propriétaire, 2026-11-22, décisions 3 et 4).
+- **Contexte :** T10.0 proposait des combats coopératifs à PV partagés ;
+  le propriétaire retient des combats **strictement individuels**.
+- **Décision :** quatre gardiens (Forest, Sand, Ice, Mystic) et quatre
+  sites sacrés confirmés. Combat **individuel** : chaque joueur a son
+  propre état de combat serveur (PV du gardien, dégâts, phases, victoire,
+  déblocages, récompenses) ; aucun PV partagé, aucune adaptation au nombre
+  de joueurs, aucun effet d'un joueur sur le combat d'un autre. Aucun PvP ;
+  pas de mort ni de perte. Après une victoire, **accès permanent** du
+  joueur à ce sanctuaire. Le serveur reste seul juge (PV, éclats,
+  résolution des attaques, éligibilité).
+- **Conséquences :** gardien affiché par client pour son propre combat
+  (état autoritaire par joueur sur le serveur) ; la persistance de la
+  victoire est soumise à D-029. Aucun développement avant autorisation de
+  T10.4.
+- **Affecte :** `gameplay/T10_GUARDIANS_DESIGN.md`,
+  `gameplay/T10_SACRED_SITES_DESIGN.md`, futurs `GuardianService` et
+  Remotes.
+
+## D-029 — T10 : progression et sauvegarde (schéma v3 conservé)
+
+- **Date :** 2026-11-22
+- **Statut :** ACCEPTÉE (propriétaire, 2026-11-22, décision 5).
+- **Décision :** le **schéma v3 est conservé**. Toute migration v4 exige une
+  proposition et une autorisation distinctes. Le schéma v4 de T10.0
+  (`guardians`, `sacredItems`) est retiré.
+- **Contrainte relevée :** l'accès permanent (D-028) suppose de
+  persister une victoire. Dans le v3, sans migration, seules des clés
+  supplémentaires de sections existantes sont possibles :
+  `achievements[id] = true` ou `collection.discoveredResources[id] = true`
+  (clés inconnues conservées, D-008) et `inventory.resources[id]`. Aucun
+  horodatage ni compteur (délai personnel, nombre de victoires) n'est
+  persistable en v3. Le choix du support est à proposer avec T10.4 et à
+  autoriser.
+- **Affecte :** `DataSchema` (inchangé), `DATA_PERSISTENCE.md` (inchangé).
+
+## D-030 — T10 : économie des ressources sacrées et récompenses
+
+- **Date :** 2026-11-22
+- **Statut :** ACCEPTÉE (propriétaire, 2026-11-22, décisions 4 et 6).
+- **Décision :** les ressources sacrées ont un **double usage** : vente
+  **ou** améliorations. **Aucune valeur n'est fixée** (prix de vente, coût
+  en améliorations, récompenses des gardiens) avant simulation
+  (`tools/simulate_progression.luau`) et validation économique. Les montants
+  de T10.0 (500 / 1 500 / 6 000 / 20 000 Coins, délai de 20 min) sont
+  retirés : simples entrées de simulation.
+- **Contraintes relevées :** une ressource sacrée vendable serait une clé
+  de `ResourceConfig` (stockée dans `inventory.resources`, sans migration,
+  mais comptée dans le sac et ajoutée au catalogue du Journal) ; un coût
+  d'amélioration en ressources est une **nouvelle règle économique**
+  (`UpgradeService` ne connaît que les Coins). Les deux exigent une
+  autorisation économique ; Bible à réviser (1.2) après validation.
+- **Affecte :** `ResourceConfig`, `UpgradeConfig`, `UpgradeService`,
+  Bible économique (inchangés à ce jour).
+
+## D-031 — T10.1 : validation du prototype à 4 ressources
+
+- **Date :** 2026-11-22
+- **Statut :** ACCEPTÉE (propriétaire, 2026-11-22).
+- **Contexte :** prototype T10.1 (une ressource par monde : `green_leaf`,
+  `copper_ore`, `silver_ore`, `purple_crystal`) en GLB Polyfork corrigés
+  (`tools/fix_glb_colors.luau`), gabarits dans
+  `ServerStorage.ResourceTemplates` du place de test, V-01 corrigé. Test
+  du propriétaire sur iPhone 12 Pro (variante APRÈS publiée) : feuille
+  visible et collectée. Aucun relevé chiffré sur Galaxy A23.
+- **Décision :** le prototype est **validé sur la base du test iPhone**.
+- **Justification :** rendu, lisibilité et collecte confirmés sur un
+  écran mobile tactile ; surcoût Studio mesuré limité (+72 MeshParts,
+  ≈ +2,6 Mo graphiques, aucune texture).
+- **Conséquences :**
+  - Format retenu pour les ressources : GLB corrigé (couleurs de sommets
+    linéaire → sRGB, recoloration documentée), 1–2 pièces par modèle.
+  - **Réserve maintenue :** performance sur l'appareil de référence
+    (Galaxy A23) non mesurée ; fiche `performance/T10_1_BASELINE_A23.md`
+    à compléter avant publication publique ou si l'extension aux 20
+    ressources dégrade le rendu. L'iPhone 12 Pro est plus puissant que
+    l'A23.
+  - La validation ne vaut **pas** autorisation d'importer les 16 autres
+    ressources ni de démarrer T10.2 : chacune exige une autorisation
+    distincte. Aucun commit sans autorisation.
+- **Affecte :** `ResourceVisualConfig`, `ResourceModelLoader`,
+  `NodeVisuals`, `ASSET_MANIFEST.md`, `T10_1_REPORT.md`.

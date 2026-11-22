@@ -41,6 +41,7 @@ local MovementValidator = require(script.Parent.Systems.MovementValidator)
 local ProfileAudit = require(script.Parent.Systems.ProfileAudit)
 local PlayerSession = require(script.Parent.Systems.PlayerSession)
 local ResourceNodes = require(script.Parent.Systems.ResourceNodes)
+local ResourceModelLoader = require(script.Parent.Systems.ResourceModelLoader)
 local ResourceSpawner = require(script.Parent.Systems.ResourceSpawner)
 local SellZones = require(script.Parent.Systems.SellZones)
 local StudioTestPresets = require(script.Parent.Systems.StudioTestPresets)
@@ -145,6 +146,8 @@ local spawner = ResourceSpawner.new({
 	end,
 	onStateChanged = ResourceNodes.applyState,
 })
+-- Modèles 3D (T10.1) : purement visuels, asynchrones, repli primitif.
+ResourceModelLoader.start()
 local nodeCount = ResourceNodes.start(spawner)
 
 -- Position répliquée au serveur ; nil si le personnage est absent ou mort.

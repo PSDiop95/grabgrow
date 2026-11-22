@@ -16,7 +16,6 @@
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
-local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 local Workspace = game:GetService("Workspace")
 
@@ -27,6 +26,7 @@ local UpgradeConfig = require(Config:WaitForChild("UpgradeConfig"))
 local Remotes = require(Shared:WaitForChild("Remotes"):WaitForChild("Remotes"))
 local Localization = require(Shared:WaitForChild("Util"):WaitForChild("Localization"))
 local InventoryController = require(script.Parent:WaitForChild("InventoryController"))
+local NodeVisuals = require(script.Parent:WaitForChild("NodeVisuals"))
 
 local CollectionController = {}
 
@@ -51,7 +51,6 @@ local GRAB_BUTTON_FALLBACK_POSITION = UDim2.new(1, -60, 1, -172)
 
 type TrackedNode = {
 	available: boolean,
-	fullSize: Vector3,
 	connection: RBXScriptConnection,
 }
 
@@ -88,7 +87,8 @@ local function setTarget(part: BasePart?)
 		return
 	end
 	target = part
-	highlight.Adornee = part
+	-- T10.1 : le surlignage entoure le visuel (modèle importé ou Part).
+	highlight.Adornee = if part then NodeVisuals.adorneeFor(part) else nil
 	-- Les types de l'API déclarent Adornee non nul ; nil retire l'ancrage.
 	billboard.Adornee = part :: any
 	billboard.Enabled = part ~= nil
@@ -158,17 +158,9 @@ local function onAvailableChanged(part: BasePart)
 		return
 	end
 	local available = part:GetAttribute("Available") == true
-	local reappeared = available and not node.available
 	node.available = available
-	if reappeared then
-		-- Réapparition : petit rebond local, purement visuel.
-		part.Size = node.fullSize * 0.3
-		TweenService:Create(
-			part,
-			TweenInfo.new(0.25, Enum.EasingStyle.Back, Enum.EasingDirection.Out),
-			{ Size = node.fullSize }
-		):Play()
-	elseif not available and target == part then
+	-- Rebond de réapparition : NodeVisuals (T10.1, V-01 : toutes les pièces).
+	if not available and target == part then
 		setTarget(nil)
 	end
 end
@@ -182,7 +174,6 @@ local function track(child: Instance)
 	end
 	tracked[child] = {
 		available = child:GetAttribute("Available") == true,
-		fullSize = child.Size,
 		connection = child:GetAttributeChangedSignal("Available"):Connect(function()
 			onAvailableChanged(child)
 		end),

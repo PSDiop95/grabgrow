@@ -47,11 +47,34 @@ sont pas listées une par une.
 6. Statut : à rechercher / sélectionné / téléchargé / importé / validé /
    rejeté.
 
+## Politique de licence T10 (D-025, D-026, 2026-11-22)
+
+- Meshes Polyfork utilisés sous **CC BY 4.0** : ligne de crédit de la fiche
+  (« <Titre> by Polyfork (<URL>), CC BY 4.0 ») recopiée dans la colonne
+  Attribution, avec la mention des modifications (recoloration, échelle,
+  matériaux).
+- Licence revérifiée **fichier par fichier** au téléchargement (date).
+- Une ligne par asset, statut « sélectionné » puis « téléchargé », remplie
+  **avant** l'import dans Studio. Sélection : `T10_RESOURCE_ASSET_SELECTION.md`.
+- Crédits à publier (description de l'expérience, écran Crédits) avant
+  toute publication publique.
+- **GLB corrigés (T10.1, 2026-11-22)** : `assets_src/polyfork/fixed/<id>.glb`,
+  produits par `tools/fix_glb_colors.luau` à partir des fichiers source
+  (inchangés). Modification : couleurs de sommets converties linéaire →
+  sRGB (l'import Roblox les lit comme du sRGB) ; feuille recolorée du roux
+  au vert (4 teintes ; palette contrastée avec l'herbe depuis le
+  2026-11-22 : limbe 214,232,76, bord 40,98,30). Géométrie, UV et matériaux glTF inchangés. Concerne
+  `res_green_leaf`, `res_copper_ore`, `res_silver_ore`, `res_purple_crystal` ;
+  attribution « modifié » déjà portée par ces lignes.
+
 ## Assets tiers
 
 | Nom interne | Nom source | Identifiant ou URL | Catégorie | Monde | Fichier source | Format | Triangles | Licence et date de vérification | Usage commercial | Attribution | Modifications | Emplacement Roblox | Statut |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| — | — | — | — | — | — | — | — | — | — | — | — | — | Aucun asset tiers à ce jour |
+| `res_green_leaf` (prototype T10.1) | Fallen Oak Leaf | `fallen-oak-leaf-5b15fe` — https://polyfork.dev/asset/fallen-oak-leaf-5b15fe | Ressource | Green Valley | `assets_src/polyfork/fallen-oak-leaf-5b15fe.glb` et `.fbx` (hors Git) | GLB, FBX | 648 | CC BY 4.0, fiche vérifiée le 2026-11-22 (`free: true`) | Oui | « Fallen Oak Leaf by Polyfork (https://polyfork.dev/asset/fallen-oak-leaf-5b15fe), CC BY 4.0 » — modifié | GLB corrigé (`fixed/`, 1 MeshPart) : sommets sRGB, recoloré vert ; pièce blanche, échelle ≈ 0,18 | `ServerStorage.ResourceTemplates.green_leaf` (place de test 93404872714886) | Prototype T10.1 (GLB corrigé, import manuel Studio 2026-11-22, sans assetId de modèle) |
+| `res_copper_ore` (prototype T10.1) | Copper Ore Deposit | `copper-ore-deposit-d5e58b` — https://polyfork.dev/asset/copper-ore-deposit-d5e58b | Ressource | Golden Desert | `assets_src/polyfork/copper-ore-deposit-d5e58b.glb` et `.fbx` (hors Git) | GLB, FBX | 685 | CC BY 4.0, fiche vérifiée le 2026-11-22 (`free: true`) | Oui | « Copper Ore Deposit by Polyfork (https://polyfork.dev/asset/copper-ore-deposit-d5e58b), CC BY 4.0 » — modifié | GLB corrigé (2 MeshParts) : sommets sRGB ; pièces blanches | `ServerStorage.ResourceTemplates.copper_ore` (place de test) | Prototype T10.1 (GLB corrigé, import manuel Studio 2026-11-22, sans assetId de modèle) |
+| `res_silver_ore` (prototype T10.1) | Silver Ore Deposit | `silver-ore-deposit-57f7c3` — https://polyfork.dev/asset/silver-ore-deposit-57f7c3 | Ressource | Frozen Peaks | `assets_src/polyfork/silver-ore-deposit-57f7c3.glb` (hors Git) | GLB | 729 | CC BY 4.0, fiche vérifiée le 2026-11-22 (`free: true`) | Oui | « Silver Ore Deposit by Polyfork (https://polyfork.dev/asset/silver-ore-deposit-57f7c3), CC BY 4.0 » — modifié | GLB corrigé (2 MeshParts) : sommets sRGB ; Metal sur `deposit-metal` | `ServerStorage.ResourceTemplates.silver_ore` (place de test) | Prototype T10.1 (GLB corrigé, import manuel Studio 2026-11-22, sans assetId de modèle) |
+| `res_purple_crystal` (prototype T10.1) | Amethyst Ore Deposit | `amethyst-ore-deposit-02d55d` — https://polyfork.dev/asset/amethyst-ore-deposit-02d55d | Ressource | Mystic World | `assets_src/polyfork/amethyst-ore-deposit-02d55d.glb` (hors Git) | GLB | 733 | CC BY 4.0, fiche vérifiée le 2026-11-22 (`free: true`) | Oui | « Amethyst Ore Deposit by Polyfork (https://polyfork.dev/asset/amethyst-ore-deposit-02d55d), CC BY 4.0 » — modifié | GLB corrigé (2 MeshParts) : sommets sRGB ; cristaux Neon violets agrandis ×1,6 (config) | `ServerStorage.ResourceTemplates.purple_crystal` (place de test) | Prototype T10.1 (GLB corrigé, import manuel Studio 2026-11-22, sans assetId de modèle) |
 
 ## Candidats à rechercher (après validation du manifeste)
 

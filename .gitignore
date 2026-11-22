@@ -7,3 +7,9 @@ sourcemap.json
 # fichier temporaire de Test > Local Server.
 /GrabAndGrow.rbxl
 /server.rbxl
+# Sauvegardes dédiées des places de test (T10.1 : prototype ressources).
+/places/
+
+# Fichiers source des assets tiers (D-026 : hors Git, emplacement noté
+# dans docs/assets/ASSET_MANIFEST.md).
+/assets_src/

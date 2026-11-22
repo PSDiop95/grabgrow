@@ -49,6 +49,25 @@ export type ResourceVisual = {
 	material: string,
 	particles: { color: Triple, rate: number }?,
 	details: { ResourceDetail }?,
+	model: ResourceModel?,
+}
+
+-- T10.1 (D-025 à D-027) : modèle 3D importé, facultatif. Chargé par
+-- Systems/ResourceModelLoader ; la forme primitive ci-dessus reste le
+-- repli et la hitbox serveur. Provenance : docs/assets/ASSET_MANIFEST.md.
+--   template   : nom d'un modèle stocké dans le place, sous
+--                ServerStorage.ResourceTemplates (import manuel Studio)
+--   assetId    : ou asset Roblox (Model) du créateur de l'expérience
+--                (exactement une des deux sources)
+--   targetSize : plus grande dimension visée (studs)
+--   parts      : facultatif ; surcharge par nom de pièce { color, material,
+--                scale } ; `scale` agrandit la pièce autour de son centre
+--                (]0, 2]) avant l'ajustement à `targetSize`
+export type ResourceModel = {
+	template: string?,
+	assetId: number?,
+	targetSize: number,
+	parts: { [string]: { color: Triple?, material: string?, scale: number? } }?,
 }
 
 local ResourceVisualConfig: { [string]: ResourceVisual } = {
@@ -156,6 +175,45 @@ local ResourceVisualConfig: { [string]: ResourceVisual } = {
 			{ shape = "Block", size = { 0.5, 1.2, 0.5 }, offset = { 1.5, 0.4, 0 }, orientation = { 0, 0, -50 }, color = { 110, 250, 255 }, material = "Neon" },
 			{ shape = "Block", size = { 0.5, 1.2, 0.5 }, offset = { -1.5, 0.4, 0 }, orientation = { 0, 0, 50 }, color = { 110, 250, 255 }, material = "Neon" },
 		},
+	},
+}
+
+-- Prototype T10.1 : une ressource par monde (D-025). Modèles Polyfork
+-- CC BY 4.0 « modifiés » (manifeste : res_green_leaf, res_copper_ore,
+-- res_silver_ore, res_purple_crystal) : GLB corrigés par
+-- tools/fix_glb_colors.luau (couleurs de sommets linéaire -> sRGB, feuille
+-- recolorée en vert), importés à la main dans le place. Les couleurs
+-- viennent des sommets : pièces blanches (la couleur du Part les
+-- multiplie). Cristal de l'améthyste en Neon (rareté Rare).
+local WHITE = { 255, 255, 255 }
+ResourceVisualConfig.green_leaf.model = {
+	template = "green_leaf",
+	targetSize = 1.8,
+	parts = { ["leaf-mesh"] = { color = WHITE, material = "SmoothPlastic" } },
+}
+ResourceVisualConfig.copper_ore.model = {
+	template = "copper_ore",
+	targetSize = 1.8,
+	parts = {
+		["copper-ore-deposit-body"] = { color = WHITE, material = "SmoothPlastic" },
+		["copper-ore-deposit-copper"] = { color = WHITE, material = "SmoothPlastic" },
+	},
+}
+ResourceVisualConfig.silver_ore.model = {
+	template = "silver_ore",
+	targetSize = 1.9,
+	parts = {
+		["deposit-matte"] = { color = WHITE, material = "SmoothPlastic" },
+		["deposit-metal"] = { color = WHITE, material = "Metal" },
+	},
+}
+ResourceVisualConfig.purple_crystal.model = {
+	template = "purple_crystal",
+	targetSize = 2.4,
+	parts = {
+		["amethyst-ore-deposit-mesh"] = { color = WHITE, material = "SmoothPlastic" },
+		-- Cristaux agrandis : ils doivent dominer la roche (hypothèse visuelle).
+		["amethyst-ore-deposit-mesh2"] = { color = { 160, 60, 255 }, material = "Neon", scale = 1.6 },
 	},
 }
 

@@ -35,6 +35,7 @@ local WorldTravelServiceTests = require(script.Parent.WorldTravelServiceTests)
 local TravelRulesTests = require(script.Parent.TravelRulesTests)
 local CollectionJournalTests = require(script.Parent.CollectionJournalTests)
 local AnalyticsTests = require(script.Parent.AnalyticsTests)
+local ResourceFxTests = require(script.Parent.ResourceFxTests)
 
 local GameConfig = require(Config.GameConfig)
 local ResourceConfig = require(Config.ResourceConfig)
@@ -73,6 +74,8 @@ local FeedbackRules = require(ReplicatedStorage.Shared.Util.FeedbackRules)
 local OnboardingRules = require(ReplicatedStorage.Shared.Util.OnboardingRules)
 local TravelRules = require(ReplicatedStorage.Shared.Util.TravelRules)
 local CollectionJournalRules = require(ReplicatedStorage.Shared.Util.CollectionJournalRules)
+local ResourceFxRules = require(ReplicatedStorage.Shared.Util.ResourceFxRules)
+local RarityVisualConfig = require(Config.RarityVisualConfig)
 local OnboardingConfig = require(Config.OnboardingConfig)
 local FeedbackConfig = require(Config.FeedbackConfig)
 local CollectionSecurityConfig = require(ServerStorage:WaitForChild("ServerOnlyConfig").CollectionSecurityConfig)
@@ -424,6 +427,15 @@ report(
 		ResourceConfig = ResourceConfig,
 		DataSchema = DataSchema,
 		Remotes = Remotes,
+	})
+)
+
+report(
+	"ResourceFxTests",
+	ResourceFxTests.run({
+		ResourceFxRules = ResourceFxRules,
+		RarityVisualConfig = RarityVisualConfig,
+		ResourceConfig = ResourceConfig,
 	})
 )
 

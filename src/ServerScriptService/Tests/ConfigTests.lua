@@ -249,6 +249,48 @@ function ConfigTests.run(configs: Configs): { string }
 				end
 			end
 		end
+		-- T10.1 : modèle importé facultatif.
+		for resourceId, visual in pairs(visuals) do
+			local model = visual.model
+			if model ~= nil then
+				local label = `{resourceId}.model`
+				check(
+					(model.assetId == nil) ~= (model.template == nil),
+					`{label} : exactement une source attendue (template ou assetId)`
+				)
+				if model.assetId ~= nil then
+					check(isPositiveInteger(model.assetId), `{label}.assetId : entier > 0 attendu`)
+				end
+				if model.template ~= nil then
+					check(isNonEmptyString(model.template), `{label}.template : nom attendu`)
+				end
+				check(
+					type(model.targetSize) == "number" and model.targetSize >= MIN_RESOURCE_SIZE and model.targetSize <= MAX_RESOURCE_SIZE,
+					`{label}.targetSize hors de [{MIN_RESOURCE_SIZE}, {MAX_RESOURCE_SIZE}] studs`
+				)
+				if model.parts ~= nil then
+					local rarity = if resources[resourceId] then resources[resourceId].rarity else nil
+					for partName, override in pairs(model.parts) do
+						if override.material ~= nil then
+							check(MATERIALS[override.material] == true, `{label}.parts.{partName} : matériau non autorisé`)
+							check(
+								override.material ~= "Neon" or NEON_RARITIES[rarity] == true,
+								`{label}.parts.{partName} : Neon réservé aux raretés Rare et Épique`
+							)
+						end
+						if override.scale ~= nil then
+							check(
+								type(override.scale) == "number" and override.scale > 0 and override.scale <= 2,
+								`{label}.parts.{partName}.scale hors de ]0, 2]`
+							)
+						end
+						if override.color ~= nil then
+							check(type(override.color) == "table" and #override.color == 3, `{label}.parts.{partName} : couleur RGB attendue`)
+						end
+					end
+				end
+			end
+		end
 		for resourceId in pairs(visuals) do
 			check(resources[resourceId] ~= nil, `ResourceVisualConfig.{resourceId} : ressource inconnue`)
 		end
