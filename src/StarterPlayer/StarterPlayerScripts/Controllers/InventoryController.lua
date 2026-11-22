@@ -19,6 +19,7 @@ local TweenService = game:GetService("TweenService")
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local GameConfig = require(Shared:WaitForChild("Config"):WaitForChild("GameConfig"))
 local ResourceConfig = require(Shared:WaitForChild("Config"):WaitForChild("ResourceConfig"))
+local SacredResourceConfig = require(Shared:WaitForChild("Config"):WaitForChild("SacredResourceConfig"))
 local Remotes = require(Shared:WaitForChild("Remotes"):WaitForChild("Remotes"))
 local Localization = require(Shared:WaitForChild("Util"):WaitForChild("Localization"))
 local SaleValue = require(Shared:WaitForChild("Util"):WaitForChild("SaleValue"))
@@ -427,6 +428,13 @@ local function renderBag(inventory: { used: number, capacity: number, resources:
 			local quantity = inventory.resources[resourceId] or 0
 			if quantity > 0 then
 				table.insert(parts, `{translate(ResourceConfig[resourceId].displayNameKey)} {quantity}`)
+			end
+		end
+		-- Unités sacrées (D-035, hors ResourceConfig) : listées à la suite.
+		for _, resourceId in ipairs(SacredResourceConfig.Order) do
+			local quantity = inventory.resources[resourceId] or 0
+			if quantity > 0 then
+				table.insert(parts, `{translate(SacredResourceConfig.Resources[resourceId].nameKey)} {quantity}`)
 			end
 		end
 		if #parts == 0 then

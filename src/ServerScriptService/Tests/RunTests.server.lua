@@ -36,6 +36,8 @@ local TravelRulesTests = require(script.Parent.TravelRulesTests)
 local CollectionJournalTests = require(script.Parent.CollectionJournalTests)
 local AnalyticsTests = require(script.Parent.AnalyticsTests)
 local ResourceFxTests = require(script.Parent.ResourceFxTests)
+local GuardianTests = require(script.Parent.GuardianTests)
+local GuardianPersistenceTests = require(script.Parent.GuardianPersistenceTests)
 
 local GameConfig = require(Config.GameConfig)
 local ResourceConfig = require(Config.ResourceConfig)
@@ -85,6 +87,13 @@ local MovementSecurityConfig = require(ServerStorage:WaitForChild("ServerOnlyCon
 local SecurityLogConfig = require(ServerStorage:WaitForChild("ServerOnlyConfig").SecurityLogConfig)
 local TravelSecurityConfig = require(ServerStorage:WaitForChild("ServerOnlyConfig").TravelSecurityConfig)
 local AnalyticsConfig = require(ServerStorage:WaitForChild("ServerOnlyConfig").AnalyticsConfig)
+local GuardianSecurityConfig = require(ServerStorage:WaitForChild("ServerOnlyConfig").GuardianSecurityConfig)
+local GuardianConfig = require(Config.GuardianConfig)
+local SacredResourceConfig = require(Config.SacredResourceConfig)
+local GuardianRules = require(ReplicatedStorage.Shared.Util.GuardianRules)
+local GuardianCombatService = require(ServerScriptService.Services.GuardianCombatService)
+local SacredSiteService = require(ServerScriptService.Services.SacredSiteService)
+local SacredResourceService = require(ServerScriptService.Services.SacredResourceService)
 
 local totalFailures = 0
 
@@ -436,6 +445,45 @@ report(
 		ResourceFxRules = ResourceFxRules,
 		ResourceVFXConfig = ResourceVFXConfig,
 		ResourceConfig = ResourceConfig,
+	})
+)
+
+-- T10.3 : gardiens et sites sacrés.
+report(
+	"GuardianTests",
+	GuardianTests.run({
+		GuardianConfig = GuardianConfig,
+		GuardianRules = GuardianRules,
+		GuardianCombatService = GuardianCombatService,
+		SacredSiteService = SacredSiteService,
+		SacredResourceService = SacredResourceService,
+		RateLimitService = RateLimitService,
+		GuardianSecurityConfig = GuardianSecurityConfig,
+		ResourceConfig = ResourceConfig,
+		Localization = Localization,
+		Remotes = Remotes,
+		SacredResourceConfig = SacredResourceConfig,
+		AchievementConfig = AchievementConfig,
+	})
+)
+
+report(
+	"GuardianPersistenceTests",
+	GuardianPersistenceTests.run({
+		PlayerDataService = PlayerDataService,
+		MemoryDataStore = MemoryDataStore,
+		DataSchema = DataSchema,
+		DataConfig = DataConfig,
+		SacredSiteService = SacredSiteService,
+		SacredResourceService = SacredResourceService,
+		GuardianConfig = GuardianConfig,
+		GuardianRules = GuardianRules,
+		SacredResourceConfig = SacredResourceConfig,
+		AchievementService = AchievementService,
+		ProfileAudit = ProfileAudit,
+		StudioTestPresets = StudioTestPresets,
+		InventoryService = InventoryService,
+		Remotes = Remotes,
 	})
 )
 

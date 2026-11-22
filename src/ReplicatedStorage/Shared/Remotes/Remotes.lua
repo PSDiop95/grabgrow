@@ -38,6 +38,19 @@ Remotes.Name = table.freeze({
 	-- CollectionService.GetClientState ; T8.6 : `discovered`, journal de
 	-- collection en lecture seule, aucun RemoteEvent dédié).
 	StateUpdated = "StateUpdated",
+	-- T10.3 (D-034). Client -> Serveur. Payload : { siteId = "RootSanctuary" }.
+	-- Active SON combat de gardien près de l'autel (accès contrôlé serveur).
+	RequestGuardianActivate = "RequestGuardianActivate",
+	-- T10.3. Client -> Serveur. Payload : { shardId = "sh12" }. Saisie d'un
+	-- éclat de faiblesse de SON combat ; dégâts calculés par le serveur.
+	RequestGuardianStrike = "RequestGuardianStrike",
+	-- T10.3. Client -> Serveur. Payload : { nodeId = "RootSanctuary_Sacred_1" }.
+	-- Réclamation de la récompense sacrée à la terrasse (une fois, D-035).
+	RequestSacredCollect = "RequestSacredCollect",
+	-- T10.3. Serveur -> Client, au SEUL joueur concerné. Payload : { type, ... }
+	--   combat, shard, shardRemoved, attack, hit, ended, victory, sites, result
+	--   (voir GuardianCombatService et SacredSiteService).
+	GuardianEvent = "GuardianEvent",
 })
 
 Remotes.Action = table.freeze({
@@ -66,6 +79,12 @@ Remotes.ResultCode = table.freeze({
 	WorldLocked = "WORLD_LOCKED", -- monde de la ressource ou destination non débloqué (T8)
 	WorldUnavailable = "WORLD_UNAVAILABLE", -- monde débloqué mais sans point d'arrivée sur la carte (T8)
 	RateLimited = "RATE_LIMITED",
+	-- T10.3 : gardiens et sites sacrés.
+	NotInCombat = "NOT_IN_COMBAT", -- aucun combat en cours (vaincu, abandonné, jamais commencé)
+	AlreadyInCombat = "ALREADY_IN_COMBAT",
+	Stunned = "STUNNED", -- touché par une attaque : saisie impossible quelques instants
+	GuardianRespawning = "GUARDIAN_RESPAWNING", -- gardien vaincu, réapparition en attente (ce joueur)
+	AlreadyClaimed = "ALREADY_CLAIMED", -- récompense sacrée déjà réclamée (D-035)
 	InternalError = "INTERNAL_ERROR",
 })
 

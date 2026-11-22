@@ -1,8 +1,26 @@
 # GRAB & GROW — État du projet
 
-Dernière mise à jour : 2026-11-22 (T10.2 et import des 20 ressources validés, D-032, D-033)
+Dernière mise à jour : 2026-11-22 (T10.3 gardiens et sites sacrés VALIDÉE, D-034, D-035)
 
 ## Résumé
+
+**T10.3 (gardiens et sites sacrés) : VALIDÉE** par le propriétaire le
+2026-11-22. Résultats des tests manuels M1-M14 et L1-L7 non transmis à ce
+jour (non consignés comme exécutés). T10.4 non commencée (autorisation
+distincte requise). Rapport (`phases/T10_3_GUARDIANS_REPORT.md`, D-034).
+Quatre gardiens à attaques annoncées, quatre sites, combats individuels
+(gardien visuellement commun, états par joueur). Persistance option A en
+v3 (`achievements["sanctuary_*"]`, aucune migration) et récompense sacrée
+(3 unités par site, réclamation atomique à la terrasse, D-035). Lune OK
+(`GuardianTests` 26 cas, `GuardianPersistenceTests` 23 cas), LSP OK, Rojo
+OK, Studio OK (solo : combat, victoire sauvegardée, réclamation, double
+réclamation refusée). Non exécutés ou non transmis : deux joueurs réels
+(M1-M14), mobile et latence (L1-L7), captures, reconnexion sur DataStore
+réel. Vente et consommation des unités sacrées : non conçues ; valeurs
+provisoires (S2). `ResourceConfig` inchangé ; `GrabAndGrow.rbxl` non
+modifié ; aucun commit. Sites présents dans le place de test, non
+enregistré (`tools/studio/build_sacred_sites.luau`). Documents :
+`phases/T10_3_*`, `tests/T10_3_TEST_PLAN.md`.
 
 **T10.2 (VFX et animations des ressources) : VALIDÉE** le 2026-11-22
 avec réserves (mobile, A23, deux joueurs réels non testés) (`phases/T10_2_VFX_REPORT.md`, D-032). Système VFX commun

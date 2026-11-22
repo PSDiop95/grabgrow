@@ -24,6 +24,12 @@ local MovementSecurityConfig = require(ServerStorage.ServerOnlyConfig.MovementSe
 local SecurityLogConfig = require(ServerStorage.ServerOnlyConfig.SecurityLogConfig)
 local TravelSecurityConfig = require(ServerStorage.ServerOnlyConfig.TravelSecurityConfig)
 local AnalyticsConfig = require(ServerStorage.ServerOnlyConfig.AnalyticsConfig)
+local GuardianSecurityConfig = require(ServerStorage.ServerOnlyConfig.GuardianSecurityConfig)
+local GuardianConfig = require(ReplicatedStorage.Shared.Config.GuardianConfig)
+local GuardianCombatService = require(script.Parent.Services.GuardianCombatService)
+local SacredSiteService = require(script.Parent.Services.SacredSiteService)
+local SacredResourceService = require(script.Parent.Services.SacredResourceService)
+local SacredSites = require(script.Parent.Systems.SacredSites)
 local AchievementService = require(script.Parent.Services.AchievementService)
 local AnalyticsService = require(script.Parent.Services.AnalyticsService)
 local CollectionService = require(script.Parent.Services.CollectionService)
@@ -286,6 +292,124 @@ local worldTravelService = WorldTravelService.new({
 	security = securityLog,
 })
 
+-- Gardiens et sites sacrés (T10.3, D-034) ----------------------------------
+-- Combats INDIVIDUELS : un état par joueur dans GuardianCombatService ; le
+-- modèle du gardien est commun et statique (carte), animé localement par
+-- chaque client. Messages envoyés au SEUL joueur concerné. Persistance
+-- option A (v3, D-035) : clés achievements["sanctuary_*"] ; récompense de
+-- 3 unités sacrées réclamée une fois à la terrasse.
+
+local guardianEvent = remotes[Remotes.Name.GuardianEvent]
+local getSacredSite, getSacredNode, sacredSiteCount = SacredSites.start()
+local guardianRateLimit = RateLimitService.new({
+	clock = os.clock,
+	limits = GuardianSecurityConfig.RateLimits,
+	logEveryRejections = GuardianSecurityConfig.RateLimitFeedback.logEveryRejections,
+})
+local guardianRandom = Random.new()
+
+local function sendGuardianEvent(userId: number, message: { [string]: any })
+	local player = Players:GetPlayerByUserId(userId)
+	if player then
+		guardianEvent:FireClient(player, message)
+	end
+end
+
+local sacredSiteService: any
+local guardianCombatService = GuardianCombatService.new({
+	clock = os.clock,
+	random = function(min: number, max: number): number
+		return guardianRandom:NextNumber(min, max)
+	end,
+	getCharacterPosition = getCharacterPosition,
+	send = sendGuardianEvent,
+	onVictory = function(userId: number, info: GuardianCombatService.VictoryInfo)
+		sacredSiteService.RecordVictory(userId, info)
+	end,
+	rateLimit = guardianRateLimit,
+	movement = movementValidator,
+	security = securityLog,
+})
+
+sacredSiteService = SacredSiteService.new({
+	playerData = playerDataService,
+	combat = guardianCombatService,
+	getSite = getSacredSite,
+	getCharacterPosition = getCharacterPosition,
+	send = sendGuardianEvent,
+	rateLimit = guardianRateLimit,
+	clock = os.clock,
+	victoryStore = SacredSiteService.profileVictoryStore(playerDataService),
+	movement = movementValidator,
+	security = securityLog,
+})
+
+-- Récompense sacrée (D-035) : 3 unités, une fois, réclamées à la terrasse.
+local sacredResourceService = SacredResourceService.new({
+	playerData = playerDataService,
+	sites = sacredSiteService,
+	getNode = getSacredNode,
+	getCharacterPosition = getCharacterPosition,
+	rateLimit = guardianRateLimit,
+	clock = os.clock,
+	movement = movementValidator,
+	security = securityLog,
+})
+
+-- Envoi de l'état du sac après une réclamation ; branché plus bas, une fois
+-- sendState défini.
+local sendSacredState: (player: Player) -> () = function() end
+
+local function sendGuardianResult(player: Player, action: string, result: any)
+	guardianEvent:FireClient(player, {
+		type = "result",
+		action = action,
+		ok = result.ok,
+		code = result.code,
+		siteId = result.siteId,
+		shardId = result.shardId,
+		nodeId = result.nodeId,
+		resourceId = result.resourceId,
+		amount = result.amount,
+	})
+end
+
+remotes[Remotes.Name.RequestGuardianActivate].OnServerEvent:Connect(function(player: Player, payload: any, ...: any)
+	local result = sacredSiteService.HandleActivate(player.UserId, payload, select("#", ...))
+	if not result.silent then
+		sendGuardianResult(player, "Activate", result)
+	end
+end)
+
+remotes[Remotes.Name.RequestGuardianStrike].OnServerEvent:Connect(function(player: Player, payload: any, ...: any)
+	local result = guardianCombatService.HandleStrike(player.UserId, payload, select("#", ...))
+	-- Les saisies réussies sont déjà signalées par shardRemoved et combat.
+	if not result.silent and not result.ok then
+		sendGuardianResult(player, "Strike", result)
+	end
+end)
+
+remotes[Remotes.Name.RequestSacredCollect].OnServerEvent:Connect(function(player: Player, payload: any, ...: any)
+	local result = sacredResourceService.HandleCollect(player.UserId, payload, select("#", ...))
+	if not result.silent then
+		sendGuardianResult(player, "SacredCollect", result)
+	end
+	if result.ok then
+		sendSacredState(player)
+		sacredSiteService.SendView(player.UserId)
+	end
+end)
+
+-- Boucle des combats : ne travaille que s'il y a des combats en cours.
+task.spawn(function()
+	while true do
+		task.wait(GuardianConfig.Combat.tickSeconds)
+		if guardianCombatService.ActiveCount() > 0 then
+			guardianCombatService.Tick()
+		end
+	end
+end)
+
 -- Succès (T7, D-020) -------------------------------------------------------
 
 local achievementService = AchievementService.new({ playerData = playerDataService })
@@ -312,6 +436,7 @@ local function sendState(player: Player)
 		stateUpdated:FireClient(player, state)
 	end
 end
+sendSacredState = sendState
 
 -- Un seul argument attendu (le payload) ; les arguments supplémentaires
 -- font refuser la demande (T6). Tout ce qui vient du client est validé
@@ -339,6 +464,10 @@ remotes[Remotes.Name.RequestCollect].OnServerEvent:Connect(function(player: Play
 	if result.ok then
 		grantAchievements(player)
 		sendState(player)
+		-- T10.3 : une découverte peut ouvrir l'accès à un site sacré.
+		if result.firstDiscovery then
+			sacredSiteService.SendView(player.UserId)
+		end
 	end
 end)
 
@@ -413,6 +542,7 @@ remotes[Remotes.Name.RequestUnlockWorld].OnServerEvent:Connect(function(player: 
 		sendState(player)
 		-- T8.7 (D-023) : opération importante, sauvegarde différée et regroupée.
 		playerDataService.RequestSave(player.UserId, "déblocage de monde")
+		sacredSiteService.SendView(player.UserId)
 	end
 end)
 
@@ -422,6 +552,8 @@ remotes[Remotes.Name.TravelToWorld].OnServerEvent:Connect(function(player: Playe
 	local result = worldTravelService.HandleRequest(player.UserId, payload, select("#", ...))
 	if result.ok then
 		track("TravelSucceeded", player, result)
+		-- T10.3 : quitter l'île abandonne le combat en cours (rien n'est attribué).
+		guardianCombatService.Abandon(player.UserId, GuardianCombatService.EndReason.LeftArena)
 	end
 	if result.silent then
 		return
@@ -449,6 +581,8 @@ local function onPlayerAdded(player: Player)
 		end
 		collectionService.ResetTravelReference(player.UserId, spawnPosition)
 		movementValidator.Reset(player.UserId, spawnPosition, os.clock())
+		-- T10.3 : nouveau personnage (Reset, chute) : combat abandonné.
+		guardianCombatService.Abandon(player.UserId, GuardianCombatService.EndReason.NoCharacter)
 		character:WaitForChild("Humanoid", 10)
 		applyWalkSpeed(player)
 	end)
@@ -484,6 +618,7 @@ if RunService:IsStudio() then
 		warn(`[StudioTest] {player.Name} : préréglage {tostring(name)} appliqué ({description})`)
 		applyWalkSpeed(player)
 		sendState(player)
+		sacredSiteService.SendView(player.UserId)
 		return `OK : {description}`
 	end
 	applyPreset.Parent = folder
@@ -562,6 +697,8 @@ PlayerSession.start(playerDataService, {
 		-- T7 : succès déjà atteints (profil v1 migré, par exemple).
 		grantAchievements(player)
 		sendState(player)
+		-- T10.3 : accès aux sites sacrés (affichage).
+		sacredSiteService.SendView(player.UserId)
 		-- T6 : contrôle de cohérence, journal seulement (aucune correction).
 		local ok, issues = pcall(ProfileAudit.run, playerDataService.GetData(player.UserId))
 		if ok then
@@ -579,8 +716,12 @@ PlayerSession.start(playerDataService, {
 		upgradeService.RemovePlayer(player.UserId)
 		worldUnlockService.RemovePlayer(player.UserId)
 		worldTravelService.RemovePlayer(player.UserId)
+		-- T10.3 : combat en cours abandonné, victoires de session effacées.
+		guardianCombatService.RemovePlayer(player.UserId)
+		sacredSiteService.RemovePlayer(player.UserId)
+		sacredResourceService.RemovePlayer(player.UserId)
 		movementValidator.Remove(player.UserId)
 		securityLog.Remove(player.UserId)
 	end,
 })
-print(`[Bootstrap] PlayerDataService démarré ; collecte : {nodeCount} ressource(s) ; vente : {sellZoneCount} zone(s)`)
+print(`[Bootstrap] PlayerDataService démarré ; collecte : {nodeCount} ressource(s) ; vente : {sellZoneCount} zone(s) ; sites sacrés : {sacredSiteCount}`)

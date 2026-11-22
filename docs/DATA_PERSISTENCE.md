@@ -253,6 +253,33 @@ d'écrasé). À la publication, redémarrer tous les serveurs (pas de
 cohabitation v1 / v2) ; un retour arrière exige un serveur qui accepte la
 v2.
 
+### v3 sans migration : sanctuaires (T10.3, option A, D-035, 2026-11-22)
+
+Aucun changement de `schemaVersion`. Clés réservées dans des sections
+existantes (déjà acceptées par le contrôle, identifiants inconnus
+conservés) :
+
+- `achievements["sanctuary_<siteId>"] = true` : victoire personnelle,
+  accès permanent au site (T10-D01). Posée une fois par
+  `SacredSiteService.profileVictoryStore`, puis sauvegarde demandée
+  (`guardian_victory`). Écriture impossible : victoire gardée en session,
+  réécrite à la victoire suivante ou à la réclamation.
+- `achievements["sanctuary_reward_<siteId>"] = true` : récompense de
+  première victoire réclamée. Posée par `SacredResourceService` dans la
+  **même** mutation que `inventory.resources[<id sacré>] += 3` (et que la
+  clé de victoire si elle manque), puis sauvegarde demandée
+  (`sacred_reward`). Sac sans 3 places : rien n'est posé, droit conservé.
+- `inventory.resources["sacred_*"]` : unités sacrées
+  (`SacredResourceConfig`, hors `ResourceConfig`) ; 1 place de sac
+  chacune ; jamais vendues par `SellService` ; ignorées par le Journal.
+- Jamais retirées. `AchievementService`, `AnalyticsService` et
+  `ProfileAudit` les ignorent (vérifié par `GuardianPersistenceTests` P10).
+- Préréglages Studio : ils remettent l'inventaire à zéro (unités sacrées
+  comprises) mais gardent `achievements` ; après un préréglage, une
+  récompense déjà réclamée ne peut pas être réclamée de nouveau (Studio
+  seulement).
+- Tests : `GuardianPersistenceTests` (P1 à P15, Lune et Studio).
+
 ## Environnements
 
 | Contexte | Magasin |
