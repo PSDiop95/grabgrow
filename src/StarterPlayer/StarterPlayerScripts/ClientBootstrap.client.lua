@@ -3,7 +3,7 @@
 -- T2 : affichage du sac et collecte. T3 : vente. T4 : boutique et mondes.
 -- T5.2 : retours audio et visuels. T5.3 : guidage de première session.
 -- T7 : succès permanents. T8.2 : voyage entre mondes. T8.6 : journal de
--- collection.
+-- collection. T10.3 : gardiens et sites sacrés.
 
 local Controllers = script.Parent:WaitForChild("Controllers")
 local InventoryController = require(Controllers:WaitForChild("InventoryController"))
@@ -17,6 +17,7 @@ local FeedbackController = require(Controllers:WaitForChild("FeedbackController"
 local OnboardingController = require(Controllers:WaitForChild("OnboardingController"))
 local AchievementController = require(Controllers:WaitForChild("AchievementController"))
 local CollectionJournalController = require(Controllers:WaitForChild("CollectionJournalController"))
+local GuardianController = require(Controllers:WaitForChild("GuardianController"))
 
 InventoryController.start()
 -- T10.1 : visuels des ressources (modèles importés, V-01, attente).
@@ -36,3 +37,5 @@ OnboardingController.start()
 AchievementController.start()
 -- T8.6 : après la Boutique (bouton placé sous le sien, même cadre de panneau).
 CollectionJournalController.start()
+-- T10.3 : gardiens et sites sacrés (après la collecte : cibles du bouton Grab).
+GuardianController.start()

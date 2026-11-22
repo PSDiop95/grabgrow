@@ -1085,3 +1085,68 @@ propriétaire), ACCEPTÉE, REMPLACÉE.
 - **Affecte :** `ResourceVisualConfig`, `ResourceModelLoader`,
   `ConfigTests`, `tools/fix_glb_colors.luau`, `ASSET_MANIFEST.md`,
   `T10_2_VFX_REPORT.md`, place de test 93404872714886.
+
+## D-034 — T10.3 : gardiens et sites sacrés (addendum T10-D01 à T10-D03)
+
+- **Date :** 2026-11-22
+- **Statut :** ACCEPTÉE pour l'addendum (propriétaire, 2026-11-22) ;
+  implémentation T10.3 **validée** par le propriétaire le 2026-11-22.
+- **Contexte :** le prompt T10.3 demandait un combat coopératif, contraire
+  à D-028 (combats individuels). D-028 plaçait les gardiens en « T10.4 » ;
+  le propriétaire les a demandés en T10.3.
+- **Décision :**
+  - T10-D01 : la victoire personnelle débloque le site de façon permanente
+    (individuelle, jamais révoquée) ; le gardien réapparaît pour de
+    nouveaux combats.
+  - T10-D02 : un état de combat par joueur (PV, dégâts, victoire,
+    récompenses), aucun état global. Gardien **visuellement commun** :
+    un modèle serveur statique par site, animé localement par chaque
+    client pour son propre combat ; aucune copie physique par joueur.
+  - T10-D03 : une ressource sacrée par monde, à vendre ou à consommer
+    pour des améliorations spéciales ; aucune valeur ni coût sans
+    validation. En T10.3 : identifiants réservés, collecte refusée
+    (`NOT_AVAILABLE`).
+  - Victoires dans un magasin **de session** (D-029 : aucune migration) ;
+    magasin persistant injectable après autorisation.
+- **Justification :** isolation logique simple à tester, coût réseau et
+  serveur borné, aucune donnée persistante ni économique modifiée.
+- **Conséquences :** l'accès permanent est perdu à la déconnexion tant que
+  la persistance (option A en v3, préférée par le propriétaire le 2026-11-22 ; v4 exclue) n'est pas implémentée ; deux joueurs au
+  même site voient chacun le gardien tourné vers eux.
+- **Affecte :** `GuardianConfig`, `GuardianRules`, `GuardianSecurityConfig`,
+  `GuardianCombatService`, `SacredSiteService`, `SacredResourceService`,
+  `Systems/SacredSites`, `GuardianController`, `CollectionController`,
+  `Remotes`, `Bootstrap`, `Localization`, `GuardianTests`,
+  `tools/studio/build_sacred_sites.luau`, `T10_3_GUARDIANS_REPORT.md`.
+
+## D-035 — T10.3 : ressources sacrées (récompense, sac, rareté, réclamation)
+
+- **Date :** 2026-11-22
+- **Statut :** ACCEPTÉE (propriétaire, 2026-11-22) ; **implémentée** le
+  2026-11-22 sur autorisation (option A et P1 à P15). `ResourceConfig`,
+  schéma v3 et économie inchangés ; aucune valeur de vente.
+- **Contexte :** T10-D03 (double usage) ; option A en v3 confirmée ;
+  synthèse `phases/T10_3_DECISION_SYNTHESIS.md`.
+- **Décision :**
+  1. 3 unités par site, une seule fois, à la première victoire (régime R1 ;
+     R2 et R3 écartés).
+  2. 1 place de sac par unité (règle actuelle).
+  3. Nouvelle catégorie « Sacrée », distincte de Common à Epic.
+  4. Configuration dédiée, hors `ResourceConfig` : Journal à 20/20,
+     conditions d'accès aux sites inchangées.
+  5. Réclamation à la terrasse : sac plein → `INVENTORY_FULL` sans perte du
+     droit ; nouvel essai après avoir libéré de la place ; ajout des 3
+     unités et clé `achievements["sanctuary_reward_<siteId>"]` dans une
+     seule mutation, sans double attribution possible.
+  6. Économie : S2 (k = 2) comme hypothèse de test ; valeurs provisoires.
+- **Conséquences :** tests P1 à P15 spécifiés
+  (`phases/T10_3_PERSISTENCE_OPTION_A.md`), spécifications validées le 2026-11-22, à écrire avant
+  implémentation ; un code `ALREADY_CLAIMED` sera nécessaire ; vente et
+  consommation des unités restent à concevoir. T10.3 attend la validation
+  technique et M1-M14, L1-L7. T10.4 non autorisée.
+- **Affecte :** `SacredResourceConfig` (nouveau), `GuardianConfig`,
+  `GuardianRules`, `SacredSiteService`, `SacredResourceService`,
+  `Bootstrap`, `Remotes` (`ALREADY_CLAIMED`, `NOT_AVAILABLE` retiré),
+  `GuardianController`, `InventoryController`, `Localization`,
+  `GuardianTests`, `GuardianPersistenceTests` (nouveau), `RunTests`,
+  `DATA_PERSISTENCE.md`.

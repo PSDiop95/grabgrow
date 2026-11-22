@@ -9,6 +9,14 @@ sacrées à **double usage**, vente ou améliorations (D-030) ; **schéma v3
 conservé**, le schéma v4 proposé en T10.0 est retiré (D-029) ; aucune valeur
 économique fixée (D-030).
 
+Révision T10.3 (2026-11-22, D-034) : sites **construits** sous les noms
+Sanctuaire des racines, Temple du soleil, Autel des glaces, Sanctuaire
+astral, sur plateformes dédiées reliées aux îles. Ressources sacrées :
+identifiants réservés, collecte refusée (`NOT_AVAILABLE`) ; valeurs
+et règles d'attribution validées le 2026-11-22 (D-035) : 3 unités à la
+première victoire, réclamées à la terrasse, 1 place chacune, catégorie
+« Sacrée » hors `ResourceConfig` ; valeurs provisoires (S2). Non implémenté.
+
 ## 1. Rôle
 
 Un site sacré par monde : l'arène du gardien (`T10_GUARDIANS_DESIGN.md`)

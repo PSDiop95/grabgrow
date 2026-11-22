@@ -10,6 +10,11 @@ récompenses **non fixées** avant simulation (D-030) ; schéma v3 conservé
 (D-029). Les règles de PV partagés, d'adaptation au nombre de joueurs et
 de réapparition par serveur de la version T10.0 sont retirées.
 
+Révision T10.3 (2026-11-22, D-034) : **implémenté** en T10.3 (et non
+T10.4) selon l'addendum T10-D01 à T10-D03. Gardien visuellement commun,
+états par joueur ; PV, attaques et durées dans `GuardianConfig`
+(hypothèses) ; détails et écarts dans `phases/T10_3_GUARDIANS_REPORT.md`.
+
 ## 1. Principes communs
 
 - **PvE individuel, sans PvP** : chaque joueur combat **son** gardien ;

@@ -54,7 +54,19 @@ type TrackedNode = {
 	connection: RBXScriptConnection,
 }
 
+-- T10.3 : autres cibles du bouton « Grab » (éclats de gardien, autel, nœud
+-- sacré), fournies par GuardianController. Même ciblage (le plus proche,
+-- à portée), même bouton ; la demande part vers leur propre RemoteEvent.
+export type TargetSource = {
+	-- Cible la plus proche de `origin` et sa distance, ou nil.
+	find: (origin: Vector3) -> (BasePart?, number),
+	owns: (part: BasePart) -> boolean,
+	activate: (part: BasePart) -> (),
+	label: (part: BasePart) -> string,
+}
+
 local localPlayer = Players.LocalPlayer :: Player
+local targetSources: { TargetSource } = {}
 local requestCollect: RemoteEvent
 local tracked: { [BasePart]: TrackedNode } = {}
 local target: BasePart? = nil
@@ -82,17 +94,30 @@ local function collectRange(): number
 	return if state then state.collectRangeStuds else UpgradeConfig.Magnet.levels[1].value
 end
 
+local function sourceOf(part: BasePart): TargetSource?
+	for _, source in ipairs(targetSources) do
+		if source.owns(part) then
+			return source
+		end
+	end
+	return nil
+end
+
 local function setTarget(part: BasePart?)
 	if part == target then
 		return
 	end
 	target = part
+	local source = if part then sourceOf(part) else nil
 	-- T10.1 : le surlignage entoure le visuel (modèle importé ou Part).
-	highlight.Adornee = if part then NodeVisuals.adorneeFor(part) else nil
+	highlight.Adornee = if part and source == nil then NodeVisuals.adorneeFor(part) else part
 	-- Les types de l'API déclarent Adornee non nul ; nil retire l'ancrage.
 	billboard.Adornee = part :: any
 	billboard.Enabled = part ~= nil
-	if part then
+	if part and source then
+		local hint = if UserInputService.TouchEnabled then "" else `  [{COLLECT_KEY.Name}]`
+		billboardLabel.Text = source.label(part) .. hint
+	elseif part then
 		local resourceType = part:GetAttribute("ResourceType")
 		local definition = if type(resourceType) == "string" then ResourceConfig[resourceType] else nil
 		local name = if definition then translate(definition.displayNameKey) else ""
@@ -110,6 +135,20 @@ local function findTarget(): BasePart?
 	local origin = root.Position
 	local best: BasePart? = nil
 	local bestDistance = collectRange()
+	-- T10.3 : une cible de combat passe avant les ressources ; chaque source
+	-- applique sa propre portée nominale.
+	local sourceDistance = math.huge
+	for _, source in ipairs(targetSources) do
+		local part, distance = source.find(origin)
+		if part and distance < sourceDistance then
+			sourceDistance = distance
+			best = part
+			bestDistance = distance
+		end
+	end
+	if best ~= nil then
+		return best
+	end
 	for part, node in pairs(tracked) do
 		if node.available then
 			local distance = (part.Position - origin).Magnitude
@@ -125,6 +164,12 @@ end
 -- Envoie une demande pour `part`, au plus une à la fois et sans dépasser
 -- la cadence nominale. Seul l'identifiant du nœud est transmis.
 local function request(part: BasePart)
+	local source = sourceOf(part)
+	if source then
+		-- Cadence et envoi gérés par la source (GuardianController).
+		source.activate(part)
+		return
+	end
 	local now = os.clock()
 	if now < pendingUntil or now < nextSendAt then
 		return
@@ -237,6 +282,11 @@ local function onPointerPressed(input: InputObject, nodeFolder: Instance)
 	if hit and hit.Instance:IsA("BasePart") and tracked[hit.Instance] ~= nil then
 		request(hit.Instance)
 	end
+end
+
+-- T10.3 : ajoute une source de cibles (GuardianController).
+function CollectionController.addTargetSource(source: TargetSource)
+	table.insert(targetSources, source)
 end
 
 -- Place le bouton de collecte au-dessus du bouton de saut de Roblox
