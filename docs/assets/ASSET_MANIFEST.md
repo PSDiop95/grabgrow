@@ -122,6 +122,7 @@ propriétaire (02, de dos). Dossier : `docs/publication/images/`.
 | `thumb_05_mystic_world.png` | Mystic World, îles flottantes | Play | Miniature |
 | `icon_provisional_guardian.png` | Gardien de la forêt, 512×512 | Play | Icône **provisoire**, remplacée par I1 ci-dessous |
 | `icon_I1_chatgpt_512.png` (source `icon_I1_chatgpt_source.png`, 1254×1254) | Personnage cubique, sac débordant de ressources | **Généré par IA** : ChatGPT (compte Go du propriétaire), 2026-11-23, prompt I1 de `IMAGE_PROMPTS_CHATGPT.md` sans modification ; réduit en 512×512, aucune retouche | **Icône proposée**, à valider par le propriétaire |
+| `thumb_06_chatgpt_T1.png` (source `thumb_06_chatgpt_T1_source.png`, 1536×1024) | Trois personnages collectent cristal, bûche et pomme ; étal de vente au fond | **Généré par IA** : ChatGPT (compte Go du propriétaire), 2026-11-23, prompt T1 sans modification ; recadré 16:9 (1536×864) puis 1920×1080, aucune retouche | Miniature **proposée**. Écarts avec le jeu : marchand PNJ à l'étal (absent du jeu), personnages plus détaillés que les avatars Roblox. À placer après au moins 2 vraies captures |
 
 Import dans le Creator Dashboard : à faire par le propriétaire (le
 navigateur de l'agent ne peut pas envoyer de fichier).

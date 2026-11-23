@@ -116,3 +116,21 @@ l'agent ne publie rien et ne change aucun réglage.
    (autorisation explicite requise). Noter version, date et commit dans
    `PROJECT_STATUS.md`.
 
+### État au 2026-11-23
+
+- Étapes 3 à 5 : expérience créée et privée ; nom, descriptions EN/FR,
+  icône I1 et miniatures importés (propriétaire). Questionnaire rempli
+  par le propriétaire le 2026-11-23 : maturité « Minimal », âge minimum
+  16+, aucun descripteur de contenu. Genre : à confirmer.
+- Place de production : version 3 publiée le 2026-11-23 à 10:26, ouverte
+  dans Studio et **vérifiée** : 111 scripts identiques à `main` `6e63de6`
+  (empreinte globale 4134376799, identique au dépôt), 20 modèles de
+  ressources, 4 mondes, 4 sites sacrés, 4 zones de vente,
+  `useMemoryStore = true` (sans effet hors Studio), DataStore de production
+  `GrabAndGrow_PlayerData_v1`, analytics actif. Play Studio : `TOUS LES
+  TESTS : OK`, 160 ressources ; seuls avertissements : assets d'avatar
+  203785492 et 81504106 (A-8).
+- **Publiée le 2026-11-23** sur décision du propriétaire (D-041) : accès
+  public, 16+, vérifié par l'API publique `games.roblox.com` sans
+  authentification. Test fermé non réalisé ; serveurs de 50 joueurs ;
+  genre « All ».

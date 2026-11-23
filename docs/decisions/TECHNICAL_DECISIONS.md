@@ -1259,3 +1259,22 @@ propriétaire), ACCEPTÉE, REMPLACÉE.
   `MovementSecurityConfig` (aucune alerte observée en Studio).
 - **Affecte :** `GuardianConfig`, `GuardianRules`, `GuardianCombatService`,
   `GuardianController`, `GuardianTests` (27 cas).
+
+## D-041 — Publication publique de GRAB & GROW
+
+- **Date :** 2026-11-23
+- **Statut :** ACCEPTÉE (propriétaire : « C'est bon publie le jeu
+  maintenant », 2026-11-23).
+- **Contexte :** place de production vérifié (111 scripts identiques à
+  `main` `6e63de6`), questionnaire rempli (Minimal, aucun descripteur),
+  identité vérifiée.
+- **Décision :** expérience 10778642065 rendue publique via Gérer
+  l'audience > Publier publiquement sur Roblox. Audience : 16+ (défaut),
+  Kids & Select non engagé.
+- **Justification :** décision explicite du propriétaire.
+- **Conséquences :** des joueurs réels écrivent dans le DataStore de
+  production `GrabAndGrow_PlayerData_v1`. Publiée **sans** test fermé ni
+  test sur mobile réel (Galaxy A23, recul D-040 avec latence) : à
+  surveiller dans les premiers jours. Serveurs de 50 joueurs (réglage par
+  défaut, non testé à cette taille). Genre affiché : « All ».
+- **Affecte :** `RELEASE_PLAN.md`, `PUBLICATION_READINESS_CHECKLIST.md`.
