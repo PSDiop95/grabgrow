@@ -1,8 +1,18 @@
 # GRAB & GROW — État du projet
 
-Dernière mise à jour : 2026-11-22 (T10.4 validation globale : statut proposé PARTIAL, D-036)
+Dernière mise à jour : 2026-11-23 (T10.4 validation complémentaire T10-D01 à D03 : statut proposé PARTIEL)
 
 ## Résumé
+
+**T10.4 validation complémentaire (2026-11-23) : PARTIEL**
+(`phases/T10_4_COMPLEMENTARY_VALIDATION_REPORT.md`). DataStore réel de
+l'expérience de test, Play solo : D01 (victoire, déblocage, reconnexion,
+défaite, accès conservé) OK ; D03 (collecte, vente, consommation, doubles
+transactions, reconnexion après chaque étape) OK. Lune 25 suites OK
+(`SacredTransactionTests` 20 cas). Local Server à 2 joueurs (2026-11-23) :
+arrivée pendant un combat et M8 (déconnexion en combat) OK. NOT TESTED :
+reconnexion multijoueur réelle, mobile. Vide au-delà de 34 studs autour de
+l'arène Root (recul de 18 studs) : à vérifier.
 
 **T10.5b (interface reliques sacrées, Boussole) : faite en Studio solo**
 (`phases/T10_5B_SACRED_UI_REPORT.md`) ; clic réel, mobile et Local Server
@@ -205,7 +215,7 @@ chiffrée. Place de test version 56. Commit T5.5 non créé, aucun push.
 
 | # | Réserve | Statut |
 |---|---|---|
-| R-01 | Copie `Recovery_` (D-008) non vérifiée sur DataStore réel : D-008 validée sur l'implémentation et les tests automatisés | À faire ; demande le droit MCP `universe-datastores.objects:update`, à n'activer qu'avec l'accord du propriétaire |
+| R-01 | Copie `Recovery_` (D-008) : observée sur DataStore réel le 2026-11-23 (`Recovery_11975439775_1795386059`, profil de test ancien normalisé) ; cas provoqué volontairement non testé | Partiellement levé ; demande le droit MCP `universe-datastores.objects:update`, à n'activer qu'avec l'accord du propriétaire |
 | R-02 | V-04 : deux serveurs actifs simultanément non testés (Studio : une session par place, `RCC-276`) | Facultatif avant T2 |
 | R-03 | V-02 : sortie d'un joueur sur un serveur qui continue (`PlayerRemoving` seul) non isolée sur DataStore réel | Couvert par simulation |
 | R-04 | Place Roblox de test : version enregistrée avec `useMemoryStore = false` | **Levée** le 2026-11-11 (accord du propriétaire) : place de test (93404872714886) sauvegardé en version 7 avec `useMemoryStore = true` ; `DataConfig` du place et de `GrabAndGrow.rbxl` local identiques au dépôt (empreinte comparée) ; aucune donnée persistante modifiée |
