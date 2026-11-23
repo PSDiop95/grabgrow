@@ -29,6 +29,7 @@ local GuardianConfig = require(ReplicatedStorage.Shared.Config.GuardianConfig)
 local GuardianCombatService = require(script.Parent.Services.GuardianCombatService)
 local SacredSiteService = require(script.Parent.Services.SacredSiteService)
 local SacredResourceService = require(script.Parent.Services.SacredResourceService)
+local SacredTransactionService = require(script.Parent.Services.SacredTransactionService)
 local SacredSites = require(script.Parent.Systems.SacredSites)
 local AchievementService = require(script.Parent.Services.AchievementService)
 local AnalyticsService = require(script.Parent.Services.AnalyticsService)
@@ -356,6 +357,14 @@ local sacredResourceService = SacredResourceService.new({
 	security = securityLog,
 })
 
+-- Vente et améliorations sacrées (T10.5a, D-037, D-038) : une mutation par
+-- opération ; valeurs et coûts lus dans SacredResourceConfig.
+local sacredTransactionService = SacredTransactionService.new({
+	playerData = playerDataService,
+	rateLimit = guardianRateLimit,
+	security = securityLog,
+})
+
 -- Envoi de l'état du sac après une réclamation ; branché plus bas, une fois
 -- sendState défini.
 local sendSacredState: (player: Player) -> () = function() end
@@ -491,6 +500,47 @@ remotes[Remotes.Name.RequestSell].OnServerEvent:Connect(function(player: Player,
 	})
 	if result.ok then
 		grantAchievements(player)
+		sendState(player)
+	end
+end)
+
+-- T10.5a : vente sacrée. Seul l'identifiant de ressource est lu ; quantité
+-- et montant sont décidés par le serveur.
+remotes[Remotes.Name.RequestSacredSell].OnServerEvent:Connect(function(player: Player, payload: any, ...: any)
+	local result = sacredTransactionService.HandleSell(player.UserId, payload, select("#", ...))
+	if result.silent then
+		return
+	end
+	actionResult:FireClient(player, {
+		action = Remotes.Action.SacredSell,
+		ok = result.ok,
+		code = result.code,
+		resourceId = result.resourceId,
+		quantitySold = result.quantitySold,
+		coinsEarned = result.coinsEarned,
+	})
+	if result.ok then
+		grantAchievements(player)
+		sendState(player)
+	end
+end)
+
+-- T10.5a : amélioration sacrée. Seul l'identifiant est lu ; coût et effet
+-- viennent de SacredResourceConfig et du profil serveur.
+remotes[Remotes.Name.RequestSacredUpgrade].OnServerEvent:Connect(function(player: Player, payload: any, ...: any)
+	local result = sacredTransactionService.HandleUpgrade(player.UserId, payload, select("#", ...))
+	if result.silent then
+		return
+	end
+	actionResult:FireClient(player, {
+		action = Remotes.Action.SacredUpgrade,
+		ok = result.ok,
+		code = result.code,
+		upgradeId = result.upgradeId,
+		resourceId = result.resourceId,
+		unitsSpent = result.unitsSpent,
+	})
+	if result.ok then
 		sendState(player)
 	end
 end)
@@ -720,6 +770,7 @@ PlayerSession.start(playerDataService, {
 		guardianCombatService.RemovePlayer(player.UserId)
 		sacredSiteService.RemovePlayer(player.UserId)
 		sacredResourceService.RemovePlayer(player.UserId)
+		sacredTransactionService.RemovePlayer(player.UserId)
 		movementValidator.Remove(player.UserId)
 		securityLog.Remove(player.UserId)
 	end,

@@ -38,6 +38,7 @@ local AnalyticsTests = require(script.Parent.AnalyticsTests)
 local ResourceFxTests = require(script.Parent.ResourceFxTests)
 local GuardianTests = require(script.Parent.GuardianTests)
 local GuardianPersistenceTests = require(script.Parent.GuardianPersistenceTests)
+local SacredTransactionTests = require(script.Parent.SacredTransactionTests)
 
 local GameConfig = require(Config.GameConfig)
 local ResourceConfig = require(Config.ResourceConfig)
@@ -94,6 +95,8 @@ local GuardianRules = require(ReplicatedStorage.Shared.Util.GuardianRules)
 local GuardianCombatService = require(ServerScriptService.Services.GuardianCombatService)
 local SacredSiteService = require(ServerScriptService.Services.SacredSiteService)
 local SacredResourceService = require(ServerScriptService.Services.SacredResourceService)
+local SacredTransactionService = require(ServerScriptService.Services.SacredTransactionService)
+local SacredUpgradeRules = require(ReplicatedStorage.Shared.Util.SacredUpgradeRules)
 
 local totalFailures = 0
 
@@ -483,6 +486,25 @@ report(
 		ProfileAudit = ProfileAudit,
 		StudioTestPresets = StudioTestPresets,
 		InventoryService = InventoryService,
+		Remotes = Remotes,
+	})
+)
+
+-- T10.5a : vente et améliorations sacrées (D-037, D-038).
+report(
+	"SacredTransactionTests",
+	SacredTransactionTests.run({
+		PlayerDataService = PlayerDataService,
+		MemoryDataStore = MemoryDataStore,
+		DataSchema = DataSchema,
+		DataConfig = DataConfig,
+		SacredTransactionService = SacredTransactionService,
+		SacredUpgradeRules = SacredUpgradeRules,
+		SacredResourceConfig = SacredResourceConfig,
+		InventoryService = InventoryService,
+		RateLimitService = RateLimitService,
+		GuardianSecurityConfig = GuardianSecurityConfig,
+		UpgradeConfig = UpgradeConfig,
 		Remotes = Remotes,
 	})
 )

@@ -15,6 +15,10 @@ T10.4) selon l'addendum T10-D01 à T10-D03. Gardien visuellement commun,
 états par joueur ; PV, attaques et durées dans `GuardianConfig`
 (hypothèses) ; détails et écarts dans `phases/T10_3_GUARDIANS_REPORT.md`.
 
+Validation T10.4 (2026-11-22, D-036) : conformité à l'addendum vérifiée
+(`phases/T10_4_FINAL_VALIDATION_REPORT.md` §3) ; combat coopératif sans
+objet (T10-D02) ; équilibrage (PV, cadences) non mesuré sur joueurs réels.
+
 ## 1. Principes communs
 
 - **PvE individuel, sans PvP** : chaque joueur combat **son** gardien ;

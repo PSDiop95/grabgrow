@@ -34,6 +34,8 @@ local InventoryController = require(script.Parent:WaitForChild("InventoryControl
 local RangeRing = require(script.Parent:WaitForChild("RangeRing"))
 local TravelController = require(script.Parent:WaitForChild("TravelController"))
 local TravelRules = require(Shared:WaitForChild("Util"):WaitForChild("TravelRules"))
+-- T10.5b : vente et améliorations sacrées, section de la même liste.
+local SacredShopSection = require(script.Parent:WaitForChild("SacredShopSection"))
 
 local UpgradeController = {}
 
@@ -613,11 +615,14 @@ local function buildInterface(): ScreenGui
 	for index, upgradeId in ipairs(upgradeIds) do
 		buildCard(list, upgradeId, index)
 	end
+	-- T10.5b : reliques sacrées entre les améliorations et les mondes.
+	SacredShopSection.build(list, #upgradeIds + 1)
+	local worldsOrder = #upgradeIds + 1 + SacredShopSection.ITEM_COUNT
 	local worldsTitle = newLabel(list, translate("shop.worlds"), 18, COLOR_TEXT)
-	worldsTitle.LayoutOrder = #upgradeIds + 1
+	worldsTitle.LayoutOrder = worldsOrder
 	worldsTitle.Size = UDim2.new(1, -8, 0, 30)
 	for index, worldId in ipairs(worldIds) do
-		buildWorldRow(list, worldId, #upgradeIds + 1 + index)
+		buildWorldRow(list, worldId, worldsOrder + index)
 	end
 
 	screenGui.Parent = localPlayer:WaitForChild("PlayerGui")
@@ -728,6 +733,7 @@ function UpgradeController.start()
 	requestUnlock = Remotes.waitFor(Remotes.Name.RequestUnlockWorld)
 	local screenGui = buildInterface()
 	render()
+	SacredShopSection.start()
 	task.spawn(followGrabButton, screenGui)
 	task.spawn(avoidBagPanel, screenGui)
 

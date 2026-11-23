@@ -29,6 +29,9 @@ local GuardianSecurityConfig = {
 		GuardianActivate = { burst = 3, refillPerSecond = 0.5 },
 		GuardianStrike = { burst = 8, refillPerSecond = 4 },
 		SacredCollect = { burst = 5, refillPerSecond = 2 },
+		-- T10.5a : actions de menu, rares (au plus 4 ventes et 4 achats).
+		SacredSell = { burst = 3, refillPerSecond = 0.5 },
+		SacredUpgrade = { burst = 3, refillPerSecond = 0.5 },
 	},
 
 	RateLimitFeedback = {

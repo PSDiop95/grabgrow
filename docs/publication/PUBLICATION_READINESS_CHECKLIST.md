@@ -1,6 +1,6 @@
 # Checklist de préparation à la publication — GRAB & GROW
 
-Date de l'audit : 2026-11-16 (T9-G). **Aucune publication ni aucun réglage
+Date de l'audit : 2026-11-16 (T9-G) ; mise à jour partielle 2026-11-23 (page de l'expérience, images, crédits T10). **Aucune publication ni aucun réglage
 de l'expérience n'a été modifié.** Les règles Roblox citées sont celles de
 la documentation Creator Hub consultée à cette date (pages « Publish
 experiences and places », « Content maturity ») ; à revérifier le jour de
@@ -15,10 +15,10 @@ réserve), **BLOCKED** (manque une action ou une décision), **NOT TESTED**
 | Élément | Statut | Constat / action |
 |---|---|---|
 | Nom « GRAB & GROW » | PARTIAL | Le place de test s'affiche « Test de prise et de croissance » dans Studio. Nom public à définir dans l'expérience de production (propriétaire) |
-| Description courte | BLOCKED | Non rédigée. Règle Roblox : résumer le jeu dès la première phrase, sans répétition de mots-clés. Proposition à rédiger et valider |
-| Description complète | BLOCKED | Non rédigée (EN et FR) |
-| Icône | BLOCKED | Aucune ; génération soumise à validation explicite |
-| Miniatures | BLOCKED | Aucune ; captures existantes de travail (`docs/phases/T8_5_captures`, `T8_6_captures`) non destinées à la vitrine |
+| Description courte | PARTIAL | Brouillon EN/FR (2026-11-23, `STORE_PAGE_DRAFT.md` §2), à valider |
+| Description complète | PARTIAL | Brouillon EN/FR (`STORE_PAGE_DRAFT.md` §2), à valider |
+| Icône | BLOCKED | Aucune ; prompts prêts (`IMAGE_PROMPTS_CHATGPT.md` I1–I3), génération et choix par le propriétaire |
+| Miniatures | BLOCKED | Aucune ; prompts prêts (T1–T6) ; au moins 2 vraies captures à produire |
 | Captures d'écran | BLOCKED | À produire après validation de la direction visuelle |
 | Cohérence visuelle | PARTIAL | Quatre îles en primitives low-poly cohérentes (T8) ; aucun asset tiers ; logo absent |
 | Présentation des quatre mondes | PARTIAL | Mondes jouables et validés (T8.2 à T8.5) ; aucun support de présentation |
@@ -37,7 +37,7 @@ réserve), **BLOCKED** (manque une action ou une décision), **NOT TESTED**
 | Compatibilité des plateformes | PARTIAL | Voir C ; cases d'appareils de l'expérience non consultées |
 | Communication (chat) | NOT TESTED | Aucun chat ajouté par le jeu ; réglages par défaut de Roblox |
 | Classification (questionnaire) | BLOCKED | Obligatoire : sans classification, Roblox restreint la jouabilité pour tous. Contenu présumé sans élément restreint (aucune violence, aucun chat ajouté, aucun achat) : réponse « non » à la question de contenu restreint → audience 16+ ; Kids & Select demande un parcours supplémentaire (ci-dessous). Réponse réservée au propriétaire |
-| Permissions des assets | PASS | Aucun asset 3D tiers (`ASSET_MANIFEST.md`) ; 8 sons Roblox vérifiés (`SOUND_MANIFEST.md`) |
+| Permissions des assets | BLOCKED | Depuis T10 : 20 meshes Polyfork CC BY 4.0 modifiés ; crédits absents en jeu et dans la description (A-4, options `STORE_PAGE_DRAFT.md` §3) ; 8 sons Roblox vérifiés (`SOUND_MANIFEST.md`) |
 | Dépendances | PASS | Aucune dépendance externe, aucun HttpService sortant, aucun package |
 
 ### Exigences Roblox de sortie publique (au 2026-11-16)
@@ -77,7 +77,7 @@ Appareils réellement testés : PC (Studio), téléphone Android réel (T5.5),
 | Classification | BLOCKED | Questionnaire à remplir par le propriétaire |
 | Communications | PASS | Aucun système de communication ajouté |
 | Données et analytics | PASS | Roblox AnalyticsService uniquement, aucune donnée personnelle dans les champs, aucun service tiers (T9) |
-| Assets et licences | PASS | Voir B |
+| Assets et licences | BLOCKED | Crédits CC BY à afficher (voir B) |
 | Contenus restreints | PASS (présumé) | Aucun contenu violent, sexuel, de jeu d'argent ou d'achat ; à confirmer par le propriétaire dans le questionnaire |
 | Confidentialité | NOT TESTED | Paramètres de l'expérience |
 | Sécurité serveur | PASS | T6 (D-019), T8.7 : aucune autorité client |

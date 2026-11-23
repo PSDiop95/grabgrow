@@ -11,7 +11,10 @@ inchangés. Reproduire : `lune run tools/simulate_sacred_economy.luau`.
 - Accès au site : Green Valley vers 26 min (hypothèse : 5 ressources découvertes), autres mondes dès leur déblocage.
 - Ferme : combat 60 s + réapparition 45 s (`GuardianConfig`).
 - Amélioration de référence : « Sac sacré 1 », 3 unités, +10 % de capacité ≈ **+9 % de revenu (estimation non simulée)**.
-- Une unité sacrée = 5 places de sac (hypothèse).
+- Une unité sacrée = 1 place de sac (D-035). Anomalie A-3 de T10.4
+  corrigée le 2026-11-22 dans `tools/simulate_sacred_economy.luau`, qui
+  ajoute une section R-1 (D-037) : seuils par amélioration dans
+  `T10_3_SACRED_TRANSACTIONS_PROPOSAL.md` §4.
 
 ## 2. Revenus de référence
 

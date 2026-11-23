@@ -279,6 +279,13 @@ conservés) :
   récompense déjà réclamée ne peut pas être réclamée de nouveau (Studio
   seulement).
 - Tests : `GuardianPersistenceTests` (P1 à P15, Lune et Studio).
+- T10.5a (U-A, D-037, D-038) : `achievements["sacred_upgrade_<id>"] = true`,
+  acquisition d'une amélioration sacrée (un seul niveau). Posée par
+  `SacredTransactionService` dans la **même** mutation que le retrait des
+  3 unités, puis sauvegarde `sacred_upgrade`. La vente sacrée retire
+  `inventory.resources["sacred_*"]` et crédite les Coins dans une mutation
+  (sauvegarde `sacred_sale`). Aucun changement de `schemaVersion` ni de
+  `DataSchema`. Tests : `SacredTransactionTests` (Lune).
 
 ## Environnements
 

@@ -17,7 +17,8 @@
 --   * accès au site de Green Valley vers 20 min de jeu (5 ressources
 --     découvertes) ; aux autres sites dès le déblocage du monde ;
 --   * cycle de ferme : combat 60 s + réapparition 45 s (GuardianConfig) ;
---   * une ressource sacrée occupe 5 places de sac ;
+--   * une ressource sacrée occupe 1 place de sac (D-035 ; reflète
+--     SacredResourceConfig.bagSlotsPerUnit, non lisible depuis Lune) ;
 --   * gain de revenu des améliorations spéciales estimé (paramètres
 --     UPGRADE_GAINS) faute de modèle de collecte dans cet outil.
 
@@ -85,7 +86,7 @@ end
 
 local VALUE_MINUTES = { 0.5, 1, 2, 4 } -- valeur = k minutes du revenu bas
 local CYCLE_SECONDS = 60 + 45
-local BAG_SLOTS = 5
+local BAG_SLOTS = 1 -- D-035 (anomalie A-3 de T10.4 corrigée)
 local FIRST_VICTORY_UNITS = 3
 local REGIMES = {
 	{ id = "R1", label = "1re victoire seulement (3 unités)", perHour = 0 },
@@ -96,6 +97,14 @@ local REGIMES = {
 -- capacité ≈ +9 % de revenu (hypothèse).
 local UPGRADE_UNITS = 3
 local UPGRADE_GAIN = 0.09
+-- R-1 (D-037) : une amélioration à un niveau par monde, coût = les 3 unités
+-- du monde. Gains de revenu ESTIMÉS (aucun modèle de collecte ici).
+local R1_UPGRADES = {
+	GreenValley = { id = "sacred_magnet", gain = 0.03 },
+	GoldenDesert = { id = "sacred_grabber", gain = 0.05 },
+	FrozenPeaks = { id = "sacred_backpack", gain = 0.09 },
+	MysticWorld = { id = "sacred_compass", gain = 0 },
+}
 
 local function fmt(n)
 	if n >= 100 then
@@ -164,3 +173,23 @@ end
 
 print("\n## Place dans le sac\n")
 print(`Une unité = {BAG_SLOTS} places ; 3 unités = {3 * BAG_SLOTS} places.`)
+
+print("\n## R-1 : amélioration du monde contre vente de ses 3 unités (gains estimés)\n")
+print("Seuil = temps de jeu après lequel l'amélioration rapporte plus que la vente.\n")
+print("| Monde | Amélioration | Gain estimé | k = 0,5 | k = 1 | k = 2 | k = 4 |")
+print("|---|---|---|---|---|---|---|")
+for _, world in ipairs(WORLDS) do
+	local upgrade = R1_UPGRADES[world.id]
+	if upgrade then
+		local cells = {}
+		for _, k in ipairs(VALUE_MINUTES) do
+			if upgrade.gain <= 0 then
+				table.insert(cells, "jamais (sans effet économique)")
+			else
+				local forgone = UPGRADE_UNITS * k * world.low
+				table.insert(cells, minutesText(forgone / (upgrade.gain * world.high)))
+			end
+		end
+		print(`| {world.id} | {upgrade.id} | {math.floor(upgrade.gain * 100 + 0.5)} % | {table.concat(cells, " | ")} |`)
+	end
+end

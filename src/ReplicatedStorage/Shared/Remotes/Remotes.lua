@@ -31,6 +31,8 @@ Remotes.Name = table.freeze({
 	--   Upgrade : upgradeId?, level?, coinsSpent
 	--   UnlockWorld : worldId?, coinsSpent
 	--   Travel  : worldId? (T8)
+	--   SacredSell    : resourceId?, quantitySold, coinsEarned (T10.5a)
+	--   SacredUpgrade : upgradeId?, resourceId?, unitsSpent (T10.5a)
 	--   Achievement : achievementId, coinsEarned (T7, envoyé par le serveur
 	--                 seul, après une action validée ; aucune demande client)
 	ActionResult = "ActionResult",
@@ -47,6 +49,14 @@ Remotes.Name = table.freeze({
 	-- T10.3. Client -> Serveur. Payload : { nodeId = "RootSanctuary_Sacred_1" }.
 	-- Réclamation de la récompense sacrée à la terrasse (une fois, D-035).
 	RequestSacredCollect = "RequestSacredCollect",
+	-- T10.5a (D-038). Client -> Serveur. Payload : { resourceId = "sacred_sun_relic" }.
+	-- Vend TOUTES les unités de cette ressource sacrée ; quantité et montant
+	-- décidés par le serveur. Réponse : ActionResult action = SacredSell.
+	RequestSacredSell = "RequestSacredSell",
+	-- T10.5a (D-037, D-038). Client -> Serveur. Payload : { upgradeId = "sacred_backpack" }.
+	-- Achète l'amélioration spéciale (un seul niveau) contre les unités
+	-- sacrées du monde. Réponse : ActionResult action = SacredUpgrade.
+	RequestSacredUpgrade = "RequestSacredUpgrade",
 	-- T10.3. Serveur -> Client, au SEUL joueur concerné. Payload : { type, ... }
 	--   combat, shard, shardRemoved, attack, hit, ended, victory, sites, result
 	--   (voir GuardianCombatService et SacredSiteService).
@@ -60,6 +70,8 @@ Remotes.Action = table.freeze({
 	UnlockWorld = "UnlockWorld",
 	Achievement = "Achievement",
 	Travel = "Travel",
+	SacredSell = "SacredSell",
+	SacredUpgrade = "SacredUpgrade",
 })
 
 Remotes.ResultCode = table.freeze({
@@ -85,6 +97,8 @@ Remotes.ResultCode = table.freeze({
 	Stunned = "STUNNED", -- touché par une attaque : saisie impossible quelques instants
 	GuardianRespawning = "GUARDIAN_RESPAWNING", -- gardien vaincu, réapparition en attente (ce joueur)
 	AlreadyClaimed = "ALREADY_CLAIMED", -- récompense sacrée déjà réclamée (D-035)
+	-- T10.5a : unités sacrées insuffisantes pour une amélioration spéciale.
+	InsufficientResources = "INSUFFICIENT_RESOURCES",
 	InternalError = "INTERNAL_ERROR",
 })
 

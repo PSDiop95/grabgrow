@@ -1,7 +1,10 @@
 # T10.3 — Plan de tests manuels : deux joueurs, mobile, captures
 
-Date : 2026-11-22 — Statut : **À EXÉCUTER** par le propriétaire (le MCP ne
-lance ni Local Server ni appareil réel). Place : place de test
+Date : 2026-11-22 — Statut : **A exécutée** le 2026-11-22 (Local Server
+lancé par le propriétaire, scénarios pilotés par MCP) : résultats dans
+`phases/T10_4_FINAL_VALIDATION_REPORT.md` §5 (M8, M10 non exécutés en
+réel). M10 et M12 ont changé d'attendu depuis D-035 (accès conservé,
+3 unités réclamées). B (mobile) et C (captures) : à exécuter. Place : place de test
 93404872714886 (jamais `GrabAndGrow.rbxl`). Noter pour chaque point OK / KO
 et, en cas d'écart, la ligne d'Output ou une capture.
 

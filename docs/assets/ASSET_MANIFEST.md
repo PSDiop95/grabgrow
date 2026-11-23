@@ -58,6 +58,12 @@ sont pas listées une par une.
   **avant** l'import dans Studio. Sélection : `T10_RESOURCE_ASSET_SELECTION.md`.
 - Crédits à publier (description de l'expérience, écran Crédits) avant
   toute publication publique.
+- **Contrôle T10.4 (2026-11-22)** : 20 lignes `res_*`, toutes CC BY 4.0
+  vérifiées le 2026-11-22, attribution « modifié » renseignée ; 20 gabarits
+  présents dans `ServerStorage.ResourceTemplates` du place de test.
+  Gardiens et sites sacrés : primitives Roblox, aucun asset tiers.
+  **Crédits pas encore affichés** (ni jeu, ni description) : bloquant avant
+  publication publique.
 - **GLB corrigés (T10.1, 2026-11-22)** : `assets_src/polyfork/fixed/<id>.glb`,
   produits par `tools/fix_glb_colors.luau` à partir des fichiers source
   (inchangés). Modification : couleurs de sommets converties linéaire →

@@ -149,6 +149,22 @@ StudioTestPresets.Presets = table.freeze({
 		worlds = { "GoldenDesert", "FrozenPeaks", "MysticWorld" },
 		discovered = ALL_RESOURCES,
 	},
+	-- T10.5b : vente et améliorations sacrées (3 unités de chaque monde).
+	-- Les acquisitions (achievements["sacred_upgrade_*"]) ne sont pas
+	-- remises à zéro par un préréglage (Studio seulement).
+	S_sacred = {
+		description = "Quatre mondes, 3 unités sacrées de chaque monde",
+		coins = 0,
+		upgrades = { Backpack = 10 },
+		worlds = { "GoldenDesert", "FrozenPeaks", "MysticWorld" },
+		discovered = ALL_RESOURCES,
+		resources = {
+			sacred_heartwood_seed = 3,
+			sacred_sun_relic = 3,
+			sacred_frost_heart = 3,
+			sacred_astral_essence = 3,
+		},
+	},
 	J_world4 = {
 		description = "Journal vide, quatre mondes débloqués (découvertes en jeu)",
 		coins = 0,
