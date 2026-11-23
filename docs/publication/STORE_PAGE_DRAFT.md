@@ -121,4 +121,5 @@ Règles à respecter (modération Roblox et CLAUDE.md §4.3) :
 4. Questionnaire de classification et choix d'audience (propriétaire).
 5. Expérience de production distincte, DataStore vierge.
 6. Test fermé (`RELEASE_PLAN.md`), dont mobile réel et Galaxy A23.
-7. Vérifier le bord de l'arène Root (vide au-delà de 34 studs).
+7. Bord des arènes (vide au-delà de 34 studs) : recul borné à 24 studs du
+   centre (D-040) ; à revérifier sur mobile avec latence.

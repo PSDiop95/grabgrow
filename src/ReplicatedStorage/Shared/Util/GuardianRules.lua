@@ -56,6 +56,19 @@ function GuardianRules.directionTo(from: Planar, to: Planar): Planar
 	return { X = dx / length, Z = dz / length }
 end
 
+-- Recul borné (A-7) : distance vers l'extérieur, réduite pour que le
+-- joueur ne dépasse pas `maxRadius` du centre ; 0 s'il y est déjà.
+function GuardianRules.knockbackDistance(center: Planar, position: Planar, wanted: number, maxRadius: number): number
+	if not (wanted > 0) then
+		return 0
+	end
+	local room = maxRadius - planarDistance(center, position)
+	if not (room > 0) then
+		return 0
+	end
+	return math.min(wanted, room)
+end
+
 -- Phase 1, 2 ou 3 selon la fraction de PV restante.
 function GuardianRules.phaseFor(health: number, maxHealth: number): number
 	local thresholds = GuardianConfig.Combat.phaseThresholds

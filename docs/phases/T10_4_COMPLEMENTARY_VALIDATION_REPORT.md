@@ -117,7 +117,26 @@ mon script (`CharacterAdded:Wait()`) a coupé la connexion MCP et Studio a
   touché près du bord pourrait donc tomber. Non observé en jeu : la mort de
   P1 pendant ce lot vient de mon harnais (positions d'éclats mal lues, marche
   vers (0, 0, 0)). La « chute de Player2 » de T10.4 (§5, scénario 6) a une
-  cause probable identique, non confirmée. À vérifier manuellement (A-7).
+  cause probable identique, non confirmée.
+- **Mesure du recul (2026-11-23, Studio solo, Root, A-7)** :
+  - Profil des 4 arènes identique : sol plein jusqu'à 30 studs, vide au-delà
+    de 34 studs (sauf la passerelle). Éclats à 20 studs au plus.
+  - 6 touches mesurées : déplacement radial de **0 à 0,2 stud**.
+  - Cause : le client pose bien la vitesse (23,6 studs/s à la 1re frame,
+    `GuardianController.onHit`), mais l'Humanoid reste en état `Running`
+    et l'annule en 3 frames. Seul un petit saut (≈ 1 stud) subsiste.
+  - Conséquences : aucun risque de chute par recul **en l'état**, mais le
+    recul de 18 studs prévu (`GuardianConfig.Combat.hit`) ne fonctionne pas.
+    Le corriger tel quel recréerait le risque de chute près du bord : un
+    correctif doit borner le recul pour rester dans le sol (≤ 30 studs).
+  - Non mesuré : mobile, latence.
+- **Correctif A-7 (D-040, 2026-11-23)** : recul appliqué par un
+  `LinearVelocity` planaire pendant 0,45 s, borné par le serveur puis par le
+  client à 24 studs du centre (`GuardianConfig.Combat.hit.maxRadiusStuds`).
+  Mesure Studio, 5 touches dans 2 directions : recul de 12,8 à 18,1 studs,
+  distance finale au centre de 25,8 studs au plus (sol jusqu'à 30), aucune
+  alerte de déplacement. Avant resserrement (borne 28) : 29,8 studs, jugé
+  trop près du bord.
 - Le place de test a été relancé pendant le lot. `useMemoryStore` y était
   encore à `false` : remis à `true`. À vérifier : la version cloud du place
   a-t-elle été enregistrée avec `false` ?
@@ -127,4 +146,4 @@ mon script (`CharacterAdded:Wait()`) a coupé la connexion MCP et Studio a
 1. Reconnexion multijoueur réelle : demande deux clients sur un serveur
    publié de l'expérience de test (autorisation requise).
 2. Mobile, Galaxy A23 (inchangé, A-2).
-3. Recul près du bord de l'arène (voir Observations).
+3. Recul (A-7) : corrigé (D-040) ; à vérifier sur mobile avec latence.

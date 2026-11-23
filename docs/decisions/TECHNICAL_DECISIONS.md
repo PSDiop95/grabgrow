@@ -1238,3 +1238,24 @@ propriétaire), ACCEPTÉE, REMPLACÉE.
   `Controllers/CreditsController.lua` (nouveau), `ClientBootstrap`,
   `Localization` (5 clés), `Tests/CreditsTests.lua` (nouveau),
   `RunTests.server.lua`, `publication/*`, `assets/ASSET_MANIFEST.md`.
+
+## D-040 — Recul des gardiens borné (A-7)
+
+- **Date :** 2026-11-23
+- **Statut :** ACCEPTÉE (propriétaire : « corriger borné », 2026-11-23).
+  Valeurs = hypothèses, à vérifier sur mobile avec latence.
+- **Contexte :** le recul de 18 studs prévu (D-034) était inopérant : la
+  vitesse posée par le client était annulée par l'Humanoid en 3 frames
+  (recul < 1 stud). Les quatre arènes n'ont du sol que jusqu'à environ
+  30 studs du centre ; un recul effectif non borné pouvait faire tomber.
+- **Décision :** le serveur calcule une distance bornée
+  (`GuardianRules.knockbackDistance`) pour que le joueur ne dépasse pas
+  `hit.maxRadiusStuds = 24` studs du centre ; le client la borne à nouveau
+  sur sa position locale et l'applique par un `LinearVelocity` planaire
+  pendant `hit.knockbackSeconds = 0.45`.
+- **Justification :** retour visuel prévu par la conception, sans risque de
+  chute ; marge de 6 studs pour la latence (dépassement mesuré 1,8 stud).
+- **Conséquences :** vitesse de recul ≤ 40 studs/s, dans les marges de
+  `MovementSecurityConfig` (aucune alerte observée en Studio).
+- **Affecte :** `GuardianConfig`, `GuardianRules`, `GuardianCombatService`,
+  `GuardianController`, `GuardianTests` (27 cas).
