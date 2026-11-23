@@ -16,7 +16,8 @@ Règle : aucun test destructif ni essai de transaction sur la production.
 
 ## 2. Checklist avant publication
 
-- [ ] T9 validée par le propriétaire.
+- [x] T9 et T10 validées par le propriétaire (D-039).
+- [x] Version candidate : `main` `6e63de6`, scripts du place identiques (2026-11-23).
 - [ ] Tous les tests automatisés OK (Lune, luau-lsp strict, Rojo build).
 - [ ] Studio solo et Local Server à 2 joueurs OK sur la version à publier.
 - [ ] Événements analytics vus dans « View Events » de l'expérience de test.
@@ -88,3 +89,30 @@ Règle : aucun test destructif ni essai de transaction sur la production.
 
 Pour chaque incident : date, version, symptôme, cause, correction, test
 ajouté. Consigner dans `docs/` (rapport de phase ou décision).
+
+## 9. Procédure de mise en production (propriétaire)
+
+Préparée le 2026-11-23. Chaque étape est une action du propriétaire ;
+l'agent ne publie rien et ne change aucun réglage.
+
+1. **Synchroniser** : ouvrir le place de test, reconnecter Rojo sur `main`,
+   puis comparer `lune run tools/repo_script_hashes.luau` avec
+   `tools/studio/place_script_hashes.luau` (mode Edit). Les deux listes
+   doivent être identiques.
+2. **Enregistrer** le place de test et noter son numéro de version.
+3. **Créer l'expérience de production** : File > Publish to Roblox As…
+   > *New experience*, nom « GRAB & GROW ». Ne jamais publier par-dessus
+   l'expérience de test. Le DataStore de production est alors vierge
+   (les DataStores sont propres à chaque expérience).
+4. Dans la nouvelle expérience : **laisser privée**, activer « Enable Studio
+   Access to API Services » seulement si un test Studio sur ce DataStore
+   est prévu (sinon le laisser désactivé), appareils : téléphone,
+   tablette, ordinateur.
+5. Renseigner nom, descriptions EN/FR (`STORE_PAGE_DRAFT.md` §2), icône et
+   miniatures validées, puis le questionnaire de classification.
+6. **Test fermé** (§4) sur cette expérience privée : scénarios §3, dont
+   Galaxy A23 et recul des gardiens avec latence réelle.
+7. Après les critères §5 seulement : changer la visibilité en public
+   (autorisation explicite requise). Noter version, date et commit dans
+   `PROJECT_STATUS.md`.
+
