@@ -1214,3 +1214,27 @@ propriétaire), ACCEPTÉE, REMPLACÉE.
 - **Affecte :** `SacredResourceConfig`, `SacredUpgradeRules` (nouveau),
   `SacredTransactionService` (nouveau), `InventoryService`,
   `CollectionService`, `Remotes`, `Bootstrap`, `SacredTransactionTests`.
+
+## D-039 — Validation de T10 et crédits CC BY (option C)
+
+- **Date :** 2026-11-23
+- **Statut :** ACCEPTÉE (propriétaire, 2026-11-23).
+- **Contexte :** T10.4 (rapports global et complémentaire) proposée
+  PARTIEL ; T10.5a/b faites. Anomalie A-4 : 20 meshes Polyfork CC BY 4.0
+  sans crédit affiché. Les 20 lignes (≈ 2 000 caractères) ne tiennent pas
+  dans la description (1 000 caractères).
+- **Décision :**
+  - T10 et ses suites (T10.0 à T10.5b, validations T10.4) **validées** par
+    le propriétaire. Ne vaut pas autorisation de publier.
+  - Crédits, option C : panneau « Crédits » en jeu (Boutique > Paramètres)
+    listant les 20 attributions complètes, plus une ligne courte dans les
+    descriptions EN/FR renvoyant au panneau.
+- **Justification :** crédit complet visible par chaque joueur, sans lien
+  hors plateforme ; description lisible.
+- **Conséquences :** `CreditsConfig` doit rester aligné sur
+  `ASSET_MANIFEST.md` ; réserves T10 conservées (mobile, Galaxy A23,
+  reconnexion multijoueur réelle, bord de l'arène Root).
+- **Affecte :** `Shared/Config/CreditsConfig.lua` (nouveau),
+  `Controllers/CreditsController.lua` (nouveau), `ClientBootstrap`,
+  `Localization` (5 clés), `Tests/CreditsTests.lua` (nouveau),
+  `RunTests.server.lua`, `publication/*`, `assets/ASSET_MANIFEST.md`.

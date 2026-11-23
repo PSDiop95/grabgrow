@@ -26,25 +26,25 @@ Defeat each world's guardian in your own personal battle to unlock its sacred sa
 
 Complete your Collection Journal. Play solo or alongside other players: your progress is always your own.
 
-3D models by Polyfork (polyfork.dev), CC BY 4.0, modified. Full credits: see below / in game.
+3D models by Polyfork (polyfork.dev), CC BY 4.0, modified. Full credits in game: Shop > Settings > Credits.
 ```
 
 ### FR (≈ 680 caractères)
 
 ```text
-Ramasse des ressources, remplis ton sac, vends-les contre des Coins et deviens plus fort sur quatre îles colorées.
+Ramassez des ressources, remplissez votre sac, vendez-les contre des Coins et devenez plus fort sur quatre îles colorées.
 
-Explore Green Valley, Golden Desert, Frozen Peaks et Mystic World. Collecte 20 ressources, des feuilles et pierres jusqu'aux cristaux rares, puis améliore ton sac, ta pince, ton aimant et tes bottes pour récolter plus vite.
+Explorez Green Valley, Golden Desert, Frozen Peaks et Mystic World. Collectez 20 ressources, des feuilles et pierres jusqu'aux cristaux rares, puis améliorez votre sac, votre pince, votre aimant et vos bottes pour récolter plus vite.
 
-Bats le gardien de chaque monde lors d'un combat personnel pour débloquer son sanctuaire sacré pour toujours, et gagne des reliques sacrées : vends-les ou utilise-les pour des améliorations uniques.
+Battez le gardien de chaque monde lors d'un combat personnel pour débloquer son sanctuaire sacré pour toujours, et gagnez des reliques sacrées : vendez-les ou utilisez-les pour des améliorations uniques.
 
-Complète ton Journal de collection. Joue seul ou avec d'autres joueurs : ta progression reste la tienne.
+Complétez votre Journal de collection. Jouez seul ou avec d'autres joueurs : votre progression reste la vôtre.
 
-Modèles 3D par Polyfork (polyfork.dev), CC BY 4.0, modifiés. Crédits complets : voir ci-dessous / en jeu.
+Modèles 3D par Polyfork (polyfork.dev), CC BY 4.0, modifiés. Crédits complets en jeu : Boutique > Paramètres > Crédits.
 ```
 
-Remarque : le jeu tutoie dans ses textes FR (`LOCALIZATION.md`) ; la
-description suit la même règle.
+Remarque : le jeu vouvoie dans ses textes FR (`LOCALIZATION.md`, T5.4) ;
+la description suit la même règle.
 
 ## 3. Crédits CC BY 4.0 (anomalie A-4, bloquant avant publication)
 
@@ -61,7 +61,10 @@ Options (décision du propriétaire) :
 | B. Ligne courte dans la description + liste complète sur une page publique (dépôt ou site) | Pas de code | Nécessite une page publique stable ; lien hors plateforme dans la description à vérifier contre les règles Roblox |
 | C. A + ligne courte dans la description | Le plus complet | Option A + texte |
 
-Recommandation : **C**. Aucune conformité juridique n'est affirmée ici.
+**Option C retenue (D-039, 2026-11-23)** : panneau « Crédits » en jeu
+(Boutique > Paramètres > Crédits, `CreditsController`, `CreditsConfig`)
+implémenté ; ligne courte ci-dessus dans les deux descriptions. Aucune
+conformité juridique n'est affirmée ici.
 
 Liste à afficher (extraite du manifeste) :
 
@@ -111,9 +114,9 @@ Règles à respecter (modération Roblox et CLAUDE.md §4.3) :
 
 ## 5. Avant de publier (rappel, rien n'est autorisé ici)
 
-1. Valider T10.4 (rapport complémentaire) et fusionner la PR
-   https://github.com/PSDiop95/grabgrow/pull/2.
-2. Choisir l'option de crédits (§3) et l'implémenter si A ou C.
+1. Fusionner la PR https://github.com/PSDiop95/grabgrow/pull/2 (T10
+   validée le 2026-11-23, D-039).
+2. Crédits : option C faite (D-039) ; saisir la ligne courte dans la description.
 3. Valider nom, descriptions, icône, miniatures.
 4. Questionnaire de classification et choix d'audience (propriétaire).
 5. Expérience de production distincte, DataStore vierge.

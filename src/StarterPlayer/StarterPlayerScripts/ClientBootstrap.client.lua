@@ -4,6 +4,7 @@
 -- T5.2 : retours audio et visuels. T5.3 : guidage de première session.
 -- T7 : succès permanents. T8.2 : voyage entre mondes. T8.6 : journal de
 -- collection. T10.3 : gardiens et sites sacrés. T10.5b : reliques sacrées.
+-- A-4 : panneau Crédits.
 
 local Controllers = script.Parent:WaitForChild("Controllers")
 local InventoryController = require(Controllers:WaitForChild("InventoryController"))
@@ -19,6 +20,7 @@ local AchievementController = require(Controllers:WaitForChild("AchievementContr
 local CollectionJournalController = require(Controllers:WaitForChild("CollectionJournalController"))
 local GuardianController = require(Controllers:WaitForChild("GuardianController"))
 local SacredCompassController = require(Controllers:WaitForChild("SacredCompassController"))
+local CreditsController = require(Controllers:WaitForChild("CreditsController"))
 
 InventoryController.start()
 -- T10.1 : visuels des ressources (modèles importés, V-01, attente).
@@ -42,3 +44,5 @@ CollectionJournalController.start()
 GuardianController.start()
 -- T10.5b : Boussole des sanctuaires (affichage, si l'amélioration est acquise).
 SacredCompassController.start()
+-- A-4 (option C) : crédits des modèles 3D (entrée dans les Paramètres de la Boutique).
+CreditsController.start()

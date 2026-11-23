@@ -37,7 +37,7 @@ réserve), **BLOCKED** (manque une action ou une décision), **NOT TESTED**
 | Compatibilité des plateformes | PARTIAL | Voir C ; cases d'appareils de l'expérience non consultées |
 | Communication (chat) | NOT TESTED | Aucun chat ajouté par le jeu ; réglages par défaut de Roblox |
 | Classification (questionnaire) | BLOCKED | Obligatoire : sans classification, Roblox restreint la jouabilité pour tous. Contenu présumé sans élément restreint (aucune violence, aucun chat ajouté, aucun achat) : réponse « non » à la question de contenu restreint → audience 16+ ; Kids & Select demande un parcours supplémentaire (ci-dessous). Réponse réservée au propriétaire |
-| Permissions des assets | BLOCKED | Depuis T10 : 20 meshes Polyfork CC BY 4.0 modifiés ; crédits absents en jeu et dans la description (A-4, options `STORE_PAGE_DRAFT.md` §3) ; 8 sons Roblox vérifiés (`SOUND_MANIFEST.md`) |
+| Permissions des assets | PARTIAL | 20 meshes Polyfork CC BY 4.0 modifiés ; crédits en jeu faits (D-039, Boutique > Paramètres > Crédits) ; ligne courte de la description à saisir à la publication ; 8 sons Roblox vérifiés (`SOUND_MANIFEST.md`) |
 | Dépendances | PASS | Aucune dépendance externe, aucun HttpService sortant, aucun package |
 
 ### Exigences Roblox de sortie publique (au 2026-11-16)
@@ -77,7 +77,7 @@ Appareils réellement testés : PC (Studio), téléphone Android réel (T5.5),
 | Classification | BLOCKED | Questionnaire à remplir par le propriétaire |
 | Communications | PASS | Aucun système de communication ajouté |
 | Données et analytics | PASS | Roblox AnalyticsService uniquement, aucune donnée personnelle dans les champs, aucun service tiers (T9) |
-| Assets et licences | BLOCKED | Crédits CC BY à afficher (voir B) |
+| Assets et licences | PARTIAL | Crédits en jeu faits ; description à saisir (voir B) |
 | Contenus restreints | PASS (présumé) | Aucun contenu violent, sexuel, de jeu d'argent ou d'achat ; à confirmer par le propriétaire dans le questionnaire |
 | Confidentialité | NOT TESTED | Paramètres de l'expérience |
 | Sécurité serveur | PASS | T6 (D-019), T8.7 : aucune autorité client |
