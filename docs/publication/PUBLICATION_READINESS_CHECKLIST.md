@@ -14,11 +14,11 @@ réserve), **BLOCKED** (manque une action ou une décision), **NOT TESTED**
 
 | Élément | Statut | Constat / action |
 |---|---|---|
-| Nom « GRAB & GROW » | PARTIAL | Le place de test s'affiche « Test de prise et de croissance » dans Studio. Nom public à définir dans l'expérience de production (propriétaire) |
-| Description courte | PARTIAL | Brouillon EN/FR (2026-11-23, `STORE_PAGE_DRAFT.md` §2), à valider |
-| Description complète | PARTIAL | Brouillon EN/FR (`STORE_PAGE_DRAFT.md` §2), à valider |
-| Icône | BLOCKED | Aucune ; prompts prêts (`IMAGE_PROMPTS_CHATGPT.md` I1–I3), génération et choix par le propriétaire |
-| Miniatures | BLOCKED | Aucune ; prompts prêts (T1–T6) ; au moins 2 vraies captures à produire |
+| Nom « GRAB & GROW » | PASS | Saisi dans l'expérience de production (univers 10778642065), EN et FR, 2026-11-23 |
+| Description courte | PARTIAL | Texte promotionnel non saisi (facultatif) |
+| Description complète | PASS | EN (source) et FR (traduction manuelle) saisies le 2026-11-23 ; lien `polyfork.dev` retiré (rejeté par le filtre Roblox) |
+| Icône | PARTIAL | I1 générée par ChatGPT (`images/icon_I1_chatgpt_512.png`), importée par le propriétaire le 2026-11-23 (API thumbnails : `Pending` à la première vérification) |
+| Miniatures | PARTIAL | 5 vraies captures 1920×1080 (`docs/publication/images/`), importées par le propriétaire le 2026-11-23 (import confirmé par le propriétaire) ; + `thumb_06_chatgpt_T1.png` (ChatGPT, à valider : marchand PNJ absent du jeu) |
 | Captures d'écran | BLOCKED | À produire après validation de la direction visuelle |
 | Cohérence visuelle | PARTIAL | Quatre îles en primitives low-poly cohérentes (T8) ; aucun asset tiers ; logo absent |
 | Présentation des quatre mondes | PARTIAL | Mondes jouables et validés (T8.2 à T8.5) ; aucun support de présentation |
@@ -29,14 +29,14 @@ réserve), **BLOCKED** (manque une action ou une décision), **NOT TESTED**
 | Élément | Statut | Constat / action |
 |---|---|---|
 | Nom et description | NOT TESTED | Non consultés (aucun accès lecture au Dashboard par l'outil) |
-| Place principale | PARTIAL | Place de test 93404872714886 (univers 10775875517) ; expérience de **production distincte** à créer ou à identifier (propriétaire) |
+| Place principale | PASS | Production : univers 10778642065, place 114057331912339 (privée), version 3 ; scripts identiques à `main` `6e63de6`, tests Studio OK (2026-11-23) |
 | Accès et permissions | NOT TESTED | Nouveaux jeux privés par défaut ; vérifier la visibilité actuelle de l'expérience de test |
 | Confidentialité | NOT TESTED | Propriétaire |
-| Serveurs (taille, nombre de joueurs) | NOT TESTED | Taille de serveur non décidée ; le jeu ne dépend pas de la présence d'autres joueurs |
+| Serveurs (taille, nombre de joueurs) | NOT TESTED | 50 joueurs par serveur (défaut Roblox, non testé à cette taille) ; le jeu ne dépend pas de la présence d'autres joueurs |
 | Paramètres de sauvegarde | PASS | DataStore séparés : `GrabAndGrow_PlayerData_v1_Studio` (Studio) et nom de production (`DataConfig.Store.name`) ; « Enable Studio Access to API Services » à vérifier dans le place de production (propriétaire) |
 | Compatibilité des plateformes | PARTIAL | Voir C ; cases d'appareils de l'expérience non consultées |
 | Communication (chat) | NOT TESTED | Aucun chat ajouté par le jeu ; réglages par défaut de Roblox |
-| Classification (questionnaire) | BLOCKED | Obligatoire : sans classification, Roblox restreint la jouabilité pour tous. Contenu présumé sans élément restreint (aucune violence, aucun chat ajouté, aucun achat) : réponse « non » à la question de contenu restreint → audience 16+ ; Kids & Select demande un parcours supplémentaire (ci-dessous). Réponse réservée au propriétaire |
+| Classification (questionnaire) | PASS | Rempli par le propriétaire le 2026-11-23. Maturité « Minimal », âge minimum 16+, aucun descripteur de contenu (API Roblox, lu le 2026-11-23). Kids & Select (moins de 16 ans) : parcours séparé, non engagé |
 | Permissions des assets | PARTIAL | 20 meshes Polyfork CC BY 4.0 modifiés ; crédits en jeu faits (D-039, Boutique > Paramètres > Crédits) ; ligne courte de la description à saisir à la publication ; 8 sons Roblox vérifiés (`SOUND_MANIFEST.md`) |
 | Dépendances | PASS | Aucune dépendance externe, aucun HttpService sortant, aucun package |
 
@@ -74,11 +74,11 @@ Appareils réellement testés : PC (Studio), téléphone Android réel (T5.5),
 | Élément | Statut | Constat |
 |---|---|---|
 | Conditions de publication | PARTIAL | Exigences relevées ci-dessus ; leur respect dépend du compte (propriétaire) |
-| Classification | BLOCKED | Questionnaire à remplir par le propriétaire |
+| Classification | PASS | Maturité « Minimal », âge minimum 16+, aucun descripteur de contenu (API Roblox, lu le 2026-11-23) |
 | Communications | PASS | Aucun système de communication ajouté |
 | Données et analytics | PASS | Roblox AnalyticsService uniquement, aucune donnée personnelle dans les champs, aucun service tiers (T9) |
 | Assets et licences | PARTIAL | Crédits en jeu faits ; description à saisir (voir B) |
-| Contenus restreints | PASS (présumé) | Aucun contenu violent, sexuel, de jeu d'argent ou d'achat ; à confirmer par le propriétaire dans le questionnaire |
+| Contenus restreints | PASS | Aucun descripteur de contenu après le questionnaire du propriétaire (2026-11-23) |
 | Confidentialité | NOT TESTED | Paramètres de l'expérience |
 | Sécurité serveur | PASS | T6 (D-019), T8.7 : aucune autorité client |
 
@@ -124,3 +124,4 @@ relèvent du titulaire du compte.
 | Place enregistré | NOT TESTED | Suppression des doublons faite dans Studio, **non enregistrée** : enregistrement par le propriétaire |
 | Carte (Workspace) | PARTIAL | Hors Rojo : vit seulement dans le place ; à copier avec le place vers la production |
 
+**Publication publique : 2026-11-23 (D-041), audience 16+.**
