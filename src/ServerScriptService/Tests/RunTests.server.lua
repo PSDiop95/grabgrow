@@ -39,6 +39,7 @@ local ResourceFxTests = require(script.Parent.ResourceFxTests)
 local GuardianTests = require(script.Parent.GuardianTests)
 local GuardianPersistenceTests = require(script.Parent.GuardianPersistenceTests)
 local SacredTransactionTests = require(script.Parent.SacredTransactionTests)
+local CreditsTests = require(script.Parent.CreditsTests)
 
 local GameConfig = require(Config.GameConfig)
 local ResourceConfig = require(Config.ResourceConfig)
@@ -91,6 +92,7 @@ local AnalyticsConfig = require(ServerStorage:WaitForChild("ServerOnlyConfig").A
 local GuardianSecurityConfig = require(ServerStorage:WaitForChild("ServerOnlyConfig").GuardianSecurityConfig)
 local GuardianConfig = require(Config.GuardianConfig)
 local SacredResourceConfig = require(Config.SacredResourceConfig)
+local CreditsConfig = require(Config.CreditsConfig)
 local GuardianRules = require(ReplicatedStorage.Shared.Util.GuardianRules)
 local GuardianCombatService = require(ServerScriptService.Services.GuardianCombatService)
 local SacredSiteService = require(ServerScriptService.Services.SacredSiteService)
@@ -508,6 +510,9 @@ report(
 		Remotes = Remotes,
 	})
 )
+
+-- A-4 (option C) : crédits des modèles 3D.
+report("CreditsTests", CreditsTests.run({ CreditsConfig = CreditsConfig, Localization = Localization }))
 
 if totalFailures == 0 then
 	print("[Tests] TOUS LES TESTS : OK")

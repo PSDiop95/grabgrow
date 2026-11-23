@@ -1,8 +1,18 @@
 # GRAB & GROW — État du projet
 
-Dernière mise à jour : 2026-11-23 (T10.4 validation complémentaire T10-D01 à D03 : statut proposé PARTIEL)
+Dernière mise à jour : 2026-11-23 (T10 validée, crédits CC BY option C, D-039)
 
 ## Résumé
+
+**T10 VALIDÉE** par le propriétaire le 2026-11-23 (D-039), réserves
+conservées (mobile, Galaxy A23, reconnexion multijoueur réelle). Recul des gardiens
+(A-7) corrigé le 2026-11-23 (D-040) : 13 à 18 studs, borné à 24 studs du
+centre (sol jusqu'à 30) ; Lune, LSP, Rojo et Studio OK ; mobile et latence
+non testés. **Crédits CC BY (A-4) : option C faite** : panneau
+« Crédits » en jeu (Boutique > Paramètres), 20 attributions issues du
+manifeste ; Lune 26 suites OK (`CreditsTests` 4 cas), LSP et Rojo OK,
+Studio Play (FR) OK ; clic réel et mobile non testés. Ligne courte de la
+description à saisir à la publication. Aucune publication.
 
 **T10.4 validation complémentaire (2026-11-23) : PARTIEL**
 (`phases/T10_4_COMPLEMENTARY_VALIDATION_REPORT.md`). DataStore réel de

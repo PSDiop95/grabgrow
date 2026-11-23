@@ -87,7 +87,16 @@ local Combat = {
 	-- ni sac, ni Coins ne sont touchés.
 	hit = {
 		stunSeconds = 1.5,
+		-- Recul maximal, vers l'extérieur de l'arène (A-7, 2026-11-23).
 		knockbackStuds = 18,
+		-- Distance au centre que le recul ne fait jamais dépasser (borne
+		-- serveur, puis client). Le sol des sites s'arrête vers 30 studs,
+		-- vide au-delà : 6 studs de marge pour la latence et le dépassement
+		-- mesuré en Studio (jusqu'à 1,8 stud au-delà de la borne).
+		maxRadiusStuds = 24,
+		-- Durée du recul côté client (vitesse = distance / durée, environ
+		-- 40 studs/s au maximum : dans les marges de MovementSecurityConfig).
+		knockbackSeconds = 0.45,
 	},
 	arena = {
 		-- Rayon de l'arène (combat) autour du centre du site.

@@ -392,6 +392,28 @@ function GuardianTests.run(modules: Modules): ({ string }, number)
 		check(not GuardianRules.isHit(circle, p, { X = 0 / 0, Z = 0 }), "NaN : hors zone")
 	end)
 
+	case("règles : recul borné près du centre (A-7)", function(check)
+		local center = { X = 100, Z = -50 }
+		local radius = Combat.hit.maxRadiusStuds
+		local wanted = Combat.hit.knockbackStuds
+		local function at(distance: number): { X: number, Z: number }
+			return { X = center.X + distance, Z = center.Z }
+		end
+		check(GuardianRules.knockbackDistance(center, at(2), wanted, radius) == wanted, "près du centre : recul complet")
+		check(GuardianRules.knockbackDistance(center, at(20), wanted, radius) == radius - 20, "près du bord : recul réduit")
+		check(GuardianRules.knockbackDistance(center, at(radius), wanted, radius) == 0, "au bord : aucun recul")
+		check(GuardianRules.knockbackDistance(center, at(radius + 3), wanted, radius) == 0, "hors arène : aucun recul")
+		check(GuardianRules.knockbackDistance(center, at(5), 0, radius) == 0, "recul nul")
+		check(GuardianRules.knockbackDistance(center, at(5), 0 / 0, radius) == 0, "valeur invalide")
+		for distance = 0, radius + 5, 0.5 do
+			local push = GuardianRules.knockbackDistance(center, at(distance), wanted, radius)
+			check(push >= 0 and distance + push <= math.max(radius, distance) + 1e-9, `dépassement à {distance}`)
+		end
+		-- Sol des sites jusqu'à environ 30 studs (relevé 2026-11-23) : au
+		-- moins 4 studs de marge, et pas au-delà de l'arène.
+		check(radius <= 26 and radius <= Combat.arena.radius, "borne du recul trop près du vide")
+	end)
+
 	case("règles : accès aux sites", function(check)
 		local worlds = { GreenValley = true }
 		local all = discoveredAll()
@@ -644,6 +666,12 @@ function GuardianTests.run(modules: Modules): ({ string }, number)
 		check(attack ~= nil and attack.attackId == "root_slam", "attaque annoncée")
 		env.advance(guardian.attacks.root_slam.telegraphSeconds + 0.1)
 		check(env.count(1, "hit") == 1, "touche attendue")
+		local hitMessage = env.lastMessage(1, "hit")
+		check(
+			hitMessage.knockbackStuds == math.min(Combat.hit.knockbackStuds, Combat.hit.maxRadiusStuds - 4)
+				and hitMessage.knockbackSeconds == Combat.hit.knockbackSeconds,
+			"recul borné envoyé (A-7)"
+		)
 		local snapshot = env.combat.GetCombat(1)
 		check(snapshot.hitsTaken == 1 and snapshot.stunnedUntil > env.now, "étourdi")
 		local shardId = snapshot.shardIds[1]

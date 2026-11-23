@@ -106,6 +106,12 @@ local STRINGS: { [string]: { [string]: string } } = {
 		["settings.reduced_effects"] = "Reduced effects",
 		["settings.on"] = "On",
 		["settings.off"] = "Off",
+		-- A-4 (option C) : crédits des modèles 3D (CreditsConfig).
+		["settings.credits"] = "Credits",
+		["settings.credits_open"] = "View",
+		["credits.title"] = "Credits",
+		["credits.intro"] = "3D models by Polyfork (CC BY 4.0), modified",
+		["credits.close"] = "Close",
 		-- T5.3 : guidage de première session.
 		["onboarding.welcome_title"] = "Welcome to Grab & Grow!",
 		["onboarding.welcome_body"] = "Collect resources, sell them and upgrade your equipment.",
@@ -325,6 +331,12 @@ local STRINGS: { [string]: { [string]: string } } = {
 		["settings.reduced_effects"] = "Effets réduits",
 		["settings.on"] = "Activé",
 		["settings.off"] = "Désactivé",
+		-- A-4 (option C) : crédits des modèles 3D (CreditsConfig).
+		["settings.credits"] = "Crédits",
+		["settings.credits_open"] = "Voir",
+		["credits.title"] = "Crédits",
+		["credits.intro"] = "Modèles 3D Polyfork (CC BY 4.0), modifiés",
+		["credits.close"] = "Fermer",
 		["onboarding.welcome_title"] = "Bienvenue dans Grab & Grow !",
 		["onboarding.welcome_body"] = "Collectez des ressources, vendez-les et améliorez votre équipement.",
 		["onboarding.step"] = "Étape %d/3",

@@ -412,13 +412,17 @@ function GuardianCombatService.new(dependencies: Dependencies)
 		combat.stunnedUntil = now + Combat.hit.stunSeconds
 		combat.hitsTaken += 1
 		local away = GuardianRules.directionTo(combat.site.center, position)
+		-- Recul borné près du centre : jamais vers le vide (A-7).
+		local knockback =
+			GuardianRules.knockbackDistance(combat.site.center, position, Combat.hit.knockbackStuds, Combat.hit.maxRadiusStuds)
 		send(combat.userId, {
 			type = "hit",
 			combatId = combat.combatId,
 			attackId = pending.definition.id,
 			direction = away,
 			stunSeconds = Combat.hit.stunSeconds,
-			knockbackStuds = Combat.hit.knockbackStuds,
+			knockbackStuds = knockback,
+			knockbackSeconds = Combat.hit.knockbackSeconds,
 		})
 	end
 

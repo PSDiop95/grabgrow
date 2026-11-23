@@ -30,7 +30,8 @@ objet (T10-D02) ; équilibrage (PV, cadences) non mesuré sur joueurs réels.
   saisi (même bouton que la collecte) inflige des dégâts calculés par le
   serveur.
 - **Pas de mort, pas de perte** : une attaque reçue repousse le joueur et
-  l'étourdit 1,5 s (pas de saisie possible). Les PV de l'avatar ne sont pas
+  l'étourdit 1,5 s (pas de saisie possible). Recul de 18 studs au plus,
+  borné pour ne jamais dépasser 24 studs du centre (sol jusqu'à 30, D-040). Les PV de l'avatar ne sont pas
   touchés, l'inventaire et les Coins jamais.
 - **Lisibilité mobile** : attaques annoncées par une zone au sol (anneau,
   ligne, cône) **1,5 s** avant l'impact ; couleur + forme + son.

@@ -673,6 +673,70 @@ local function onCombat(message: any)
 	updateHud()
 end
 
+-- Recul (A-7) : distance bornée par le serveur (hit.maxRadiusStuds), puis
+-- de nouveau ici sur la position locale, souvent en avance sur celle du
+-- serveur.
+-- Une vitesse posée directement est annulée par l'Humanoid en quelques
+-- frames (état Running, mesuré le 2026-11-23) : un LinearVelocity planaire
+-- la maintient pendant knockbackSeconds. Visuel seulement : la position
+-- reste validée par le serveur (MovementValidator).
+local KNOCKBACK_HOP = 12
+local KNOCKBACK_MAX_FORCE = 1e7
+local knockbackMover: LinearVelocity? = nil
+
+local function applyKnockback(message: any)
+	local root = rootPart()
+	local direction = message.direction
+	local distance = if type(message.knockbackStuds) == "number" then message.knockbackStuds else 0
+	local seconds = if type(message.knockbackSeconds) == "number" then message.knockbackSeconds else Combat.hit.knockbackSeconds
+	if root == nil or type(direction) ~= "table" or not (distance > 0) or not (seconds > 0) then
+		return
+	end
+	local push = Vector2.new(tonumber(direction.X) or 0, tonumber(direction.Z) or 0)
+	if push.Magnitude < 1e-3 then
+		return
+	end
+	local view = if combat then sites[combat.siteId] else nil
+	if view then
+		local center = view.center.Position
+		distance = GuardianRules.knockbackDistance(
+			{ X = center.X, Z = center.Z },
+			{ X = root.Position.X, Z = root.Position.Z },
+			distance,
+			Combat.hit.maxRadiusStuds
+		)
+		if not (distance > 0) then
+			return
+		end
+	end
+	if knockbackMover then
+		knockbackMover:Destroy()
+	end
+	local attachment = root:FindFirstChild("RootAttachment")
+	if attachment == nil or not attachment:IsA("Attachment") then
+		return
+	end
+	local mover = Instance.new("LinearVelocity")
+	mover.Name = "GuardianKnockback"
+	mover.Attachment0 = attachment
+	mover.RelativeTo = Enum.ActuatorRelativeTo.World
+	mover.VelocityConstraintMode = Enum.VelocityConstraintMode.Plane
+	mover.PrimaryTangentAxis = Vector3.xAxis
+	mover.SecondaryTangentAxis = Vector3.zAxis
+	mover.PlaneVelocity = push.Unit * (distance / seconds)
+	mover.ForceLimitMode = Enum.ForceLimitMode.Magnitude
+	mover.MaxForce = KNOCKBACK_MAX_FORCE
+	mover.Parent = root
+	knockbackMover = mover
+	root.AssemblyLinearVelocity += Vector3.new(0, KNOCKBACK_HOP, 0)
+	task.delay(seconds, function()
+		if knockbackMover == mover then
+			knockbackMover = nil
+		end
+		mover:Destroy()
+	end)
+end
+
 local function onHit(message: any)
 	local now = os.clock()
 	local stun = if type(message.stunSeconds) == "number" then message.stunSeconds else Combat.hit.stunSeconds
@@ -680,13 +744,7 @@ local function onHit(message: any)
 	showBanner(translate("guardian.hit"), stun)
 	vignette.BackgroundTransparency = 0.6
 	TweenService:Create(vignette, TweenInfo.new(0.5), { BackgroundTransparency = 1 }):Play()
-	local root = rootPart()
-	local direction = message.direction
-	if root and type(direction) == "table" then
-		local push = Vector3.new(tonumber(direction.X) or 0, 0, tonumber(direction.Z) or 0)
-		local strength = (if type(message.knockbackStuds) == "number" then message.knockbackStuds else 12) * 2.2
-		root.AssemblyLinearVelocity = push * strength + Vector3.new(0, 22, 0)
-	end
+	applyKnockback(message)
 end
 
 local function onEnded(message: any)

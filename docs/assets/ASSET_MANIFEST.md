@@ -64,6 +64,12 @@ sont pas listées une par une.
   Gardiens et sites sacrés : primitives Roblox, aucun asset tiers.
   **Crédits pas encore affichés** (ni jeu, ni description) : bloquant avant
   publication publique.
+- **Crédits (D-039, option C, 2026-11-23)** : panneau « Crédits » en jeu
+  (Boutique > Paramètres) alimenté par `Shared/Config/CreditsConfig.lua`,
+  identique aux 20 lignes de ce manifeste (vérifié par comparaison et par
+  `CreditsTests`). Toute ligne Polyfork ajoutée ici doit l'être aussi dans
+  `CreditsConfig`. Ligne courte dans la description : à saisir à la
+  publication (`publication/STORE_PAGE_DRAFT.md`).
 - **GLB corrigés (T10.1, 2026-11-22)** : `assets_src/polyfork/fixed/<id>.glb`,
   produits par `tools/fix_glb_colors.luau` à partir des fichiers source
   (inchangés). Modification : couleurs de sommets converties linéaire →
