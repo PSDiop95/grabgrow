@@ -26,7 +26,7 @@ Defeat each world's guardian in your own personal battle to unlock its sacred sa
 
 Complete your Collection Journal. Play solo or alongside other players: your progress is always your own.
 
-3D models by Polyfork (polyfork.dev), CC BY 4.0, modified. Full credits in game: Shop > Settings > Credits.
+3D models by Polyfork, CC BY 4.0, modified. Full credits in game: Shop > Settings > Credits.
 ```
 
 ### FR (≈ 680 caractères)
@@ -40,8 +40,17 @@ Battez le gardien de chaque monde lors d'un combat personnel pour débloquer son
 
 Complétez votre Journal de collection. Jouez seul ou avec d'autres joueurs : votre progression reste la vôtre.
 
-Modèles 3D par Polyfork (polyfork.dev), CC BY 4.0, modifiés. Crédits complets en jeu : Boutique > Paramètres > Crédits.
+Modèles 3D par Polyfork, CC BY 4.0, modifiés. Crédits complets en jeu : Boutique > Paramètres > Crédits.
 ```
+
+**Saisi le 2026-11-23** dans l'expérience de production (univers
+10778642065) : nom `GRAB & GROW`, description EN (langue source anglaise),
+nom et description FR en traduction manuelle (traduction automatique
+désactivée). La première version, avec `(polyfork.dev)`, a été **rejetée
+par le filtre Roblox** (« Le nouveau nom d'univers ou la description ont
+été rejetés ») ; le lien est retiré, les liens complets restent dans le
+panneau Crédits en jeu. Genre, texte promotionnel, icône et miniatures :
+non saisis.
 
 Remarque : le jeu vouvoie dans ses textes FR (`LOCALIZATION.md`, T5.4) ;
 la description suit la même règle.

@@ -104,6 +104,28 @@ sont pas listées une par une.
 | `res_spectral_ore` | Geode Boulder | `geode-boulder-e8091d` — https://polyfork.dev/asset/geode-boulder-e8091d | Ressource | Mystic World | `assets_src/polyfork/geode-boulder-e8091d.glb` (hors Git) | GLB | 589 | CC BY 4.0, fiche vérifiée le 2026-11-22 (`free: true`) | Oui | « Geode Boulder by Polyfork (https://polyfork.dev/asset/geode-boulder-e8091d), CC BY 4.0 » — modifié | GLB corrigé (`fixed/`) : sommets sRGB ; cristaux blancs recolorés violet | `ServerStorage.ResourceTemplates.spectral_ore` (place de test 93404872714886) | Importé (GLB corrigé, import manuel Studio 2026-11-22, sans assetId de modèle) ; validation visuelle et mobile en attente |
 | `res_mystic_core` | Divination Orb | `divination-orb-115d77` — https://polyfork.dev/asset/divination-orb-115d77 | Ressource | Mystic World | `assets_src/polyfork/divination-orb-115d77.glb` (hors Git) | GLB | 688 | CC BY 4.0, fiche vérifiée le 2026-11-22 (`free: true`) | Oui | « Divination Orb by Polyfork (https://polyfork.dev/asset/divination-orb-115d77), CC BY 4.0 » — modifié | GLB corrigé (`fixed/`) : sommets sRGB ; orbe et éclats recolorés magenta ; fittings, gems et RootPart de l'importeur exclus ; Neon (config) | `ServerStorage.ResourceTemplates.mystic_core` (place de test 93404872714886) | Importé (GLB corrigé, import manuel Studio 2026-11-22, sans assetId de modèle) ; validation visuelle et mobile en attente |
 
+## Images de la vitrine (2026-11-23)
+
+Captures **réelles** du place de test (93404872714886, commit `6e63de6`),
+prises dans Studio par MCP (`screen_capture`, caméra scriptée, HUD masqué).
+Miniatures : aucune image générée par IA. Source 1530×768, recadrée en 16:9 puis
+agrandie en 1920×1080 (léger flou). Contiennent les meshes Polyfork
+CC BY 4.0 (crédités dans la description et en jeu) et l'avatar Roblox du
+propriétaire (02, de dos). Dossier : `docs/publication/images/`.
+
+| Fichier | Vue | Mode | Usage prévu |
+|---|---|---|---|
+| `thumb_01_green_valley.png` | Green Valley, vue aérienne (hub, portails, sanctuaire) | Edit (sans ressources) | Miniature |
+| `thumb_02_guardian.png` | Avatar face au gardien de la forêt (Sanctuaire des racines) | Play | Miniature |
+| `thumb_03_golden_desert.png` | Golden Desert, vue aérienne | Play | Miniature |
+| `thumb_04_frozen_peaks.png` | Frozen Peaks, vue aérienne | Play | Miniature |
+| `thumb_05_mystic_world.png` | Mystic World, îles flottantes | Play | Miniature |
+| `icon_provisional_guardian.png` | Gardien de la forêt, 512×512 | Play | Icône **provisoire**, remplacée par I1 ci-dessous |
+| `icon_I1_chatgpt_512.png` (source `icon_I1_chatgpt_source.png`, 1254×1254) | Personnage cubique, sac débordant de ressources | **Généré par IA** : ChatGPT (compte Go du propriétaire), 2026-11-23, prompt I1 de `IMAGE_PROMPTS_CHATGPT.md` sans modification ; réduit en 512×512, aucune retouche | **Icône proposée**, à valider par le propriétaire |
+
+Import dans le Creator Dashboard : à faire par le propriétaire (le
+navigateur de l'agent ne peut pas envoyer de fichier).
+
 ## Candidats à rechercher (après validation du manifeste)
 
 Catégories prioritaires (GDD 14.2 et 14.8), une recherche par monde :

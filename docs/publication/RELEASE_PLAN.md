@@ -10,7 +10,7 @@ ou modification de l'expérience demande l'accord explicite du propriétaire.
 |---|---|---|
 | Studio | Développement, tests automatisés | Mémoire (`useMemoryStore`) ou `_Studio` |
 | Expérience de test (place 93404872714886) | Tests privés, vérification analytics | Test (jamais la production) |
-| Expérience de production (à créer) | Test fermé puis public | Production, vierge au lancement |
+| Expérience de production « GRAB & GROW » (univers 10778642065, place de départ 114057331912339, créée le 2026-11-23, privée) | Test fermé puis public | Production, vierge au lancement |
 
 Règle : aucun test destructif ni essai de transaction sur la production.
 

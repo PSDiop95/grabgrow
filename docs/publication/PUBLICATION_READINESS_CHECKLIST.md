@@ -14,11 +14,11 @@ réserve), **BLOCKED** (manque une action ou une décision), **NOT TESTED**
 
 | Élément | Statut | Constat / action |
 |---|---|---|
-| Nom « GRAB & GROW » | PARTIAL | Le place de test s'affiche « Test de prise et de croissance » dans Studio. Nom public à définir dans l'expérience de production (propriétaire) |
-| Description courte | PARTIAL | Brouillon EN/FR (2026-11-23, `STORE_PAGE_DRAFT.md` §2), à valider |
-| Description complète | PARTIAL | Brouillon EN/FR (`STORE_PAGE_DRAFT.md` §2), à valider |
-| Icône | BLOCKED | Aucune ; prompts prêts (`IMAGE_PROMPTS_CHATGPT.md` I1–I3), génération et choix par le propriétaire |
-| Miniatures | BLOCKED | Aucune ; prompts prêts (T1–T6) ; au moins 2 vraies captures à produire |
+| Nom « GRAB & GROW » | PASS | Saisi dans l'expérience de production (univers 10778642065), EN et FR, 2026-11-23 |
+| Description courte | PARTIAL | Texte promotionnel non saisi (facultatif) |
+| Description complète | PASS | EN (source) et FR (traduction manuelle) saisies le 2026-11-23 ; lien `polyfork.dev` retiré (rejeté par le filtre Roblox) |
+| Icône | PARTIAL | I1 générée par ChatGPT (`images/icon_I1_chatgpt_512.png`, 2026-11-23), à valider ; variante provisoire tirée d'une capture ; import par le propriétaire |
+| Miniatures | PARTIAL | 5 vraies captures 1920×1080 (`docs/publication/images/`, 2026-11-23) ; import par le propriétaire |
 | Captures d'écran | BLOCKED | À produire après validation de la direction visuelle |
 | Cohérence visuelle | PARTIAL | Quatre îles en primitives low-poly cohérentes (T8) ; aucun asset tiers ; logo absent |
 | Présentation des quatre mondes | PARTIAL | Mondes jouables et validés (T8.2 à T8.5) ; aucun support de présentation |
@@ -29,7 +29,7 @@ réserve), **BLOCKED** (manque une action ou une décision), **NOT TESTED**
 | Élément | Statut | Constat / action |
 |---|---|---|
 | Nom et description | NOT TESTED | Non consultés (aucun accès lecture au Dashboard par l'outil) |
-| Place principale | PARTIAL | Place de test 93404872714886 (univers 10775875517) ; expérience de **production distincte** à créer ou à identifier (propriétaire) |
+| Place principale | PARTIAL | Production : univers 10778642065, place 114057331912339 (privée). Contenu du place publié : à vérifier avec les empreintes (RELEASE_PLAN §9.1) |
 | Accès et permissions | NOT TESTED | Nouveaux jeux privés par défaut ; vérifier la visibilité actuelle de l'expérience de test |
 | Confidentialité | NOT TESTED | Propriétaire |
 | Serveurs (taille, nombre de joueurs) | NOT TESTED | Taille de serveur non décidée ; le jeu ne dépend pas de la présence d'autres joueurs |
