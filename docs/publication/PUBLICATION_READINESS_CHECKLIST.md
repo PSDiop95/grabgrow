@@ -1,6 +1,6 @@
 # Checklist de préparation à la publication — GRAB & GROW
 
-Date de l'audit : 2026-11-16 (T9-G) ; mise à jour partielle 2026-11-23 (page de l'expérience, images, crédits T10). **Aucune publication ni aucun réglage
+Date de l'audit : 2026-11-16 (T9-G) ; mises à jour 2026-11-23 (page de l'expérience, images, crédits T10, version candidate). **Aucune publication ni aucun réglage
 de l'expérience n'a été modifié.** Les règles Roblox citées sont celles de
 la documentation Creator Hub consultée à cette date (pages « Publish
 experiences and places », « Content maturity ») ; à revérifier le jour de
@@ -64,7 +64,7 @@ large ; Kids & Select implique des démarches et un coût).
 | Multijoueur | PASS | Local Server à 2 joueurs, 11 scénarios (T8.7) ; analytics multijoueur NOT TESTED (T9) |
 | Reconnexion | PASS | DataStore de test (T8.7, 12 cas) |
 | Sauvegarde | PASS | Schéma v3, D-023 ; réserve R-01 (copie `Recovery_` non vérifiée sur DataStore réel) |
-| Gestion des erreurs | PASS | Tests Lune (429 cas), panne analytics isolée (T9) |
+| Gestion des erreurs | PASS | Tests (25 suites, 521 cas + ConfigTests, Lune et Play Studio, 2026-11-23), panne analytics isolée (T9) |
 
 Appareils réellement testés : PC (Studio), téléphone Android réel (T5.5),
 émulateurs Studio. Rien d'autre n'est déclaré compatible.
@@ -96,7 +96,8 @@ relèvent du titulaire du compte.
 
 ## F. Actions nécessaires avant publication
 
-1. Clôture et validation de T9 (propriétaire).
+1. ~~Clôture et validation de T9 et T10~~ : fait (D-039), PR #2 et #3
+   fusionnées dans `main` (`6e63de6`).
 2. Publication **privée** de l'expérience de test et vérification des
    événements (D5, `ANALYTICS_TEST_REPORT.md`).
 3. Test Local Server analytics à 2 joueurs (propriétaire).
@@ -109,3 +110,17 @@ relèvent du titulaire du compte.
 7. Test fermé (voir `RELEASE_PLAN.md`), dont mesure de performance sur
    appareil modeste, tablette réelle et contrôle visuel mobile.
 8. Levée ou acceptation des réserves R-01, manette, performance.
+
+## G. Version candidate (2026-11-23)
+
+| Élément | Statut | Constat |
+|---|---|---|
+| Commit | PASS | `main` = `6e63de6` (T10 complète, crédits D-039, recul D-040) |
+| Scripts du place = dépôt | PASS | 111 scripts, empreintes identiques (`tools/repo_script_hashes.luau` / `tools/studio/place_script_hashes.luau`) ; 2 doublons identiques (`CreditsConfig`, `CreditsController`) supprimés du place |
+| Tests au démarrage du Play | PASS | `TOUS LES TESTS : OK` ; panneau Crédits : 1 entrée, 20 lignes |
+| Code réservé à Studio | PASS | Tests, préréglages `StudioTestHooks` et magasin en mémoire conditionnés à `RunService:IsStudio()` ; hors Studio : DataStore `GrabAndGrow_PlayerData_v1`, analytics Roblox |
+| `useMemoryStore` du place | PASS | `true` (sans effet hors Studio) |
+| Avertissement d'asset 203785492 | Accepté | Asset d'avatar Roblox, hors projet (A-8) |
+| Place enregistré | NOT TESTED | Suppression des doublons faite dans Studio, **non enregistrée** : enregistrement par le propriétaire |
+| Carte (Workspace) | PARTIAL | Hors Rojo : vit seulement dans le place ; à copier avec le place vers la production |
+
